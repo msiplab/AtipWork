@@ -72,7 +72,8 @@
 
 ## リンク
 
-- [Cody Coursework](https://coursework.mathworks.com/courses/4881-2018)
+- [MATLAB Academy](https://matlabacademy.mathworks.com/jp)
+- [Cody Coursework](https://coursework.mathworks.com/)
 
 ## 参考文献
 - 村松正吾，「[MATLABによる画像＆映像信号処理](http://www.cqpub.co.jp/hanbai/books/30/30941.htm)」，CQ出版社，2007年
