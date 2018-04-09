@@ -53,7 +53,7 @@
 	.\Sec08
 	.\Sec09
 	.\Sec10
-  >>
+      >>
 
   と表示されればOKです。
 　
@@ -66,9 +66,9 @@
 
 　続けて、ls コマンドで 'calcio.avi'ファイルが data ディレクトリ内に作成されていることを確認してください。
 
-　    >> ls data/calcio.avi
-      
-　    calcio.avi  
+      >> ls data/calcio.avi
+        
+      calcio.avi  
 
 　これで準備完了です。（作成は一度だけでOKです。）
 
