@@ -89,11 +89,11 @@
 
 以上
 
-## Cody Coursework
+## リンク
 
-- https://coursework.mathworks.com/courses/4881-2018
+- [Cody Coursework](https://coursework.mathworks.com/courses/4881-2018)
 
 ## 参考文献
-- 村松正吾，「MATLABによる画像＆映像信号処理」，CQ出版社，2007年
+- 村松正吾，「[MATLABによる画像＆映像信号処理](http://www.cqpub.co.jp/hanbai/books/30/30941.htm)」，CQ出版社，2007年
 ---
 2018年4月9日 村松正吾
