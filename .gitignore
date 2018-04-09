@@ -1,0 +1,5 @@
+*.avi
+*.db
+tmp/*.jpg
+tmp/*.tif
+tmp/*.png

@@ -1,0 +1,11 @@
+velocity = [2 1];
+[x,y]=meshgrid(-1:2/20:1-2/20,-1:2/20:1-2/20);
+h = surf(x,y,zeros(20));
+axis([-1 1 -1 1 -1 1]);
+rotate(h,[0 1 0],90);
+rotate(h,[1 1 0],180*atan(velocity(2))/pi);
+rotate(h,[0 0 1],180*atan(velocity(1))/pi);
+hd = get(hsp,'XData');
+td = get(hsp,'YData');
+vd = get(hsp,'ZData');
+delete(hsp);
