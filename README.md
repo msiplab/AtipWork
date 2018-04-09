@@ -45,7 +45,7 @@
 
       >> mkCalcioAvi
 
-　続けて、ls コマンドで 'calcio.avi'ファイルが data ディレクトリ内に作成されていることを確認してください。
+  続けて、ls コマンドで 'calcio.avi'ファイルが data ディレクトリ内に作成されていることを確認してください。
 
       >> ls data/calcio.avi
         
