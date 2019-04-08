@@ -13,10 +13,10 @@
 
 - ツールボックス
   - Signal Processing Toolbox
-  - Image Processing Toolbox (practiceXX_X_ip.mのみで利用） 
+  - Image Processing Toolbox (practiceXX_X_ip.mのみで利用）
 
 ---
-## 利用方法 
+## 利用方法
 
 - MATLAB を起動後、cd コマンドなどを利用して、展開したフォルダ（ディレクトリ）に移動して下さい。
 
@@ -25,11 +25,11 @@
   この時点で、ls コマンドを実行すると
 
       >> ls
-        
+
       .          Appendix   Sec03      Sec06      Sec09      data       work       
       ..         LICENSE    Sec04      Sec07      Sec10      setpath.m  
       .git       README.md  Sec05      Sec08      common     tmp               
-      
+
       >>
 
   と表示されると思います。
@@ -48,7 +48,7 @@
   続けて、ls コマンドで 'calcio.avi'ファイルが data ディレクトリ内に作成されていることを確認してください。
 
       >> ls data/calcio.avi
-        
+
       calcio.avi  
 
 　これで準備完了です。（作成は一度だけでOKです。）
@@ -73,7 +73,7 @@
 ## リンク
 
 - [MATLAB Academy](https://matlabacademy.mathworks.com/jp)
-- [Cody Coursework](https://coursework.mathworks.com/)
+- [MATLAB Grader](https://grader.mathworks.com/)
 
 ## 参考文献
 - 村松正吾，「[MATLABによる画像＆映像信号処理](http://www.cqpub.co.jp/hanbai/books/30/30941.htm)」，CQ出版社，2007年
