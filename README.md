@@ -1,6 +1,6 @@
 # 「画像処理特論」実習用Mファイル
 
-本リポジトリには、画像処理特論の実習課題で利用するMファイル群(practiceXX_X.m)と画像データが保存されています。
+本リポジトリには、画像処理特論の実習課題で利用するMファイル群と画像データが保存されています。
 
 今回提供するMファイル郡は以下の環境で動作の確認を行いました。
 
@@ -9,11 +9,11 @@
   - Linux 
 
 - MATLAB
-  - R2017b
+  - R2020a
 
 - ツールボックス
   - Signal Processing Toolbox
-  - Image Processing Toolbox (practiceXX_X_ip.mのみで利用）
+  - Image Processing Toolbox 
 
 ---
 ## 利用方法
@@ -25,12 +25,11 @@
   この時点で、ls コマンドを実行すると
 
       >> ls
-
-      .          Appendix   Sec03      Sec06      Sec09      data       work       
-      ..         LICENSE    Sec04      Sec07      Sec10      setpath.m  
-      .git       README.md  Sec05      Sec08      common     tmp               
-
-      >>
+      
+      .           .git        2019before  LICENSE     data        tmp         
+      ..          .gitignore  Appendix    README.md   setpath.m   work        
+      
+      >> 
 
   と表示されると思います。
 
@@ -84,3 +83,4 @@
 2018年4月9日 村松正吾 作成
 2019年4月8日 更新
 2019年4月17日 更新
+2020年4月18日 更新

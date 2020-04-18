@@ -1,13 +1,13 @@
 addpath('./data');
-addpath('./common');
-addpath('./Sec03');
-addpath('./Sec04');
-addpath('./Sec05');
-addpath('./Sec06');
-addpath('./Sec07');
-addpath('./Sec08');
-addpath('./Sec09');
-addpath('./Sec10');
+addpath('./2019before/common');
+addpath('./2019before/Sec03');
+addpath('./2019before/Sec04');
+addpath('./2019before/Sec05');
+addpath('./2019before/Sec06');
+addpath('./2019before/Sec07');
+addpath('./2019before/Sec08');
+addpath('./2019before/Sec09');
+addpath('./2019before/Sec10');
 addpath('./Appendix');
 if exist('./tmp','dir')~=7
     mkdir('./tmp')
