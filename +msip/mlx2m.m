@@ -1,18 +1,18 @@
-function m2mlx(srcDir,fname,dstDir,isVerbose)
+function mlx2m(srcDir,fname,dstDir,isVerbose)
 %M2MLX
 %
-% Copyright (c) Shogo MURAMATSU, 2018
+% Copyright (c) Shogo MURAMATSU, 2020
 % All rights reserved
 
 % デフォルトの値を設定
 if nargin < 1
-    srcDir = './scripts/';    
+    srcDir = './livescripts/';    
 end
 if nargin < 2
     fname = 'sample01_01';
 end
 if nargin < 3
-    dstDir = fullfile( pwd, '/livescripts/');
+    dstDir = fullfile( pwd, '/scripts/');
 end
 if nargin < 4
     isVerbose = true;
@@ -23,14 +23,14 @@ if exist(dstDir,'dir') ~= 7
     mkdir(dstDir)
 end
 
-% スクリプトからライブスクリプトに変換
+% ライブスクリプトからスクリプトに変換
 if exist(dstDir,'dir') == 7
-    srcFile = fullfile(srcDir, [fname '.m']);
-    dstFile = fullfile(dstDir, [fname '.mlx']);
+    srcFile = fullfile(srcDir, [fname '.mlx']);
+    dstFile = fullfile(dstDir, [fname '.m']);
     if exist(srcFile,'file') == 2
-        matlab.internal.liveeditor.openAndSave(srcFile, dstFile);
+        matlab.internal.liveeditor.openAndConvert(srcFile, dstFile);
         if isVerbose
-            fprintf('Open as livescript and saved %s\n',srcFile);
+            fprintf('Open as script and saved %s\n',srcFile);
         end
     else
         me = MException('MsipException:NoSuchFiler', ...

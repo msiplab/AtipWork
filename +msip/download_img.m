@@ -5,12 +5,12 @@ function download_img(isVerbose)
 % All rights reserved.
 %
 
-% ƒfƒtƒHƒ‹ƒg‚Ì’l‚ğİ’è
+% ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®å€¤ã‚’è¨­å®š
 if nargin < 1
     isVerbose = true;
 end
 
-% ‰æ‘œƒTƒ“ƒvƒ‹‚Ìƒ_ƒEƒ“ƒ[ƒh
+% ç”»åƒã‚µãƒ³ãƒ—ãƒ«ã®ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰
 dstdir = './data/';
 if exist(dstdir,'dir') == 7
     fnames = {'lena' 'baboon' 'goldhill' 'barbara'};

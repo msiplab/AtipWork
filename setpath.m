@@ -1,3 +1,4 @@
+addpath('./scripts');
 addpath('./data');
 addpath('./2019before/common');
 addpath('./2019before/Sec03');

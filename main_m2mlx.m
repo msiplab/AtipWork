@@ -6,12 +6,16 @@
 srcDir = './scripts/';
 dstDir = fullfile(pwd,'/livescripts/');
 isVerbose = true;
-%% ファイルの指定
-%%
-fname = 'sample01_01';
+
+%% ファイルの取得
+list = ls([srcDir '*.m']);
+
 %% ファイルの変換
-%%
-msip.m2mlx(srcDir,fname,dstDir,isVerbose)
-%% 変換後のスクリプトの内容
-%%
-open(fullfile(dstDir,[fname '.mlx']))
+for idx = 1:size(list,1)
+    % ファイル名の抽出    
+    [~,fname,~] = fileparts(list(idx,:));
+    % ライブスクリプトへ変換
+    msip.m2mlx(srcDir,fname,dstDir,isVerbose)
+    % 変換後のスクリプトの内容
+    open(fullfile(dstDir,[fname '.mlx']))
+end
