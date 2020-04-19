@@ -1,6 +1,6 @@
-%% Sample 1-1
+%% Sample 1-3
 %% 画像データの表現
-% オンラインヘルプ 
+% FOR ループ
 % 
 % 
 % 
@@ -10,7 +10,7 @@
 % 
 % 動作確認: MATLAB R2020a
 %% Digital image representation
-% Online help
+% FOR loop
 % 
 % 
 % 
@@ -19,22 +19,24 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a
-% $i$のヘルプ
-% (Help on $i$)
+% 変数 $s$ の初期化
+% (Initialize variable $s$)
+% 
+% $$s\leftarrow 0$$
 
-help i
-% $j$ のヘルプ
-% (Help on $j$)
+s = 0;
+% 累積加算
+% (Accumulation)
+% 
+% $$s = \sum_{k=1}^{10}k$$
 
-help j
-% $\pi$ のヘルプ
-% (Help on $\pi$)
+for k=1:10
+   s = s + k;
+end
+% 結果の表示
+% (Display result)
 
-help pi
-% オンライン検索
-% (Online search)
-
-lookfor fft
+disp(s)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.
 % 

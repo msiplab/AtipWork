@@ -1,6 +1,6 @@
-%% Sample 1-1
+%% Sample 1-5
 %% 画像データの表現
-% オンラインヘルプ 
+% 画像の読み込みと表示 
 % 
 % 
 % 
@@ -10,7 +10,7 @@
 % 
 % 動作確認: MATLAB R2020a
 %% Digital image representation
-% Online help
+% Image read and show
 % 
 % 
 % 
@@ -19,22 +19,18 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a
-% $i$のヘルプ
-% (Help on $i$)
+% 画像の読み込み
+% (Image read)
 
-help i
-% $j$ のヘルプ
-% (Help on $j$)
+P = imread('peppers.png');
+% 画像の情報
+% (Information of image)
 
-help j
-% $\pi$ のヘルプ
-% (Help on $\pi$)
+whos P
+% 画像の表示
+% (Image show)
 
-help pi
-% オンライン検索
-% (Online search)
-
-lookfor fft
+imshow(P)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.
 % 

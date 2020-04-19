@@ -1,4 +1,4 @@
-# 「画像処理特論」実習用Mファイル
+# 「画像処理特論」サンプルMファイル
 
 本リポジトリには、画像処理特論の実習課題で利用するMファイル群と画像データが保存されています。
 
@@ -26,8 +26,9 @@
 
       >> ls
       
-      .           .git        2019before  LICENSE     data        tmp         
-      ..          .gitignore  Appendix    README.md   setpath.m   work        
+      +msip         .git          Appendix      data          main_mlx2m.m  tmp           
+      .             .gitignore    LICENSE       livescripts   scripts       work          
+      ..            2019before    README.md     main_m2mlx.m  setpath.m            
       
       >> 
 
@@ -83,4 +84,4 @@
 2018年4月9日 村松正吾 作成
 2019年4月8日 更新
 2019年4月17日 更新
-2020年4月18日 更新
+2020年4月19日 更新

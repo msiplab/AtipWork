@@ -4,7 +4,7 @@
 % All rights resereved
 
 srcDir = fullfile(pwd,'./livescripts/');
-dstDir = '/scripts/';
+dstDir = './scripts/';
 isVerbose = true;
 
 %% ファイルの取得
