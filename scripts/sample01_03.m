@@ -2,8 +2,6 @@
 %% 画像データの表現
 % FOR ループ
 % 
-% 
-% 
 % 画像処理特論
 % 
 % 村松 正吾 
@@ -12,16 +10,12 @@
 %% Digital image representation
 % FOR loop
 % 
-% 
-% 
 % Advanced Topics in Image Processing
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
-% 変数 $s$ の初期化
-% (Initialize variable $s$)
-% 
+% Verified: MATLAB R2020a 
+% 変数 $s$ の初期化 (Initialize variable $s$)
 % $$s\leftarrow 0$$
 
 s = 0;
@@ -39,5 +33,3 @@ end
 disp(s)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.
-% 
-%

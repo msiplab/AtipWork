@@ -2,8 +2,6 @@
 %% 画像データの表現
 % 基本操作 
 % 
-% 
-% 
 % 画像処理特論
 % 
 % 村松 正吾 
@@ -12,16 +10,12 @@
 %% Digital image representation
 % Basic operations
 % 
-% 
-% 
 % Advanced Topics in Image Processing
 % 
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a
-% 行列 $\mathbf{A}$の定義
-% (Definition of matrix $\mathbf{A}$)
-% 
+%  行列 $\mathbf{A}$の定義 (Definition of matrix $\mathbf{A}$)
 % $$\mathbf{A}=\left(\begin{array}{ll}1 & 2 \\ 3 & 4 \\ 5 & 6\end{array}\right)$$
 
 A = [
@@ -44,5 +38,3 @@ B = [
 C = A*B
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.
-% 
-%

@@ -2,8 +2,6 @@
 %% 画像データの表現
 % 画像の読み込みと表示 
 % 
-% 
-% 
 % 画像処理特論
 % 
 % 村松 正吾 
@@ -12,15 +10,12 @@
 %% Digital image representation
 % Image read and show
 % 
-% 
-% 
 % Advanced Topics in Image Processing
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
-% 画像の読み込み
-% (Image read)
+% Verified: MATLAB R2020a 
+% 画像の読み込み (Image read)
 
 P = imread('peppers.png');
 % 画像の情報
@@ -33,5 +28,3 @@ whos P
 imshow(P)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.
-% 
-%

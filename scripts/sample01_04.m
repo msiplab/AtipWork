@@ -2,8 +2,6 @@
 %% 画像データの表現
 % 配列の生成
 % 
-% 
-% 
 % 画像処理特論
 % 
 % 村松 正吾 
@@ -12,15 +10,12 @@
 %% Digital image representation
 % Creation of arrays
 % 
-% 
-% 
 % Advanced Topics in Image Processing
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
-% ワークスペースのクリア
-% (Clear workspace)
+% Verified: MATLAB R2020a 
+% ワークスペースのクリア (Clear workspace)
 
 clear
 % 全ての要素が零の配列の生成
@@ -67,12 +62,9 @@ class(I)
 S = zeros(2,3,'single');
 disp('Type of S')
 class(S)
-
 % ワークスペース内の変数のリスト
 % (List variables in workspace)
 
 whos
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.
-% 
-%

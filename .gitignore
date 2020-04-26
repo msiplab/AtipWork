@@ -1,6 +1,5 @@
 *.avi
 *.db
-*.mlx
 tmp/*.jpg
 tmp/*.tif
 tmp/*.png

@@ -2,8 +2,6 @@
 %% 画像データの表現
 % オンラインヘルプ 
 % 
-% 
-% 
 % 画像処理特論
 % 
 % 村松 正吾 
@@ -12,19 +10,16 @@
 %% Digital image representation
 % Online help
 % 
-% 
-% 
 % Advanced Topics in Image Processing
 % 
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a
-% $i$のヘルプ
-% (Help on $i$)
+%  $i$のヘルプ (Help on $i$)
 
 help i
 % $j$ のヘルプ
-% (Help on $j$)
+% (Help on $j$ )
 
 help j
 % $\pi$ のヘルプ
@@ -34,8 +29,6 @@ help pi
 % オンライン検索
 % (Online search)
 
-lookfor fft
+lookfor fftn
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.
-% 
-%
