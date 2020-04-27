@@ -15,7 +15,8 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a 
-% ワークスペースのクリア (Clear workspace)
+% ワークスペースのクリア
+% (Clear workspace)
 
 clear
 % 全ての要素が零の配列の生成

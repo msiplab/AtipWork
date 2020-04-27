@@ -15,7 +15,8 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a
-%  $i$のヘルプ (Help on $i$)
+%  $i$のヘルプ
+% (Help on $i$)
 
 help i
 % $j$ のヘルプ

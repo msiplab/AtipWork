@@ -15,7 +15,9 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a 
-% 変数 $s$ の初期化 (Initialize variable $s$)
+% 変数 $s$ の初期化 
+% (Initialize variable $s$)
+% 
 % $$s\leftarrow 0$$
 
 s = 0;

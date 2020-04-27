@@ -15,7 +15,8 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a 
-% 画像の読み込み (Image read)
+% 画像の読み込み
+% (Image read)
 
 P = imread('peppers.png');
 % 画像の情報

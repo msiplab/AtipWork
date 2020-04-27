@@ -15,7 +15,9 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a
-%  行列 $\mathbf{A}$の定義 (Definition of matrix $\mathbf{A}$)
+%  行列 $\mathbf{A}$の定義 
+% (Definition of matrix $\mathbf{A}$)
+% 
 % $$\mathbf{A}=\left(\begin{array}{ll}1 & 2 \\ 3 & 4 \\ 5 & 6\end{array}\right)$$
 
 A = [
