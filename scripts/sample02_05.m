@@ -42,7 +42,7 @@ Tn = @(x) 1.0-x;
 Y = Tn(X);
 imshow(Y)
 title('Negative')
-% RGB空間で累乗則変換
+% RGB空間でべき乗則変換
 % (Power law conversion in RGB space)
 % 
 % $$$\left(\begin{array}{l}y_\mathrm{R} \\ y_\mathrm{G} \\ y_\mathrm{B}\end{array}\right)=T\left(\begin{array}{l}x_\mathrm{R} 
@@ -55,7 +55,7 @@ gamma = 0.5
 Y = imadjust(X,[],[],gamma);
 imshow(Y)
 title('Power law conversion in RGB space')
-% HSV空間でV成分のみ累乗則変換
+% HSV空間でV成分のみべき乗則変換
 % (Power law conversion for V component in HSV space)
 % 
 % $$$\left(\begin{array}{l}u_\mathrm{H} \\ u_\mathrm{S} \\ u_\mathrm{V}\end{array}\right)=\mathrm{rgb2hsv}\left(\begin{array}{l}x_\mathrm{R} 

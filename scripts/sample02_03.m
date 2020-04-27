@@ -60,7 +60,7 @@ K = Tc(I);
 imshow(K)
 title('Contrast stretching')
 imhist(K)
-% 累乗則変換
+% べき乗則変換
 % (Power law conversion)
 % 
 % $$y=T(x) = x^\gamma$$  
