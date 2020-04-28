@@ -68,7 +68,9 @@ title('Power law conversion in RGB space')
 gamma = 0.5
 % Power law conversion for V component in HSV space
 U = rgb2hsv(X);
-U(:,:,3) = imadjust(U(:,:,3),[],[],gamma);
+[H,S,V] = imsplit(U);
+V = imadjust(V,[],[],gamma);
+U = cat(3,H,S,V);
 Y = hsv2rgb(U);
 imshow(Y)
 title('Power law conversion for V component in HSV space')
@@ -80,9 +82,10 @@ title('Power law conversion for V component in HSV space')
 % \\ \mathrm{histeq}(x_\mathrm{G}) \\ \mathrm{histeq}(x_\mathrm{B})\end{array}\right)$$$
 
 % Histogram equalization in RGB space
-R = histeq(X(:,:,1));
-G = histeq(X(:,:,2));
-B = histeq(X(:,:,3));
+[R,G,B] = imsplit(X);
+R = histeq(R);
+G = histeq(G);
+B = histeq(B);
 Y = cat(3,R,G,B);
 imshow(Y)
 title('Histogram equalization in RGB space')
@@ -97,7 +100,9 @@ title('Histogram equalization in RGB space')
 
 % Histogram equalization for V component in HSV space
 U = rgb2hsv(X);
-U(:,:,3) = histeq(U(:,:,3));
+[H,S,V] = imsplit(U);
+V = histeq(V);
+U = cat(3,H,S,V);
 Y = hsv2rgb(U);
 imshow(Y)
 title('Histogram equalization for V component in HSI space')
