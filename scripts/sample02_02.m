@@ -15,7 +15,7 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a
-% 処理画像の準備
+% サンプル画像の準備
 % (Preparation of sample image)
 % 
 % 本サンプルで利用する画像データを収めたdata フォルダにパスをとおして，サンプル動画を準備。

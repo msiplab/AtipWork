@@ -26,6 +26,7 @@ whos P
 % 画像の表示
 % (Image show)
 
+figure(1)
 imshow(P)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

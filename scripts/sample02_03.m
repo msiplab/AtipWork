@@ -15,7 +15,7 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a
-% 処理画像の準備
+% サンプル画像の準備
 % (Preparation of sample image)
 % 
 % 本サンプルで利用する画像データを収めたdata フォルダにパスをとおす。
@@ -26,8 +26,10 @@ addpath('./data')
 close
 % Reading original image
 I = im2double(rgb2gray(imread('firenzeRgb.jpg')));
+figure(1)
 imshow(I)
 title('Original')
+figure(2)
 imhist(I)
 % ネガ変換
 % (Negative conversion)
@@ -36,13 +38,16 @@ imhist(I)
 
 % Definition of negative conversion
 Tn = @(x) 1.0-x;
+figure(3)
 fplot(Tn,[0,1])
 axis square
 grid on
 % Negative conversion of image I
 J = Tn(I);
+figure(4)
 imshow(J)
 title('Negative')
+figure(5)
 imhist(J)
 % 対比伸長
 % (Contrast stretching)
@@ -52,13 +57,16 @@ imhist(J)
 % Definition of contrast stretching
 alpha = 1
 Tc = @(x) 0.5*(sign(2.0*x-1.0).*abs(2*x-1.0).^(10^(-alpha))+1.0);
+figure(6)
 fplot(Tc,[0,1])
 axis square
 grid on
 % Contrast stretching of image I
 K = Tc(I);
+figure(7)
 imshow(K)
 title('Contrast stretching')
+figure(8)
 imhist(K)
 % べき乗則変換
 % (Power law conversion)
@@ -68,18 +76,21 @@ imhist(K)
 % Definition of power law conversion
 gamma = 0.5
 Tp = @(x) x.^gamma;
+figure(9)
 fplot(Tp,[0,1])
 axis square
 grid on
 % Power law conversion of image I
 L = Tp(I);
+figure(10)
 imshow(L)
 title('Power law conversion')
+figure(11)
 imhist(L)
 % 輝度値調整関数
 % (Image adjustment function)
 % 
-% IMADJUST は高機能な輝度値調整関数で，uint8型画像に対してもべき乗測変換を含めた細かい調整が可能
+% IMADJUST は高機能な輝度値調整関数で，uint8型画像に対してもべき乗則変換を含めた細かい調整が可能
 % 
 % IMADJUST is a sophisticated intensity adjustment function that allows fine 
 % tuning of images including uint8-type ones, such as power law conversion.
@@ -90,8 +101,10 @@ gamma = 0.5
 U = im2uint8(I);
 % Power law conversion with IMADUST function
 M = imadjust(U,[],[],gamma);
+figure(12)
 imshow(M)
 title('Power law conversion with IMADJUST')
+figure(13)
 imhist(M)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

@@ -15,7 +15,7 @@
 % Shogo MURAMATSU
 % 
 % Verified: MATLAB R2020a
-% 処理画像の準備
+% サンプル画像の準備
 % (Preparation of sample image)
 % 
 % 本サンプルで利用する画像データを収めたdata フォルダにパスをとおす。
@@ -26,6 +26,7 @@ addpath('./data')
 close
 % Reading original image
 X = im2double(imread('firenzeRgb.jpg'));
+figure(1)
 imshow(X)
 title('Original')
 % ネガ変換
@@ -40,6 +41,7 @@ title('Original')
 Tn = @(x) 1.0-x;
 % Negative conversion of image I
 Y = Tn(X);
+figure(2)
 imshow(Y)
 title('Negative')
 % RGB空間でべき乗則変換
@@ -53,6 +55,7 @@ title('Negative')
 gamma = 0.5
 % Power law conversion in RGB space
 Y = imadjust(X,[],[],gamma);
+figure(3)
 imshow(Y)
 title('Power law conversion in RGB space')
 % HSV空間でV成分のみべき乗則変換
@@ -72,6 +75,7 @@ U = rgb2hsv(X);
 V = imadjust(V,[],[],gamma);
 U = cat(3,H,S,V);
 Y = hsv2rgb(U);
+figure(4)
 imshow(Y)
 title('Power law conversion for V component in HSV space')
 % RGB空間でヒストグラム均等化
@@ -87,6 +91,7 @@ R = histeq(R);
 G = histeq(G);
 B = histeq(B);
 Y = cat(3,R,G,B);
+figure(5)
 imshow(Y)
 title('Histogram equalization in RGB space')
 % HSV空間でV成分のみヒストグラム均等化
@@ -104,6 +109,7 @@ U = rgb2hsv(X);
 V = histeq(V);
 U = cat(3,H,S,V);
 Y = hsv2rgb(U);
+figure(6)
 imshow(Y)
 title('Histogram equalization for V component in HSI space')
 %% 

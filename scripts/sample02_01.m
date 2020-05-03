@@ -47,7 +47,9 @@ whos pictureRgb pictureGray
 % * RGBカラー画像(RGB color image)
 % * グレースケール画像(Grayscale image)
 
+figure(1)
 imshow(pictureRgb)
+figure(2)
 imshow(pictureGray)
 % RGB2GRAY関数
 % (RGB2GRAY funciton)
@@ -65,7 +67,9 @@ whos pictureRgbDouble pictureGrayDouble
 % * RGBカラー画像(RGB color image)
 % * グレースケール画像(Grayscale image)
 
+figure(3)
 imshow(pictureRgbDouble)
+figure(4)
 imshow(pictureGrayDouble)
 % 画像ビューアアプリ
 % (Image viewer app)
