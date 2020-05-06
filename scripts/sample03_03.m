@@ -71,8 +71,8 @@ axis ij
 % $$\angle\nabla x=\tan^{-1}\frac{\left(\frac{\partial x}{\partial p_\mathrm{v}}\right)}{\left(\frac{\partial 
 % x}{\partial p_\mathrm{h}}\right)}$$
 
-% Gradient filter
-[Gm,Gd] = imgradient(I,ftype);
+% Magnitude and direction of the gradient image
+[Gm,Gd] = imgradient(Gh,Gv);
 
 % Show result of magnitude
 figure(4)
