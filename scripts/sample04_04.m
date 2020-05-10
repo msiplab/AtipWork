@@ -155,25 +155,23 @@ mse(v,recv)
 % 
 % 
 % 
-% 【Example】(In case of ) $\mathbf{Q}=\left(\begin{array}{cc} 3 & 0 \\ 0 & 4\end{array}\right)$, 
+% 【Example】(In case of ) $\mathbf{Q}=\left(\begin{array}{cc} 2 & 0 \\ 0 & 3\end{array}\right)$, 
 % $\mathbf{k}=\left(\begin{array}{cc}k_1 & k_2\end{array}\right)^T=\left(\begin{array}{cc} 
 % 1 & 2 \end{array}\right)^T$ の場合：
 % 
-% $$\left(\begin{array}{cccc}v[0,0] & v[0,1] & v[0,2] & v[0,3] \\v[1,0] & v[1,1] 
-% & v[1,2] & v[1,3] \\v[2,0] & v[2,1] & v[2,2] & v[2,3]  \end{array}\right)\\=T\left(\begin{array}{cccc}u[0,0] 
-% & u[0,1] & u[0,2] & u[0,3] \\u[1,0] & u[1,1] & u[1,2] & u[1,3] \\u[2,0] & u[2,1] 
-% & u[2,2] & u[2,3]  \end{array}\right)=\left(\begin{array}{cccc}u[2,2] & u[2,3] 
-% & u[2,0] & u[2,1] \\u[0,2] & u[0,3] & u[0,0] & u[0,1] \\u[1,2] & u[1,3] & u[1,0] 
-% & u[1,1]  \end{array}\right)$$
+% $$\left(\begin{array}{ccc}v[0,0] & v[0,1] & v[0,2] \\v[1,0] & v[1,1] & v[1,2]  
+% \end{array}\right)\\=T\left(\begin{array}{ccc}u[0,0] & u[0,1] & u[0,2] \\u[1,0] 
+% & u[1,1] & u[1,2]   \end{array}\right)=\left(\begin{array}{ccc}u[1,1]  & u[1,2] 
+% & u[1,0] \\u[0,1]  & u[0,2] & u[0,0]  \end{array}\right)$$
 % 
 % 
 % 信号の生成
 % (Signal generation)
 
 % Generating an input array u[n1,n2] of finite support region
-Q1 = 3; % # of rows
-Q2 = 4; % # of columns
-ugen = "reshape((0:Q1*Q2-1),[Q1 Q2])";
+N1 = 2; % # of rows
+N2 = 3; % # of columns
+ugen = "reshape((0:N1*N2-1),[N1 N2])";
 u = eval(ugen)
 % シフト量の設定
 % (Setting the shift amount)
@@ -196,10 +194,10 @@ v = mapT(u)
 % 
 % 
 % 
-% $\mathbf{Q}=\left(\begin{array}{cc} 3 & 0 \\ 0 & 4\end{array}\right)$, $\mathbf{k}=\left(\begin{array}{cc}k_1 
+% $\mathbf{Q}=\left(\begin{array}{cc} 2 & 0 \\ 0 & 3\end{array}\right)$, $\mathbf{k}=\left(\begin{array}{cc}k_1 
 % & k_2\end{array}\right)^T=\left(\begin{array}{cc} 1 & 2 \end{array}\right)^T$ 
-% の循環シフトは (The circular shift of $\mathbf{Q}=\left(\begin{array}{cc} 3 & 0 \\ 
-% 0 & 4\end{array}\right)$, $\mathbf{k}=\left(\begin{array}{cc}k_1 & k_2\end{array}\right)^T=\left(\begin{array}{cc} 
+% の循環シフトは (The circular shift of $\mathbf{Q}=\left(\begin{array}{cc} 2 & 0 \\ 
+% 0 & 3\end{array}\right)$, $\mathbf{k}=\left(\begin{array}{cc}k_1 & k_2\end{array}\right)^T=\left(\begin{array}{cc} 
 % 1 & 2 \end{array}\right)^T$  can be represented as a matrix as)
 % 
 % $$\mathbf{v}=\mathbf{Tu},$$
@@ -209,20 +207,13 @@ v = mapT(u)
 % 
 % 
 % $$\mathbf{v}=\mathrm{vec}\left(\{v[\mathbf{n}]\}_\mathbf{n}\right)=\left(\begin{array}{c}v[0,0]  
-% \\v[1,0] \\v[2,0] \\v[0,1] \\v[1,1] \\v[2,1] \\v[0,2] \\v[1,2] \\v[2,2] \\v[0,3] 
-% \\v[1,3] \\v[2,3]\end{array}\right), \mathbf{u}=\mathrm{vec}\left(\{u[\mathbf{n}]\}_\mathbf{n}\right)=\left(\begin{array}{c}u[0,0]  
-% \\u[1,0] \\u[2,0] \\u[0,1] \\u[1,1] \\u[2,1] \\u[0,2] \\u[1,2] \\u[2,2] \\u[0,3] 
-% \\u[1,3] \\u[2,3]\end{array}\right),$$
+% \\v[1,0] \\v[0,1] \\v[1,1] \\v[0,2] \\v[1,2] \end{array}\right), \mathbf{u}=\mathrm{vec}\left(\{u[\mathbf{n}]\}_\mathbf{n}\right)=\left(\begin{array}{c}u[0,0]  
+% \\u[1,0] \\u[0,1] \\u[1,1] \\u[0,2] \\u[1,2] \end{array}\right),$$
 % 
-% $$\mathbf{T}=\left(\begin{array}{cccccccccccc} 0 & 0 & 0 & 0 & 0 & 0 & 0 & 
-% 1 & 0 & 0 & 0 & 0 \\  0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\  0 & 
-% 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\  0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 
-% & 0 & 0 & 1 & 0 \\  0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\  0 & 0 
-% & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\  0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 
-% 0 & 0 & 0 & 0 \\  0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\  1 & 0 & 
-% 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\  0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 
-% & 0 & 0 & 0 \\  0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\  0 & 0 & 0 
-% & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \end{array}\right).$$
+% $$\mathbf{T}=\left(\begin{array}{cccccc}     0  &   0 &    0  &   1 &    0 
+% &    0 \\     0  &   0 &    1 &    0 &    0 &    0 \\     0   &  0  &   0  &   
+% 0 &    0 &    1 \\     0  &   0  &   0 &    0  &   1 &    0 \\     0   &  1  
+% &   0  &   0  &   0 &    0 \\     1   &  0  &   0 &    0 &    0 &    0\end{array}\right).$$
 % 
 % 
 % 循環シフトの行列生成
@@ -259,7 +250,7 @@ vecu = u(:);
 vecv = T*vecu;
 
 % Reshaping the result into the original
-recv = reshape(vecv,[Q1 Q2])
+recv = reshape(vecv,[N1 N2])
 % 行列演算による単変量循環シフトの評価
 % (Evaluation of univariate circular shift by matrix operation)
 
