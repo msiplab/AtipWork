@@ -1,3 +1,4 @@
+function main_mlx2m(varargin)
 %% ライブスクリプトからMATLABスクリプトへの変換
 %
 % Copyright (c) Shogo MURAMATSU, 2020
@@ -8,7 +9,11 @@ dstDir = './scripts/';
 isVerbose = true;
 
 %% ファイルの取得
-list = ls([srcDir '*.mlx']);
+if nargin < 1
+    list = ls([srcDir '*.mlx']);
+else
+    list = ls(sprintf('%s/%s*.mlx',srcDir,varargin{1}));    
+end
 
 %% ファイルの変換
 for idx = 1:size(list,1)
