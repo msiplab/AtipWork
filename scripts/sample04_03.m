@@ -26,6 +26,7 @@ ftype = "average";
 h = rot90(fspecial(ftype),2)
 figure(1)
 stem3(h,'filled')
+axis ij
 title(['Impulse response of ' char(ftype) ' filter'])
 % 可分離性の確認
 % (Checking the separability)
@@ -44,9 +45,11 @@ if isSeparable
     disp(hRow)
     figure(2)
     stem3(hCol,'filled')
+    axis ij
     title('hcol')
     figure(3)
     stem3(hRow,'filled')
+    axis ij
     title('hrow')
 else
     disp('h[n] is not separable.')
@@ -102,6 +105,7 @@ if isSeparable
     disp(['MSE: ' num2str(mse(h,hsep))] )
     figure(4)
     stem3(hsep,'filled')
+    axis ij
     title(['As a separate system (MSE: ' mse(h,hsep) ')'])
 end
 % クロネッカーテンソル積による2変量インパルス応答

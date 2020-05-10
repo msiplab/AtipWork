@@ -184,6 +184,7 @@ u = eval(ugen)
 h = [1 -1 ; 1 -1]
 figure(1)
 stem3(h,'filled')
+axis ij
 title('Impulse response')
 % 写像の定義
 % (Definition of a map)
