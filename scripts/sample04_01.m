@@ -133,8 +133,9 @@ ylabel('\Sigma_k y_k[n]')
 % and $|\Omega|$ means the cardinality.)
 
 % Evaluation of uu
-mse(u,uu)
+mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
+mymse(u,uu)
 % Evaluation of vv
-mse(v,vv)
+mymse(v,vv)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

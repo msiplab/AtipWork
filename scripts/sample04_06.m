@@ -64,7 +64,7 @@ mapT = @(x) cconv(x,h,Q);
 % 写像の結果
 % (Result of mapping)
 
-% Mapping with the circular shift T(.)
+% Mapping with the circular convolution T(.)
 v = mapT(u)
 % 単変量循環畳み込みの行列表現
 % (Matrix representation of the univariate circular convolution)
@@ -140,7 +140,8 @@ recv = reshape(vecv,[1 Q])
 % (Evaluation of univariate circular convolution by matrix operation)
 
 % Comparizon between mapping and matrix operation
-mse(v,recv)
+mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
+mymse(v,recv)
 % 2変量循環畳み込み
 % (Bivariate circular convolution)
 % 
@@ -272,6 +273,6 @@ recv = reshape(vecv,[N1 N2])
 % (Evaluation of bivariate circular convolution by matrix operation)
 
 % Comparizon between mapping and matrix operation
-mse(v,recv)
+mymse(v,recv)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

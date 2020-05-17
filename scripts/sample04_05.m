@@ -152,7 +152,8 @@ recv = reshape(vecv,[1 (length(u)+length(h)-1)])
 % (Evaluation of univariate convolution by matrix operation)
 
 % Comparizon between mapping and matrix operation
-mse(v,recv)
+mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
+mymse(v,recv)
 % 2変量畳み込み
 % (Bivariate convolution)
 % 
@@ -292,6 +293,6 @@ recv = reshape(vecv,(size(u)+size(h)-1))
 % (Evaluation of univariate convolution by matrix operation)
 
 % Comparizon between mapping and matrix operation
-mse(v,recv)
+mymse(v,recv)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

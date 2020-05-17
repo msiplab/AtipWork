@@ -111,7 +111,8 @@ ylabel('v[n]')
 % and $|\Omega|$ means the cardinality.)
 
 % Comparison between x and v
-mse(x,v)
+mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
+mymse(x,v)
 % 2変量フィルタリングと畳み込み
 % (Bivariate filtering and convolution)
 % 
@@ -198,7 +199,7 @@ title('(b) Prewitt w/o any option ')
 K = imfilter(I,f,'corr');
 subplot(2,2,3)
 imshow(K+.5)
-title(sprintf('(c) Prewitt w "corr" (MSE w (b): %4.2f)',mse(J,K)))
+title(sprintf('(c) Prewitt w "corr" (MSE w (b): %4.2f)',mymse(J,K)))
 %% 
 % フィルタカーネル$\{f[\mathbf{n}]\}_{\mathbf{n}}$を各軸反転 (Flip the filter kernel $\{f[\mathbf{n}]\}_{\mathbf{n}}$ 
 % on each axis.)
@@ -214,7 +215,7 @@ h = rot90(f,2)
 L = imfilter(I,h,'conv');
 subplot(2,2,4)
 imshow(L+.5)
-title(sprintf('(d) Prewitt w "conv" (MSE w (b): %4.2f)',mse(J,L)))
+title(sprintf('(d) Prewitt w "conv" (MSE w (b): %4.2f)',mymse(J,L)))
 %% 
 % (b),(c),(d)の結果はすべて同じ．(The results in (b), (c), and (d) are all the same.)
 %% 

@@ -129,7 +129,8 @@ recv = reshape(vecv,[1 Q])
 % (Evaluation of univariate circular shift by matrix operation)
 
 % Comparizon between mapping and matrix operation
-mse(v,recv)
+mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
+mymse(v,recv)
 % 2変量循環シフト
 % (Bivariate circular shift)
 % 
@@ -255,6 +256,6 @@ recv = reshape(vecv,[N1 N2])
 % (Evaluation of univariate circular shift by matrix operation)
 
 % Comparizon between mapping and matrix operation
-mse(v,recv)
+mymse(v,recv)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

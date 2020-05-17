@@ -96,17 +96,18 @@ end
 % (Confirmation of impulse response as a bivariate linear shift-invariant system)
 
 % Bivariate impulse signal
+mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
 if isSeparable
     D = 1;
     hsep = imfilter(imfilter(D,...
         hCol,'conv','full'),...
         hRow,'conv','full')
     % Evaluation
-    disp(['MSE: ' num2str(mse(h,hsep))] )
+    disp(['MSE: ' num2str(mymse(h,hsep))] )
     figure(4)
     stem3(hsep,'filled')
     axis ij
-    title(['As a separate system (MSE: ' mse(h,hsep) ')'])
+    title(['As a separate system (MSE: ' mymse(h,hsep) ')'])
 end
 % クロネッカーテンソル積による2変量インパルス応答
 % (Bivariate Impulse Response by Kronecker Tensor Product)
@@ -124,7 +125,7 @@ if isSeparable
     D = 1;
     hkron = kron(hCol,hRow)
     % Evaluation
-    disp(['MSE: ' num2str(mse(h,hkron))] )
+    disp(['MSE: ' num2str(mymse(h,hkron))] )
 end
 % 分離処理による画像フィルタリング
 % (Image filtering by separate processing)
@@ -167,7 +168,7 @@ if isSeparable
     L = imabsdiff(J,K);
     subplot(2,2,2)
     imshow(L)
-    title(['(b) Abs. Diff. (MSE: ' num2str(mse(K,J)) ')'])
+    title(['(b) Abs. Diff. (MSE: ' num2str(mymse(K,J)) ')'])
 else
     subplot(2,2,2)
     imshow(checker_board(2,8))
