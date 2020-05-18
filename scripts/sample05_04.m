@@ -57,8 +57,8 @@ title('Original')
 % 
 % $$\mathcal{N}(\mathbf{P})\colon=\{\mathbf{Px}\in\mathbb{Z}^D|\ \mathbf{x}\in[0,1)^D\}$$
 % 
-% であり，$\Omega\subseteq\mathcal{N}(\mathbf{Q})$ を仮定する．( and $\Omega\subseteq\mathcal{N}(\mathbf{Q})$ 
-% is assumed.)
+% である．ここでは，$\Omega\subseteq\mathcal{N}(\mathbf{Q})$ を仮定する．( Here, let us assume 
+% $\Omega\subseteq\mathcal{N}(\mathbf{Q})$.)
 
 % Setting the number of frequency sample points in [0,2π)
 nPoints1 = 256; % N_1
@@ -134,8 +134,8 @@ colorbar(ax,'Ticks',[ -pi -pi/2 0 pi/2 pi],'TickLabels', { '-\pi', '-\pi/2', '0'
 % 
 % IDFT(IFFT)による再構成 (Reconstruction by IDFT (IFFT))
 % 
-% $$u[\mathbf{n}] = \frac{1}{\left|\det(\mathbf{Q})\right|}\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})}U[\mathbf{k}]e^{-\j2\pi\mathbf{k}\mathbf{Q}^{-1}\mathbf{n}},\ 
-% \mathbf{n}\in\Omega\subseteq\mathcal{N}(\mathbf{Q}) $$
+% $$u[\mathbf{n}] = \frac{1}{\left|\det(\mathbf{Q})\right|}\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})}U[\mathbf{k}]e^{\j2\pi\mathbf{k}\mathbf{Q}^{-1}\mathbf{n}},\ 
+% \mathbf{n}\in\Omega\subseteq\mathcal{N}(\mathbf{Q})$$
 
 % Reconstruction from the spectrum
 r = ifft2(U,nPoints1,nPoints2);
@@ -155,8 +155,8 @@ title(['Reconstruction MSE: ' num2str(mymse(u,urec))])
 % 
 % IDFT(IFFT)による計算 (Calculation by IDFT (IFFT))
 % 
-% $$u_\mathrm{mag}[\mathbf{n}] = \frac{1}{\left|\det(\mathbf{Q})\right|}\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})}\left|U[\mathbf{k}]\right|e^{-\j2\pi\mathbf{k}\mathbf{Q}^{-1}\mathbf{n}},\ 
-% \mathbf{n}\in\Omega\subseteq\mathcal{N}(\mathbf{Q}) $$
+% $$u_\mathrm{mag}[\mathbf{n}] = \frac{1}{\left|\det(\mathbf{Q})\right|}\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})}\left|U[\mathbf{k}]\right|e^{\j2\pi\mathbf{k}\mathbf{Q}^{-1}\mathbf{n}},\ 
+% \mathbf{n}\in\Omega\subseteq\mathcal{N}(\mathbf{Q})$$
 
 % Reconstruction from the spectrum
 rmag = ifft2(ifftshift(Umag),nPoints1,nPoints2);
