@@ -129,7 +129,7 @@ colorbar(ax,'Ticks',[ -pi -pi/2 0 pi/2 pi],'TickLabels', { '-\pi', '-\pi/2', '0'
 % スペクトル$U\left(e^{\j\mathbf{\omega}^T}\right)$からの画像再構成 
 % (Reconstruction from the spectrum $U\left(e^{\j\mathbf{\omega}^T}\right)$)
 % 
-% $$u[\mathbf{n}]=\frac{1}{(2\pi)^2}\int_{\mathbf{\omega}\in[0,2\pi)^2}U\left(e^{\j\mathbf{\omega}^T}\right)d\mathbf{\omega},\ 
+% $$u[\mathbf{n}]=\frac{1}{(2\pi)^2}\int_{\mathbf{\omega}\in[0,2\pi)^2}U\left(e^{\j\mathbf{\omega}^T}\right)e^{\j\mathbf{\omega}^T\mathbf{n}}d\mathbf{\omega},\ 
 % \mathbf{n}\in\Omega\subset\mathbb{Z}^2 $$
 % 
 % IDFT(IFFT)による再構成 (Reconstruction by IDFT (IFFT))
@@ -150,7 +150,7 @@ title(['Reconstruction MSE: ' num2str(mymse(u,urec))])
 % 振幅スペクトル$\left|U\left(e^{\j\mathbf{\omega}^T}\right)\right|$からの画像再構成 
 % (Reconstruction from the spectrum$\left|U\left(e^{\j\mathbf{\omega}^T}\right)\right|$)
 % 
-% $$u_\mathrm{mag}[\mathbf{n}]=\frac{1}{(2\pi)^2}\int_{\mathbf{\omega}\in[0,2\pi)^2}\left|U\left(e^{\j\mathbf{\omega}^T}\right)\right|d\mathbf{\omega},\ 
+% $$u_\mathrm{mag}[\mathbf{n}]=\frac{1}{(2\pi)^2}\int_{\mathbf{\omega}\in[0,2\pi)^2}\left|U\left(e^{\j\mathbf{\omega}^T}\right)\right|e^{\j\mathbf{\omega}^T\mathbf{n}}d\mathbf{\omega},\ 
 % \mathbf{n}\in\Omega\subset\mathbb{Z}^2 $$
 % 
 % IDFT(IFFT)による計算 (Calculation by IDFT (IFFT))
@@ -170,13 +170,13 @@ title('Magnitude only')
 % (Reconstruction from the spectrum $\angle U\left(e^{\j\mathbf{\omega}^T}\right)$)
 % 
 % $$u_\mathrm{phs}[\mathbf{n}]=\frac{1}{(2\pi)^2}\int_{\mathbf{\omega}\in[0,2\pi)^2}e^{\j\angle 
-% U\left(e^{\j\mathbf{\omega}^T}\right)}e^{-\j\mathbf{\omega}^T\mathbf{n}}d\mathbf{\omega},\ 
+% U\left(e^{\j\mathbf{\omega}^T}\right)}e^{\j\mathbf{\omega}^T\mathbf{n}}d\mathbf{\omega},\ 
 % \mathbf{n}\in\Omega\subset\mathbb{Z}^2 $$
 % 
 % IDFT(IFFT)による計算 (Calculation by IDFT (IFFT))
 % 
 % $$u_\mathrm{phs}[\mathbf{n}] = \frac{1}{\left|\det(\mathbf{Q})\right|}\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})}e^{\j\angle 
-% U[\mathbf{k}]}e^{-\j2\pi\mathbf{k}\mathbf{Q}^{-1}\mathbf{n}},\ \mathbf{n}\in\Omega\subseteq\mathcal{N}(\mathbf{Q}) 
+% U[\mathbf{k}]}e^{\j2\pi\mathbf{k}\mathbf{Q}^{-1}\mathbf{n}},\ \mathbf{n}\in\Omega\subseteq\mathcal{N}(\mathbf{Q}) 
 % $$
 
 % Reconstruction from the spectrum
