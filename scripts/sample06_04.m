@@ -62,7 +62,7 @@ disp(['|<v,Au> - <A''v,u>| = ' num2str(err)])
 matB = ctranspose(matA);
 
 % Absolute difference
-err = norm(matA' - matB,2);
+err = norm(matA' - matB,'fro');
 disp(['||B - A''||F = ' num2str(err)])
 % 二変量間引き処理の随伴作用素
 % (Adjoint operator of bivariate downsampling)
