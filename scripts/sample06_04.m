@@ -131,13 +131,13 @@ innprodA = dot(arrayY(:),arrayV(:));
 % Adjoint operation of downsampling (r=T'v)
 arrayR = adjOp(arrayY)
 %% 
-% $$\langle \mathbf{r},\mathbf{v}\rangle=\langle\mathbf{T}^H\mathbf{v},\mathbf{u}\rangle$$
+% $$\langle \mathbf{r},\mathbf{u}\rangle=\langle\mathbf{T}^H\mathbf{y},\mathbf{u}\rangle$$
 
 % Inner product <r,u>=<T'v,u>
 innprodB = dot(arrayR(:),arrayU(:));
 
 % Verify the preservation of the inner product
 err = abs(innprodA - innprodB);
-disp(['|<y,Tu> - <T''v,u>| = ' num2str(err)])
+disp(['|<y,Tu> - <T''y,u>| = ' num2str(err)])
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

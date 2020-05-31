@@ -33,6 +33,9 @@ deltat = 1
 % \Delta_\mathrm{t}^{-1}t}$$
 
 % Sinc function
+if ~license('test','signal_toolbox')
+    sinc = @(x) (x==0) + (x~=0).*(sin(pi*x)./(pi*x)); 
+end
 figure(1)
 fplot(@(x) sinc(x/deltat),[-15 15])
 xlabel('Time t')
