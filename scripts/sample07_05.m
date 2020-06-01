@@ -25,7 +25,7 @@ close all
 % * $M$: 補間率 (upsampling factor) 
 
 % Upsampling factor
-uFactor = 5;
+uFactor = 2;
 % 間引き率の設定
 % (Setting of downsampling factor)
 %% 

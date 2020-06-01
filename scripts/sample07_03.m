@@ -37,22 +37,28 @@ uFactor = 2;
 % $$f[n]=\left\{\begin{array}{ll} \frac{1}{M}(M-|n|) & -M+1\leq n\leq M-1 \\ 
 % 0 & \mathrm{otherwise} \end{array}\right.$$
 % 
+% オフセットを考慮した場合 (When considering the offset)
+% 
+% $$f[n]=\left\{\begin{array}{ll} \frac{1}{M}\left(M-\left|n-\frac{1}{2}\right|\right) 
+% & -M+1\leq n\leq M \\ 0 & \mathrm{otherwise} \end{array}\right.$$
+% 
 % ただし，非因果性に注意．(Note that the incausal property.)
 %% 
 % * $\{f[n]\}_n$: インパルス応答 (Impulse response)
 
 % Filter seletion
 ftype = "Nearest neighbor";
-offset = false; % Set TRUE for making the bilinear interpolation similar to IMRESIZE
+offset = false; % Set TRUE for even M, FALSE for odd M to make the handmade bilinear interpolation similar to IMRESIZE
 
 % Impulse response of interpolation filter
 if strcmp(ftype,'Nearest neighbor')
     f = ones(1,uFactor);
     offset = false;
 elseif strcmp(ftype, 'Bilinear interpolation')
-    f = 1-abs(-(uFactor-1):(uFactor-1))/uFactor;
-    if offset && mod(uFactor,2)==0
-        f = conv(f,[1 1]/2);
+    if ~offset
+         f = 1-abs((-uFactor+1):(uFactor-1))/uFactor;
+    else
+        f = 1-abs(((-uFactor+1):uFactor)-0.5)/uFactor;
     end
 else
     error('Invalid ftype')
@@ -90,11 +96,18 @@ hold off
 % \right)& \mathbf{n}\in \{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1)^2\} 
 % \\ 0 & \mathrm{otherwise} \end{array}\right.$$
 % 
+% オフセットを考慮した場合
+% 
+% $$f[\mathbf{n}]=\left\{\begin{array}{ll} \mathrm{prod}\left(\mathbf{1}-\mathrm{abs}\left(\mathbf{M}^{-1}\mathbf{n}-\frac{1}{2}\mathbf{1}\right) 
+% \right)& \mathbf{n}\in \{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1]^2\} 
+% \\ 0 & \mathrm{otherwise} \end{array}\right.$$
+% 
 % ただし， $\mathrm{prod}(\cdot)$ は要素の積．非因果性に注意．(where $\mathrm{prod}(\cdot)$ denotes 
 % the product of the array elements. Note that the incausal property.)
 % 
-% Note that if $\mathbf{M}=\mathrm{diag}(M,M)\Rightarrow \mathrm{prod}(\mathbf{1}-\mathrm{abs}(\mathbf{M}^{-1}\mathbf{n}))=\frac{1}{M^2}(M-|n_1|)(M-|n_2|)$ 
-% and $\{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1)^2\}=\{-M+1,M-1\}^2$.        
+% Note that if $\mathbf{M}=\mathrm{diag}(M,M)\Rightarrow \mathrm{prod}(\mathbf{1}-\mathrm{abs}(\mathbf{M}^{-1}\mathbf{n}-\alpha\mathbf{1}))=\frac{1}{M^2}(M-|n_1-\alpha|)(M-|n_2-\alpha|)$ 
+% , $\{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1)^2\}=\{-M+1,-M+2,\cdots,M-1\}^2$ 
+% and $\{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1]^2\}=\{-M+1,-M+2,\cdots,M\}^2$.
 
 % Reading an image
 u = imread('cameraman.tif');
@@ -104,11 +117,12 @@ if strcmp(ftype,'Nearest neighbor')
     [n1,n2] = ndgrid(0:uFactor-1);
     f = ones(uFactor,uFactor);
 elseif strcmp(ftype,'Bilinear interpolation')
-    [n1,n2] = ndgrid(-uFactor+1:uFactor-1);
-    f = (1-abs(n1)/uFactor).*(1-abs(n2)/uFactor);
-    if offset && mod(uFactor,2)==0
-        f = conv2(f,ones(2)/4);
+    if ~offset
+        [n1,n2] = ndgrid(-uFactor+1:uFactor-1);
+        f = (1-abs(n1)/uFactor).*(1-abs(n2)/uFactor);
+    else
         [n1,n2] = ndgrid(-uFactor+1:uFactor);
+        f = (1-abs(n1-0.5)/uFactor).*(1-abs(n2-0.5)/uFactor);
     end
 else
     error('Invalid ftype')
