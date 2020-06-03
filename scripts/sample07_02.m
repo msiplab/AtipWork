@@ -57,7 +57,7 @@ hold off
 % 画像への適用
 % (Application to images)
 % 
-% $$v[\mathbf{m}]=\sum_{\mathbf{k}\in\mathbb{Z}^2}h[\mathbf{k}]u[\mathbf{Mm}-\mathbf{k}]=\frac{1}{|\det\mathbf{M}|}\sum_{\mathbf{k}\in\mathcal{N}(\mathbf{M})}u[\mathbf{Mm}-\mathbf{k}]$$
+% $$v[\mathbf{m}]=\sum_{\mathbf{k}\in\mathbb{Z}^2}h[\mathbf{k}]u[M\mathbf{m}-\mathbf{k}]=\frac{1}{|\det\mathbf{M}|}\sum_{\mathbf{k}\in\mathcal{N}(\mathbf{M})}u[\mathbf{Mm}-\mathbf{k}]$$
 % 
 % $$h[\mathbf{n}]=\left\{\begin{array}{ll} \frac{1}{|\det\mathbf{M}|} & \mathbf{n}\in 
 % \mathcal{N}(\mathbf{M})\\ 0 & \mathrm{otherwise} \end{array}\right.$$
