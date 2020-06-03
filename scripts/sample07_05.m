@@ -1,6 +1,6 @@
 %% Sample 7-5
 %% 幾何学処理
-% 有理数比の解像度変換
+% 畳み込みの随伴作用素
 % 
 % 画像処理特論
 % 
@@ -8,7 +8,7 @@
 % 
 % 動作確認: MATLAB R2020a
 %% Geometric image processing
-% Resizing w/ rational factor
+% Adjoint of convolution
 % 
 % Advanced Topics in Image Processing
 % 
@@ -19,156 +19,128 @@
 % (Preparation)
 
 close all
-% 補間率の設定
-% (Setting of upsampling factor)
-%% 
-% * $M$: 補間率 (upsampling factor) 
+% インパルス応答の生成
+% (Generation of impulse response)
 
-% Upsampling factor
-uFactor = 5;
-% 間引き率の設定
-% (Setting of downsampling factor)
-%% 
-% * $M$: 間引き率 (downsampling factor) 
-
-% Downsampling factor
-dFactor = 3;
-% フィルタの設定
-% (Setting of filter)
-% 
-% 平均フィルタのインパルス応答 (Impulse response of averaging filter)
-% 
-% $$h[n]=\left\{\begin{array}{ll} \frac{1}{M_\mathrm{d}} & 0\leq n\leq M_\mathrm{d}-1 
-% \\ 0 & \mathrm{otherwise} \end{array}\right.$$
-%% 
-% * $\{h[n]\}_n$: インパルス応答 (Impulse response)
-
-% Impulse response of averaging filter
-h = ones(1,dFactor)/dFactor;
-%% 
-% 一次補間フィルタのインパルス応答 (Impulse response of linear interpolation filter)
-% 
-% $$f[n]=\left\{\begin{array}{ll} \frac{1}{M_\mathrm{u}}(M_\mathrm{u}-|n|) & 
-% -M_\mathrm{u}+1\leq n\leq M_\mathrm{u}-1 \\ 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% ただし，非因果性に注意．(Note that the incausal property.)
-%% 
-% * $\{f[n]\}_n$: インパルス応答 (Impulse response)
-
-% Impulse response of interpolation filter
-f = 1-abs(-(uFactor-1):(uFactor-1))/uFactor;
-%% 
-% 縦続フィルタのインパルス応答 (Impulse response of the cascade filter)
-% 
-% $$g[n]=h[n]\ast f[n]$$
-
-% Impulse response of the combination
-g = conv(h,f);
-%% フィルタ特性の表示
-% (Display of filter characteristics)
-
-% Impulse response
+ftype = "prewitt";
+h = rot90(fspecial(ftype),2)
 figure(1)
-impz(g)
-ax = gca;
-ax.XLim = [-1 length(g)];
-ax.YLim = [-0.2 1];
+stem3(h,'filled')
+axis ij
+title('Impulse response of h[n]')
+% 二変量循環畳み込みの行列表現
+% (Matrix representation of bivariate circular convolution)
+% 
+% 周期 $\mathbf{Q}$ の循環畳み込み演算 (Circular convolution with period $\mathbf{Q}$)
+% 
+% $$\{v[\mathbf{n}]\}_\mathbf{n}=\{h[\mathbf{n}]\}_\mathbf{n} \bigcirc  \{u[\mathbf{n}]\}_\mathbf{n} 
+% = \sum_{\mathbf{k}\in\Omega\subset\mathbb{Z}^2}h[\mathbf{k}]\{u[(\!(\mathbf{n}-\mathbf{k})\!)_\mathbf{Q}]\}_\mathbf{n}$$
 
-% Frequency response
+% Input array size
+N1 =6;
+N2 =4;
+
+% Find the matrix representation of the bivariate downsampling
+N  = N1*N2;
+T = [];
+for idx = 1:N
+    % Generating a standard basis vector
+    e = zeros(N1,N2);
+    e(idx) = 1;
+    % Response to the standard basis vector
+    t = imfilter(e,h,'conv','circ'); 
+    T(:,idx) = t(:);
+end
+%% 
+% 行列表現 (Matrix represntation)
+%% 
+% * $\mathbf{T}$
+
+% Matrix representation of the bivariate downsampling
+T
+% 二変量循環畳み込みの随伴作用素
+% (Adjoint operator of bivariate circular convolution)
+% 
+% エルミート転置 (Herimitian transposition)
+%% 
+% * $\mathbf{T}^H$
+
+% Adjoint matrix of the bivariate circular convolution
+T'
+%% 
+% 随伴作用素(Adjoint operator)
+% 
+% $$T^\ast(\{v[\mathbf{m}]\}_\mathbf{m})=\mathrm{vec}_{\Omega_\mathrm{u}}^{-1} 
+% \circ \mathbf{T}^H\mathrm{vec}_{\Omega_\mathrm{v}}(\{v[\mathbf{m}]\}_\mathbf{m})$$
+
+% Adjoint operator T*
+adjOp = @(x) reshape(T'*x(:),[N1 N2]);
+% 内積の保存の確認
+% (Confirmation of the preservation of the inner product)
+% 
+% 入力配列の生成 (Generation of an input array) 
+%% 
+% * $\{u[\mathbf{n}]\}_\mathbf{n}$
+
+% Generation of an input array u 
+arrayU = randn(N1,N2);
+%% 
+% 循環畳み込みの出力 (Output of the circular convolution)
+%% 
+% * $\{v[\mathbf{m}]\}_\mathbf{m}=T(\{u[\mathbf{n}]\}_\mathbf{n})$
+
+% Circular convolution (v=Tu)
+arrayV = imfilter(arrayU,h,'conv','circ');
+%% 
+% 任意の出力領域配列生成(Generation of an arbitrary array in output range)
+
+% Array generation in the same domain with arrayV
+arrayY = randn(size(arrayV),'like',arrayV);
+%% 
+% 内積 (Inner product)          
+% 
+% $$\alpha=\langle \mathbf{y},\mathbf{v}\rangle=\langle\mathbf{y},\mathbf{Tu}\rangle$$
+
+% Inner product <y,v>=<y,Tu>
+innprodA = dot(arrayY(:),arrayV(:))
+%% 
+% 循環畳み込みの随伴作用素 (The adjoint operator of circular convolution)
+% 
+% $$\mathbf{r}=\mathbf{T}^H\mathbf{v}$$
+
+% Adjoint operation of circular convolution (r=T'v)
+arrayR = adjOp(arrayY)
+%% 
+% $$\beta=\langle \mathbf{r},\mathbf{u}\rangle=\langle\mathbf{T}^H\mathbf{y},\mathbf{u}\rangle$$
+
+% Inner product <r,u>=<T'v,u>
+innprodB = dot(arrayR(:),arrayU(:));
+
+% Verify the preservation of the inner product
+err = abs(innprodA - innprodB);
+disp(['|<y,Tu> - <T''y,u>| = ' num2str(err)])
+% 反転インパルス応答による循環畳み込み
+% (Circular convolution with the reversal impulse response)
+% 
+% $$\{r[\mathbf{n}]\}_\mathbf{n}=\{\bar{h}[-\mathbf{n}]\}_\mathbf{n} \bigcirc  
+% \{y[\mathbf{n}]\}_\mathbf{n} = \sum_{\mathbf{k}\in\Omega\subset\mathbb{Z}^2}\bar{h}[-\mathbf{k}]\{y[(\!(\mathbf{n}-\mathbf{k})\!)_\mathbf{Q}]\}_\mathbf{n}$$
+
+% Revaersal impulse response
+f = conj(rot90(h,2))
 figure(2)
-freqz(g)
-ax = gca;
-hold on
-line([0 min(1/uFactor,1/dFactor) min(1/uFactor,1/dFactor)],[20*log10(uFactor) 20*log10(uFactor) ax.YLim(1)],...
-    'LineStyle',':','LineWidth',2,'Color','red');
-hold off
-% 画像への適用
-% (Application to images)
-% 
-% $$v[\mathbf{m}]=\sum_{\mathbf{\ell}\in\mathbb{Z}^2}u[\mathbf{M}_\mathrm{u}\mathbf{\ell}]g[\mathbf{M_\mathrm{d}m}-\mathbf{M}_\mathrm{u}\mathbf{\ell}]$$
-% 
-% ただし，(where)
-% 
-% $$g[\mathbf{n}]=h[\mathbf{n}]\ast f[\mathbf{n}]$$
-% 
-% $$h[\mathbf{n}]=\left\{\begin{array}{ll} \frac{1}{|\det\mathbf{M}_\mathbf{d}|} 
-% & \mathbf{n}\in \mathcal{N}(\mathbf{M}_\mathbf{d})\\ 0 & \mathrm{otherwise} 
-% \end{array}\right.$$
-% 
-% $$f[\mathbf{n}]=\left\{\begin{array}{ll} \mathrm{prod}\left(\mathbf{1}-\mathrm{abs}\left(\mathbf{M}_\mathbf{u}^{-1}\mathbf{n}\right) 
-% \right)& \mathbf{n}\in \{\mathbf{M}_\mathbf{u}\mathbf{x}\in\mathbb{Z}^2\ |\ 
-% \mathbf{x}\in(-1,1)^2\} \\ 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% ただし，非因果性に注意．(Note that the incausal property.)
-%% 
-% * $\{g[\mathbf{n}]\}_\mathbf{n}$: インパルス応答 (Impulse response)
-
-% Reading an image
-u = imread('cameraman.tif');
-
-% Generating tje bilinear interpolation filter
-[n1,n2] = ndgrid(-uFactor+1:uFactor-1);
-f = (1-abs(n1)/uFactor).*(1-abs(n2)/uFactor);
-
-% Generating the average filter
-h = fspecial('average',dFactor);
-
-% Combination of h and f
-g = conv2(f,h);
-[n1,n2] = ndgrid(-uFactor-floor(dFactor/2)+1:uFactor+floor(dFactor/2)-1);
-
-% Impluse response 
-figure(3)
-stem3(n2,n1,g,'filled')
+stem3(f,'filled')
 axis ij
-ax = gca;
-ax.XLim = ax.XLim + [-1 1];
-ax.YLim = ax.YLim + [-1 1];
+title('Impulse response of f[n]')
 
-% Frequency response
-figure(4)
-freqz2(g)
-axis ij
-% Bivariate upsampling function
-upsample2 = @(x,n) ...
-    shiftdim(upsample(...
-    shiftdim(upsample(x,...
-    n(1)),1),...
-    n(2)),1);
-
-% Bivariate downsampling function
-downsample2 = @(x,n) ...
-    shiftdim(downsample(...
-    shiftdim(downsample(x,...
-    n(1)),1),...
-    n(2)),1);
-
-% Interpolation with upsampling and filtering
-x = padarray(u,[1 1],'replicate','both');
-w = imfilter(upsample2(x,uFactor*[1 1]),f,'conv');
-s = ceil(uFactor/2);
-y = w(s+1:s+uFactor*size(u,1),s+1:s+uFactor*size(u,2));
-v = downsample2(y,dFactor*[1 1]);
-% 画像表示
-% (Display image)
-% 
-% 原画像 (Original)
-
-figure(5)
-imshow(u)
-title('Original')
+% Circular convolution with impulse response f
+arrayS = imfilter(arrayY,f,'conv','circ')
 %% 
-% 結果画像 (Result)
+% 行列演算とIMFILTERの比較
 
-% Display result
-figure(6)
-imshow(v)
-title('Result')
-%%
-% Imresize
-figure(7)
-z = imresize(u,uFactor/dFactor);
-imshow(z)
-title('Imresize')
+% Definition of MSE
+mymse = @(x,y) sum((x-y).^2,'all')/numel(x);
+
+% Evaluation
+disp(['MSE between matrix operation and IMFILTER: ' num2str(mymse(arrayR,arrayS))])
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.
