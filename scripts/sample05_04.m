@@ -155,7 +155,7 @@ title(['Reconstruction MSE: ' num2str(mymse(u,urec))])
 % 
 % IDFT(IFFT)による計算 (Calculation by IDFT (IFFT))
 % 
-% $$u_\mathrm{mag}[\mathbf{n}] = \frac{1}{\left|\det(\mathbf{Q})\right|}\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})}\left|U[\mathbf{k}]\right|e^{\j2\pi\mathbf{k}\mathbf{Q}^{-1}\mathbf{n}},\ 
+% $$u_\mathrm{mag}[\mathbf{n}] = \frac{1}{\left|\det(\mathbf{Q})\right|}\sum_{\mathbf{k}\in\mathcal{N}(\mathbf{Q}^T)}\left|U[\mathbf{k}]\right|e^{\j2\pi\mathbf{k}^T\mathbf{Q}^{-1}\mathbf{n}},\ 
 % \mathbf{n}\in\Omega\subseteq\mathcal{N}(\mathbf{Q})$$
 
 % Reconstruction from the spectrum
@@ -175,8 +175,8 @@ title('Magnitude only')
 % 
 % IDFT(IFFT)による計算 (Calculation by IDFT (IFFT))
 % 
-% $$u_\mathrm{phs}[\mathbf{n}] = \frac{1}{\left|\det(\mathbf{Q})\right|}\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})}e^{\j\angle 
-% U[\mathbf{k}]}e^{\j2\pi\mathbf{k}\mathbf{Q}^{-1}\mathbf{n}},\ \mathbf{n}\in\Omega\subseteq\mathcal{N}(\mathbf{Q}) 
+% $$u_\mathrm{phs}[\mathbf{n}] = \frac{1}{\left|\det(\mathbf{Q})\right|}\sum_{\mathbf{k}\in\mathcal{N}(\mathbf{Q}^T)}e^{\j\angle 
+% U[\mathbf{k}]}e^{\j2\pi\mathbf{k}^T\mathbf{Q}^{-1}\mathbf{n}},\ \mathbf{n}\in\Omega\subseteq\mathcal{N}(\mathbf{Q}) 
 % $$
 
 % Reconstruction from the spectrum
