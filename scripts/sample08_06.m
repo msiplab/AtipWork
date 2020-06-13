@@ -104,7 +104,7 @@ end
 %% 
 % 標本分散共分散行列と相関係数 (Sample covariance matrix and correlation coefficient)
 
-Cyy = cov(double(setOfY.'))
+Syy = cov(double(setOfY.'))
 Ryy = corrcoef(double(setOfY.'))
 %% 
 % 変換後の分散共分散行列と相関係数の非対角成分が0となり、無相関となる。(The non-diagonal components of the sample 
