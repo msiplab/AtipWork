@@ -120,11 +120,11 @@ rho = 0.999;
 
 % Covariance matrix
 sigma = 1;
-Cxx = sigma^2*toeplitz(power(rho,0:nPoints-1))
+Sxx = sigma^2*toeplitz(power(rho,0:nPoints-1))
 %% 
 % カル―ネンレーべ(K-L)変換 (Karuhen Loeve transform)
 
-[B,D] = eig(Cxx);
+[B,D] = eig(Sxx);
 [~,I] = sort(diag(D));
 B = B(:,nPoints-I+1);
 %% 
