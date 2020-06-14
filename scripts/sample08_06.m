@@ -46,37 +46,37 @@ setOfX = reshape(V.', nPoints, nPixels/nPoints);
 Sxx = cov(double(setOfX.'))
 Rxx = corrcoef(double(setOfX.'))
 % カル―ネンレーべ(K-L)変換
-% (Karuhen Loeve transform)
+% (Karhunen-Loève transform)
 % 
 % 分散共分散行列の固有値分解(Eigenvalue decomposition of the variance-covariance matrix)
 %% 
-% * $\mathbf{\Sigma}_{\mathrm{xx}}=\mathbf{\Phi}^T\mathbf{\Lambda}\mathbf{\Phi}$
+% * $\mathbf{\Sigma}_{\mathrm{xx}}=\mathbf{\Phi}\mathbf{\Lambda}\mathbf{\Phi}^T$
 
-[B,D] = eig(Sxx);
+[Phi,Lambda] = eig(Sxx);
 %% 
 % 固有値のソート (Sorting the eigen valuess)
 
-[~,I] = sort(diag(D));
+[~,I] = sort(diag(Lambda));
 %% 
 % 固有ベクトルを並び換え (Reordering eigenvectors)
 
-B = B(:,nPoints-I+1);
+Phi = Phi(:,nPoints-I+1);
 %% 
 % 基底ベクトルの表示 (Display the basis vectors)
 
 figure(2)
 for idx = 1:nPoints
     subplot(ceil(nPoints/2),2,idx);
-    stem(0:nPoints-1,B(:,idx),'filled');
+    stem(0:nPoints-1,Phi(:,idx),'filled');
     ax = gca;
-    ax.YLim = 1.2*[min(B(:)) max(B(:))];
+    ax.YLim = 1.2*[min(Phi(:)) max(Phi(:))];
     xlabel('n')
 end
 %% 
 % K-L 変換 (K-L transform)
 
-Phi = B.';
-setOfY = Phi * double(setOfX);
+T = Phi.';
+setOfY = T * double(setOfX);
 %  変換前後の散布図
 % (Scatter plots before and after transform)
 
@@ -124,18 +124,18 @@ Sxx = sigma^2*toeplitz(power(rho,0:nPoints-1))
 %% 
 % カル―ネンレーべ(K-L)変換 (Karuhen Loeve transform)
 
-[B,D] = eig(Sxx);
-[~,I] = sort(diag(D));
-B = B(:,nPoints-I+1);
+[Phi,Lambda] = eig(Sxx);
+[~,I] = sort(diag(Lambda));
+Phi = Phi(:,nPoints-I+1);
 %% 
 % 基底ベクトルの表示 (Display the basis vectors)
 
 figure(5)
 for idx = 1:nPoints
     subplot(ceil(nPoints/2),2,idx);
-    stem(0:nPoints-1,B(:,idx),'filled');
+    stem(0:nPoints-1,Phi(:,idx),'filled');
     ax = gca;
-    ax.YLim = 1.2*[min(B(:)) max(B(:))];
+    ax.YLim = 1.2*[min(Phi(:)) max(Phi(:))];
     xlabel('n')
 end
 %% DCT 行列
@@ -155,8 +155,8 @@ for idx = 1:nPoints
     xlabel('n')
 end
 %% 
-% 相関係数$\rho\rightarrow 1$のAR(1)モデルに対するKLT行列は極限でDCT行列に収束する。(The KLT matrix for 
-% the AR(1) model with correlation coefficient $\rho\rightarrow 1$converges to 
-% the DCT matrix in the limit.)
+% 相関係数$\rho\rightarrow 1$のAR(1)モデルに対するKLT行列は極限でDCT行列に収束する。符号の反転は無視してよい。(The 
+% KLT matrix for the AR(1) model with correlation coefficient $\rho\rightarrow 
+% 1$converges to the DCT matrix in the limit. Flipping in signs can be ignored.)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.
