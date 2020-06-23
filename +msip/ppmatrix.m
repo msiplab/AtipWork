@@ -206,5 +206,22 @@ classdef ppmatrix < handle
             end
             value = ppmatrix(ucoef);
         end
+                        
+        function value = downsample(obj,dfactor)
+            import msip.ppmatrix
+            value = obj;
+            ucoef = obj.Coefficients;
+            coefTmp = double(value);
+            if size(obj.Coefficients,3) ~= 1
+                uLength = size(coefTmp,3);
+                uLength = dfactor*(uLength - 1) + 1;
+                usize = size(coefTmp);
+                usize(3) = uLength;
+                ucoef = ucoef(:,:,1:dfactor:end);
+            end
+            value = ppmatrix(ucoef);
+        end
+        
+        
     end
 end

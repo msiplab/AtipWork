@@ -872,5 +872,95 @@ classdef ppmatrix_testcase < matlab.unittest.TestCase
             testCase.verifyEqual(coefActual, coefExpctd);
         end
     
+        % Test for downsampling
+        function testDownsample(testCase)
+            
+            % Parameters
+            factorD = 2;
+            import msip.*            
+            
+            % Input value
+            coef(:,:,1) = [
+                1  1 ;
+                1  1 ];
+            coef(:,:,2) = [
+                2  2 ;
+                2  2 ];
+            coef(:,:,3) = [
+                3  3 ;
+                3  3 ];
+            coef(:,:,4) = [
+                4  4 ;
+                4  4 ];
+            coef(:,:,5) = -[
+                1  1 ;
+                1  1 ];
+            coef(:,:,6) = -[
+                2  2 ;
+                2  2 ];
+            coef(:,:,7) = -[
+                3  3 ;
+                3  3 ];
+            coef(:,:,8) = -[
+                4  4 ;
+                4  4 ];            
+            
+            % Expected value
+            coefExpctd(:,:,1) = [
+                1  1 ;
+                1  1 ];
+            coefExpctd(:,:,2) = [
+                3  3 ;
+                3  3 ];
+            coefExpctd(:,:,3) = -[
+                1  1 ;
+                1  1 ];
+            coefExpctd(:,:,4) = -[
+                3  3 ;
+                3  3 ];            
+            
+            % Instantiation of target class
+            import msip.*
+            testCase.ppm0 = ppmatrix(coef);
+            
+            % Actual value
+            coefActual = double(downsample(testCase.ppm0,factorD));
+            
+            % Evaluation
+            testCase.verifySize(coefActual, size(coefExpctd));
+            %diff = norm(coefExpctd(:)-coefActual(:))/numel(coefExpctd);
+            testCase.verifyEqual(coefActual,coefExpctd,'RelTol',1e-15);
+            
+        end
+
+        function testDownsampleForConstant(testCase)
+            
+            % Parameters
+            factorD = 2;
+            import msip.*            
+            
+            % Input value
+            coef = [
+                1  1 ;
+                1  1 ];
+            
+            % Expected value
+            coefExpctd = [
+                1  1 ;
+                1  1 ];
+            
+            % Instantiation of target class
+            import msip.*
+            testCase.ppm0 = ppmatrix(coef);
+            
+            % Actual value
+            coefActual = double(downsample(testCase.ppm0,factorD));
+            
+            % Evaluation
+            testCase.verifyEqual(coefActual, coefExpctd);
+        end
+        
+        
+        
     end
 end
