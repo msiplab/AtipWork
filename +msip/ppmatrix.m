@@ -222,6 +222,16 @@ classdef ppmatrix < handle
             value = ppmatrix(ucoef);
         end
         
-        
+        function value = diag(obj)
+            import msip.ppmatrix
+            value = obj;
+            ucoef = obj.Coefficients;
+            ndim = max(size(ucoef,1),size(ucoef,2));
+            vcoef = zeros(ndim,ndim,size(ucoef,3));
+            for idx=1:size(ucoef,3)
+                vcoef(:,:,idx) = diag(ucoef(:,:,idx));
+            end
+            value = ppmatrix(vcoef);
+        end
     end
 end

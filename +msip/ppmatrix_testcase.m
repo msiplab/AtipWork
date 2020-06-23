@@ -960,7 +960,53 @@ classdef ppmatrix_testcase < matlab.unittest.TestCase
             testCase.verifyEqual(coefActual, coefExpctd);
         end
         
-        
+       % Test for downsampling
+        function testDiagVertical(testCase)
+            
+            % Parameters
+            import msip.*            
+            
+            % Input value
+            coef(:,:,1) = [
+                1  ;
+                2 ];
+            coef(:,:,2) = [
+                3 ;
+                4 ];
+            coef(:,:,3) = -[
+                5 ;
+                6 ];
+            coef(:,:,4) = -[
+                7 ;
+                8 ];
+            
+            % Expected value
+            coefExpctd(:,:,1) = [
+                1  0 ;
+                0  2 ];
+            coefExpctd(:,:,2) = [
+                3  0 ;
+                0  4 ];
+            coefExpctd(:,:,3) = -[
+                5  0 ;
+                0  6 ];
+            coefExpctd(:,:,4) = -[
+                7  0 ;
+                0  8 ];            
+            
+            % Instantiation of target class
+            import msip.*
+            testCase.ppm0 = ppmatrix(coef);
+            
+            % Actual value
+            coefActual = double(diag(testCase.ppm0));
+            
+            % Evaluation
+            testCase.verifySize(coefActual, size(coefExpctd));
+            %diff = norm(coefExpctd(:)-coefActual(:))/numel(coefExpctd);
+            testCase.verifyEqual(coefActual,coefExpctd,'RelTol',1e-15);
+            
+        end
         
     end
 end
