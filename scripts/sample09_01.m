@@ -27,7 +27,8 @@ u = [ 0 3 1 3 1 5 3 0 ]; % Set to even length
 % 並列フィルタバンク実装
 % (Parallel filter bank implementation)
 % 
-% 分析フィルタバンクをデシメータで、合成フィルタバンクをインタポレータで実装
+% 分析フィルタバンクをデシメータで、合成フィルタバンクをインタポレータで実装 (Analysis filter banks are implemented 
+% with decimetors and synthesis filter banks are implemented with interpolators.)
 
 % # of channels
 nChs = 2;

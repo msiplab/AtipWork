@@ -124,7 +124,8 @@ grid on
 % ポリフェーズ行列実装
 % (Polyphase matrix implemenation)
 % 
-% フィルタバンクをポリフェースフィルタに分解して、ポリフェーズ行列として実装
+% フィルタバンクをポリフェーズフィルタに分解して、ポリフェーズ行列として実装 (Decompose the filter bank into polyphase 
+% filters and implement them in a polyphase matrix.)
 % 
 % $$\mathbf{E}(z)=\left(\begin{array}{cc}  h_0[0] &h_0[1]\\ h_1[0]& h_1[1]\end{array}\right)+\left(\begin{array}{cc}  
 % h_0[2] &h_0[3]\\ h_1[2]& h_1[3]\end{array}\right)z^{-1}=\left(\begin{array}{cc}  
@@ -184,7 +185,10 @@ disp(v)
 % ポリフェーズ行列実装（PPMATRIXオブジェクト利用）
 % (Polyphase matrix implemenation with PPMATRIX object)
 % 
-% ポリフェーズ行列演算が簡便となるよう以下のクラスを定義した。インスタンス化の際、3番目の添え字が遅延を示す3次元配列を渡す。
+% ポリフェーズ行列演算が簡便となるよう以下のクラスを定義した。インスタンス化の際、3番目の添え字が遅延を示す3次元配列を渡す。(In order to 
+% make polyphase matrix operations easier, the following classe is defined. At 
+% instantiation, plase pass a three-dimensional array where the third subscript 
+% indicates a delay.)
 %% 
 % * PPMATRIX： Polyphase Matrix Class (originally from saivdr.dictionary.utility.PolyPhaseMatrix1D 
 % in <https://github.com/msiplab/SaivDr SaivDr package> )

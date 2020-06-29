@@ -84,7 +84,7 @@ ax.YLim =[ -1 1 ];
 % Output
 subplot(3,8,[17,24])
 stem(0:length(v)-1,v,'filled')
-title('Input v[n]')
+title('Output v[n]')
 xlabel('n')
 ax = gca;
 ax.XLim =[ 0 length(v)];
