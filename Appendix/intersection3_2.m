@@ -24,9 +24,9 @@ hf1.FaceAlpha = 0.5;
 hf1.EdgeColor = 'interp';
 hf1.EdgeAlpha = 0.5;
 
-xlabel('x_1','FontSize',18)
-ylabel('x_2','FontSize',18)
-zlabel('b','FontSize',18)
+xlabel('s_0','FontSize',18)
+ylabel('s_1','FontSize',18)
+zlabel('v','FontSize',18)
 
 %%
 title(['\lambda = ' num2str(lambda)])

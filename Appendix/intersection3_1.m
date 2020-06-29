@@ -24,9 +24,9 @@ hff1 = surf(xt,yt,ztf1);
 hff1.FaceAlpha = 0.25;
 hff1.EdgeColor = 'interp';
 hff1.EdgeAlpha = 0.25;
-xlabel('x_1','FontSize',18)
-ylabel('x_2','FontSize',18)
-zlabel('b','FontSize',18)
+xlabel('s_0','FontSize',18)
+ylabel('s_1','FontSize',18)
+zlabel('v','FontSize',18)
 
 axis equal
 [az,el] = view;
@@ -98,9 +98,9 @@ hfg1.EdgeColor = 'interp';
 hfg1.EdgeAlpha = 0.25;
 %hf1.EdgeColor = 'none';
 %hf1.FaceColor = 'orange';
-xlabel('x_1','FontSize',18)
-ylabel('x_2','FontSize',18)
-zlabel('b','FontSize',18)
+xlabel('s_0','FontSize',18)
+ylabel('s_1','FontSize',18)
+zlabel('v','FontSize',18)
 
 hold on
 
