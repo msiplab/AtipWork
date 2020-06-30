@@ -24,9 +24,6 @@ close all
 
 % # of Coefs.
 K = 32;
-
-% 直交マッチング追跡(OMP)法／マッチング追跡(MP)法
-isOmp = true;
 % 入力信号の生成
 % (Generation of input sequence)
 
@@ -36,6 +33,7 @@ nSamples = 128;
 % Random process in AR(1) model
 rng('default'); 
 w = 0.1*randn(nSamples,1);
+w(floor(end/2)) = 1;
 u = filter(1,[1 -0.95],w);
 % 合成辞書
 % (Synthesis dictionary)
@@ -63,16 +61,30 @@ disp(D)
 % $\ell_1$ -ノルム最小化による非線形近似
 % (Non-linear approximation  with $\ell_1$ -norm minimization)
 % 
+% $$\hat{\mathbf{s}}=\arg\min_{\mathbf{s}\in\mathbb{R}^L}\|\mathbf{s}\|_1\ \mathrm{s.t.}\ 
+% \mathbf{v}=\mathbf{Ds}$$
+% 
 % 凸緩和法による分析処理と係数選択 (Analysis process and coefficient selection by a convex-relaxation)
 %% 
 % * 基底追跡法 (Basis Pursuit; BP)
+%% 
+% 線形計画問題に帰着させる．(Reduced to a linear programming problem)
+% 
+% $$\hat{\mathbf{x}}=\arg\min_{\mathbf{x}\in\mathbb{R}^{2L}}\mathbf{1}^T\mathbf{x}\ 
+% \mathrm{s.t.}\ \mathbf{v}=\mathbf{D}\left(\begin{array}{cc}\mathbf{I} & -\mathbf{I}\end{array}\right)\mathbf{x}\cap\mathbf{x}\in[0,\infty)^{2L}$$
+% 
+% ただし，(where)
+% 
+% $$\mathbf{s}=\mathbf{s}_{+}-\mathbf{s}_{-}\in\mathbb{R}^L$$
+% 
+% $$\mathbf{x}=\left(\begin{array}{c}\mathbf{s}_{+} \\ \mathbf{s}_{-}\end{array}\right)\in\mathbb{R}^{2L}$$
 
 % Initialization
 M  = size(D,2);
 f  = ones(2*M,1);
-lx = zeros(2*M,1);
+lu = zeros(2*M,1);
 % Linear programming
-z  = linprog(f,[],[],[D -D],x,lx,[]); 
+z  = linprog(f,[],[],[D -D],u,lx,[]); 
 s  = z(1:M) - z(M+1:end);
 %% 
 % 係数選択 (Coefficient selection)

@@ -33,6 +33,7 @@ nSamples = 128;
 % Random process in AR(1) model
 rng('default'); 
 w = 0.1*randn(nSamples,1);
+w(floor(end/2)) = 1;
 u = filter(1,[1 -0.95],w);
 % 合成辞書
 % (Synthesis dictionary)
@@ -59,6 +60,13 @@ D(:,2:2:end) = d1;
 disp(D)
 % $\ell_2$ -ノルム最小化による非線形近似
 % (Non-linear approximation  with $\ell_2$ -norm minimization)
+% 
+% $$\hat{\mathbf{s}}=\arg\min_{\mathbf{s}\in\mathbb{R}^L}\|\mathbf{s}\|_2^2\ 
+% \mathrm{s.t.}\ \mathbf{v}=\mathbf{Ds}$$
+% 
+% ムーア・ペンローズの一般逆行列で解く。
+% 
+% $$\mathbf{T}=\mathbf{D}^T(\mathbf{DD}^T)^{-1}$$
 % 
 % 分析処理 (Analysis process)
 

@@ -36,6 +36,7 @@ nSamples = 128;
 % Random process in AR(1) model
 rng('default'); 
 w = 0.1*randn(nSamples,1);
+w(floor(end/2)) = 1;
 u = filter(1,[1 -0.95],w);
 % 合成辞書
 % (Synthesis dictionary)
@@ -63,37 +64,45 @@ disp(D)
 % $\ell_0$ -擬ノルム最小化による非線形近似
 % (Non-linear approximation  with $\ell_0$ -pseudo-norm minimization)
 % 
+% $$\hat{\mathbf{s}}=\arg\min_{\mathbf{s}\in\mathbb{R}^L}\|\mathbf{s}\|_0\ \mathrm{s.t.}\ 
+% \mathbf{v}=\mathbf{Ds}$$
+% 
 % 貪欲法による分析処理と係数選択 (Analysis process and coefficient selection by a greedy algorithm)
 %% 
 % * マッチング追跡法 (Matching Pursuit; MP)
-% * 直交マッチング追跡法(Orthogonal MP; OMP)
+% * 直交マッチング追跡法(Orthogonal MP; OMP
 
 % Initializaton
 M  = size(D,2);
 e  = ones(M,1);
-z  = zeros(M,1);
+a  = zeros(M,1);
 g  = zeros(M,1);
 s  = zeros(M,1);
-v = zeros(N,1);
+v = zeros(nSamples,1);
 r  = u - v;
-sup = [];
-for k=1:K
+supp = [];
+k = 0;
+while k < K
     % Matching process
+    rr = r.'*r;
     for m = 1:M %setdiff(1:M,sup)
         d = D(:,m);
-        g(m) = d.'*r;
-        z(m) = g(m)/(d'*d);
-        e(m) = r.'*r - g(m)*z(m);
+        g(m) = d.'*r; % γm=<dm,r>
+        a(m) = g(m)/(d.'*d); % Normalize αm=γm/||dm||^2
+        e(m) = rr - g(m)*a(m); % <r-dm/||dm||^2,r> 
     end
+
     % Minimum value search (pursuit)
     [~,mmin]= min(e);
     % Update the support
-    sup = union(sup,mmin);
+    supp = union(supp,mmin);
     if isOmp % Orthogonal Matching Pursuit
-        Ds = D(:,sup);
-        s(sup)  = pinv(Ds) * u;      
+        Ds = D(:,supp);
+        s(supp)  = pinv(Ds) * u;
+        k = k + 1;
     else % Matching Pursuit
-        s(mmin) = s(mmin) + z(mmin); 
+        s(mmin) = s(mmin) + a(mmin); 
+        k = length(supp);
     end
     % Synthesis process
     v = D*s;
