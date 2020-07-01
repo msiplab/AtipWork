@@ -26,11 +26,11 @@ close all
 % steps as follows.)
 %% 
 % * 予測ステップ (Prediction step)： $\mathbf{L}_{\mathrm{p}}(z)=\left(\begin{array}{cc} 
-% 1 & 0 \\ P(z)  & 1\end{array}\right)$,$\mathbf{L}_{\mathrm{p}}^{-1}(z)=\left(\begin{array}{cc} 
-% 1 & 0 \\ -P(z)  & 1\end{array}\right)$
+% 1 & 0 \\ -P(z)  & 1\end{array}\right)$,$\mathbf{L}_{\mathrm{p}}^{-1}(z)=\left(\begin{array}{cc} 
+% 1 & 0 \\ P(z)  & 1\end{array}\right)$
 % * 更新ステップ (Update step)：$\mathbf{L}_{\mathrm{u}}(z)=\left(\begin{array}{cc} 
-% 1 & U(z) \\0& 1\end{array}\right)$,$\mathbf{L}_{\mathrm{u}}^{-1}(z)=\left(\begin{array}{cc} 
-% 1 & -U(z) \\0& 1\end{array}\right)$
+% 1 & -U(z) \\0& 1\end{array}\right)$,$\mathbf{L}_{\mathrm{u}}^{-1}(z)=\left(\begin{array}{cc} 
+% 1 & U(z) \\0& 1\end{array}\right)$
 % * 係数シフト(Coefficient delay)：$\mathbf{\Lambda}_\mathrm{b}(z)=\left(\begin{array}{cc} 
 % 1 & 0 \\0& z^{-1}\end{array}\right)$, ${\mathbf{\Lambda}}_\mathrm{t}(z)=\left(\begin{array}{cc} 
 % z^{-1} & 0 \\0 & 1\end{array}\right)$
