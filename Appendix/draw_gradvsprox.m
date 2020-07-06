@@ -7,15 +7,15 @@ lambda = 0.4;
 gamma = 0.4;
 
 %%
-f = @(s1,s2) 0.5*(v-(D(1)*s1+D(2)*s2)).^2 + lambda*0.5*(s1.^2+s2.^2);
+f = @(s0,s1) 0.5*(v-(D(1)*s0+D(2)*s1)).^2 + lambda*0.5*(s0.^2+s1.^2);
 
 figure(1)
 
+s0 = -1:.1:1;
 s1 = -1:.1:1;
-s2 = -1:.1:1;
-[S1,S2] = meshgrid(s1,s2);
-F = f(S1,S2);
-hf = surfc(s1,s2,F);
+[S0,S1] = meshgrid(s0,s1);
+F = f(S0,S1);
+hf = surfc(s0,s1,F);
 hf(1).FaceAlpha = 0.25;
 %hf(1).FaceColor = 'green';
 hf(1).EdgeAlpha = 0.25;
@@ -24,12 +24,14 @@ hf(2).LineWidth = 1;
 %hf(2).LevelStep = 0.1;
 
 
-[az,el] = view;
-view(az+90,el)
+%[az,el] = view;
+%view(az+90,el)
+ax = gca;
+gca.YDir = 'reverse';
 
 
-xlabel('x_1')
-ylabel('x_2')
+xlabel('s_1')
+ylabel('s_0')
 
 hold on
 
@@ -64,15 +66,15 @@ hold off
 
 
 %%
-f = @(s1,s2) 0.5*(v-(D(1)*s1+D(2)*s2)).^2 + lambda*(abs(s1)+abs(s2));
+f = @(s0,s1) 0.5*(v-(D(1)*s0+D(2)*s1)).^2 + lambda*(abs(s0)+abs(s1));
 
 figure(2)
 
+s0 = -1:.1:1;
 s1 = -1:.1:1;
-s2 = -1:.1:1;
-[S1,S2] = meshgrid(s1,s2);
-F = f(S1,S2);
-hf = surfc(s1,s2,F);
+[S0,S1] = meshgrid(s0,s1);
+F = f(S0,S1);
+hf = surfc(s0,s1,F);
 hf(1).FaceAlpha = 0.25;
 %hf(1).FaceColor = 'green';
 hf(1).EdgeAlpha = 0.25;
@@ -81,12 +83,13 @@ hf(2).LineWidth = 1;
 %hf(2).LevelStep = 0.1;
 
 
-[az,el] = view;
-view(az+90,el)
+%[az,el] = view;
+%view(az+90,el)
+ax = gca;
+gca.YDir = 'reverse';
 
-
-xlabel('x_1')
-ylabel('x_2')
+xlabel('s_1')
+ylabel('s_0')
 
 hold on
 
@@ -119,7 +122,7 @@ hp.LineWidth = 2;
 hp.Parent.FontSize = 18;
 hp.Parent.LineWidth = 1;
 
-zlabel('f(x)')
+zlabel('f(s)')
 
 hold off
 
