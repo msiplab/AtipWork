@@ -182,7 +182,7 @@ u = rgb2gray(im2double(imread('./data/lena.png')));
 %% 
 % * $\mathbf{v}=\mathbf{u}+\mathbf{w}$
 % * $\mathbf{u}=\mathbf{Ds}$
-% * $\mathbf{s}\sim\mathrm{Norm}\left(\mathbf{s}|\mathbf{\mu}=\mathbf{0},\sigma_s^2\mathbf{I}\right)$
+% * $\mathbf{s}\sim\mathrm{Lap}\left(\mathbf{s}|\mathbf{\mu}=\mathbf{0},b\right)$
 % * $\mathbf{w}\sim\mathrm{Norm}\left(\mathbf{w}|\mathbf{\mu}_w=\mathbf{0},\sigma_w^2\mathbf{I}\right)$
 
 v = imnoise(u,'gaussian',0,sgm^2);
