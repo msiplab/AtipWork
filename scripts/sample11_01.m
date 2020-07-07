@@ -63,7 +63,7 @@ sgmw2 = 10^-3;
 sgmw  = sqrt(sgmw2);
 
 % Gaussian distribution
-x = linspace(-4*sgmw,4*sgmw,1000);
+x = linspace(-4*sgmw,4*sgmw,1001);
 wpdf = normpdf(x,muw,sgmw);
 figure(3)
 h = plot(x,wpdf);

@@ -39,8 +39,8 @@ v = 0.5;
 f = @(s0,s1) 0.5*(v-(D(1)*s0+D(2)*s1)).^2; % Fidelity term
 r = @(s0,s1) 0.5*(s0.^2+s1.^2); % Regularizer
 % Variable settings
-s0 = linspace(-1,1,20);
-s1 = linspace(-1,1,20);
+s0 = linspace(-1,1,21);
+s1 = linspace(-1,1,21);
 [S0,S1] = ndgrid(s0,s1);
 % Evaluation
 F = f(S0,S1);

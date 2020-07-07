@@ -42,8 +42,8 @@ v = 0.5;
 f = @(s0,s1) 0.5*(v-(D(1)*s0+D(2)*s1)).^2;
 g = @(s0,s1) (abs(s0)+abs(s1));
 % Variable settins
-s0 = linspace(-1,1,20);
-s1 = linspace(-1,1,20);
+s0 = linspace(-1,1,21);
+s1 = linspace(-1,1,21);
 [S0,S1] = ndgrid(s0,s1);
 F = f(S0,S1);
 G = g(S0,S1);
