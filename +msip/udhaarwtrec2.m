@@ -1,9 +1,9 @@
-function rec = nshaarwtrec2(valueC,valueS)
-%NSHAARWTREC2 Reconstruction by Non-subsampled Haar Wavelet
+function rec = udhaarwtrec2(valueC,valueS)
+%UDHAARWTREC2 Reconstruction by Undecimated Haar Wavelet
 %  
 % Requirements: MATLAB R2011b
 %
-% Copyright (c) 2012-2015 All rights reserved, Shogo MURAMATSU
+% Copyright (c) 2012-2020 All rights reserved, Shogo MURAMATSU
 %
 % Contact address: Shogo MURAMATSU,
 %                Faculty of Engineering, Niigata University,
