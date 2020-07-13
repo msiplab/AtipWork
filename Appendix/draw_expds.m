@@ -43,7 +43,7 @@ hold on
 % Constraint
 s0 = -1:.01:1;
 s1 = -1:.01:1;
-[S0,S1] = meshgrid(s0,s1);
+[S0,S1] = ndgrid(s0,s1);
 ic = @(s1,s2) (D(1)*s1+D(2)*s2)<=0 & (D(1)*s1+D(2)*s2)>=-0.5;
 C = repmat(ic(S0,S1),[1 1 3]);
 hc = surf(s0,s1,zeros(size(C,1),size(C,2)),double(C));
