@@ -47,8 +47,8 @@ niters = 20;
 % Function setting
 f = @(x0,x1) 0.5*(v-(D(1)*x0+D(2)*x1)).^2 + lambda*0.5*(x0.^2+x1.^2);
 % Variable settings
-s0 = linspace(-1,1,20);
-s1 = linspace(-1,1,20);
+s0 = linspace(-1,1,21);
+s1 = linspace(-1,1,21);
 % Surfc plot of cost function f()
 figure(1)
 [S0,S1] = ndgrid(s0,s1);
