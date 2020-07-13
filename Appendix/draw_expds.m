@@ -7,7 +7,7 @@ lambda = 0.2;
 gamma1 = 0.4;
 beta = D*D';
 tau2 = D*D';
-gamma2 = 1/(1.05*tau2)*(1/gamma1-beta/2);
+gamma2 = 1/(1.05*tau2)*(1/gamma1-beta/2)
 
 disp((1/gamma1 - gamma2*tau2) > beta/2)
 
@@ -63,7 +63,7 @@ for idx=0:19
     t = sign(c).*max(abs(c)-gamma1*lambda,0);
     % dual
     u = y + gamma2*D*(2*t-s);
-    y = u - gamma2*max(min(u/gamma2,0),-1);
+    y = u - gamma2*min(max(u/gamma2,-0.5),0);
     
     x(1,2) = t(1); % y
     x(2,2) = t(2); % x
