@@ -13,7 +13,7 @@ figure(1)
 
 s0 = -1:.1:1;
 s1 = -1:.1:1;
-[S0,S1] = meshgrid(s0,s1);
+[S0,S1] = ndgrid(s0,s1);
 F = f(S0,S1);
 hf = surfc(s0,s1,F);
 hf(1).FaceAlpha = 0.25;
@@ -27,17 +27,17 @@ hf(2).LineWidth = 1;
 %[az,el] = view;
 %view(az+90,el)
 ax = gca;
-gca.YDir = 'reverse';
+ax.YDir = 'reverse';
 
 
-xlabel('s_1')
-ylabel('s_0')
+xlabel('x_1')
+ylabel('x_0')
 
 hold on
 
 %
 
-s = [0, -0.75].';
+s = [-0.75,0].';
 x(1,1) = s(1);
 x(2,1) = s(2);
 
@@ -60,10 +60,15 @@ hp.LineWidth = 2;
 hp.Parent.FontSize = 18;
 hp.Parent.LineWidth = 1;
 
-zlabel('f(x)')
+zlabel('g(x)')
 
 hold off
 
+set(gcf,'Color','white');
+set(gca,'Color','white');
+imwrite(frame2im(getframe(1)),'gradex.png')
+set(gcf,'Color','default');
+set(gca,'Color','default');
 
 %%
 f = @(s0,s1) 0.5*(v-(D(1)*s0+D(2)*s1)).^2 + lambda*(abs(s0)+abs(s1));
@@ -72,7 +77,7 @@ figure(2)
 
 s0 = -1:.1:1;
 s1 = -1:.1:1;
-[S0,S1] = meshgrid(s0,s1);
+[S0,S1] = ndgrid(s0,s1);
 F = f(S0,S1);
 hf = surfc(s0,s1,F);
 hf(1).FaceAlpha = 0.25;
@@ -86,17 +91,17 @@ hf(2).LineWidth = 1;
 %[az,el] = view;
 %view(az+90,el)
 ax = gca;
-gca.YDir = 'reverse';
+ax.YDir = 'reverse';
 
-xlabel('s_1')
-ylabel('s_0')
+xlabel('x_1')
+ylabel('x_0')
 
 hold on
 
 
 %
 
-s = [0, -0.75].';
+s = [ -0.75,0].';
 x(1,1) = s(1);
 x(2,1) = s(2);
 
@@ -122,7 +127,12 @@ hp.LineWidth = 2;
 hp.Parent.FontSize = 18;
 hp.Parent.LineWidth = 1;
 
-zlabel('f(s)')
+zlabel('g(x)')
 
 hold off
 
+set(gcf,'Color','white');
+set(gca,'Color','white');
+imwrite(frame2im(getframe(2)),'proxex.png')
+set(gcf,'Color','default');
+set(gca,'Color','default');
