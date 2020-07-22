@@ -81,45 +81,53 @@ imwrite(M,'admmm.png')
 %% 
 % * $\|\cdot\|_{*}$: Nuclear norm (sum of singular values $\{\sigma_k\}$)
 % * $\|\cdot\|_{1}$: $\ell_1$-norm as a vector (sum of absolute of elements)
+% * $f(\mathbf{u})=0$
+% * $g(\mathbf{y})=\|\mathbf{\ell}\|_\ast+\|\mathbf{s}\|_1+\imath_{\{\mathbf{m}\}}(\mathbf{\ell}+\mathbf{s})$
+% * $\mathbf{y}=\left(\begin{array}{c}\mathbf{\ell} \\ \mathbf{s} \\ \mathbf{\ell}+\mathbf{s} 
+% \end{array}\right)$,$\mathbf{u}=\left(\begin{array}{c}\mathbf{\ell} \\ \mathbf{s}  
+% \end{array}\right)$, $\mathbf{G}=\left(\begin{array}{cc} \mathbf{I} & \mathbf{O} 
+% \\ \mathbf{O} & \mathbf{I} \\ \mathbf{I} & \mathbf{I} \end{array}\right)$
+% * $\mathbf{\ell}:=\mathrm{vec}(\mathbf{L})$, $\mathbf{s}:=\mathrm{vec}(\mathbf{S})$
+%% 
+% アルゴリズム (Algorithm)
 
-imgZ1 = M;
-imgZ2 = zeros(size(M),'like',M);
-imgZ3 = M;
+% Step1: Initialization
+imgY1 = M;
+imgY2 = zeros(size(M),'like',M);
+imgY3 = M;
 imgD1 = zeros(size(M),'like',M);
 imgD2 = zeros(size(M),'like',M);
 imgD3 = zeros(size(M),'like',M);
 
 for idx=1:niters   
-    % State variables
-    Z1 = imgZ1;
-    Z2 = imgZ2;
-    Z3 = imgZ3;
+    % Set state variables
+    Y1 = imgY1;
+    Y2 = imgY2;
+    Y3 = imgY3;
     D1 = imgD1;
     D2 = imgD2;
     D3 = imgD3;
     
-    % Update L S
-    L = (2*(Z1-D1) - (Z2-D2) + (Z3-D3))/3;
-    S = (Z1-D1) + (Z3-D3) - 2*L;
+    % Step 2: Update L S
+    L = (2*(Y1-D1) - (Y2-D2) + (Y3-D3))/3;
+    S = (Y1-D1) + (Y3-D3) - 2*L;
     
-    % Update Z1
-    Z1 = proxnuclearnorm(L + D1, 1/rho);
+    % Step 3-1: Update Y1
+    Y1 = proxnuclearnorm(L + D1, 1/rho);
+    % Step 3-2: Update Y2
+    Y2 = softthresholding(S + D2, lambda/rho);
+    % Step 3-3: Update Y3
+    Y3 = M;
     
-    % Update Z2
-    Z2 = softthresholding(S + D2, lambda/rho);
+    % Step 4: Update dual variables
+    D1 = D1 + L - Y1;
+    D2 = D2 + S - Y2;
+    D3 = D3 + L + S - Y3;
     
-    % Update Z3
-    Z3 = M;
-    
-    % update dual variables
-    D1 = D1 + L - Z1;
-    D2 = D2 + S - Z2;
-    D3 = D3 + L + S - Z3;
-    
-    % Update
-    imgZ1 = Z1;
-    imgZ2 = Z2;
-    imgZ3 = Z3;
+    % Update state variables
+    imgY1 = Y1;
+    imgY2 = Y2;
+    imgY3 = Y3;
     imgD1 = D1;
     imgD2 = D2;
     imgD3 = D3;
