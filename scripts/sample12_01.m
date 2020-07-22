@@ -7,7 +7,7 @@
 % 村松 正吾 
 % 
 % 動作確認: MATLAB R2020a
-%% Image restoraton
+%% Image restoration
 % Wiener filter
 % 
 % Advanced Topics in Image Processing
