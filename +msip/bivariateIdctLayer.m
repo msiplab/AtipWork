@@ -8,8 +8,8 @@ classdef bivariateIdctLayer < nnet.layer.Layer
     end
     
     properties (Access = private)
-        %Cv 
-        %Ch 
+        Cv 
+        Ch 
     end
     
     methods
@@ -24,8 +24,8 @@ classdef bivariateIdctLayer < nnet.layer.Layer
                 + layer.Stride(1) + "x" + layer.Stride(2);
             layer.Type = '';
             
-            %layer.Cv = dctmtx(layer.Stride(1));
-            %layer.Ch = dctmtx(layer.Stride(2));
+            layer.Cv = dctmtx(layer.Stride(1));
+            layer.Ch = dctmtx(layer.Stride(2));
         end
         
         function Z = predict(layer, X)
@@ -39,21 +39,34 @@ classdef bivariateIdctLayer < nnet.layer.Layer
             %         Z1, ..., Zm - Outputs of layer forward function
             
             % Layer forward function for prediction goes here.
+            Stride_ = layer.Stride;
+            Cv_ = layer.Cv;
+            Ch_ = layer.Ch;
+            nRows = size(X,1)/Stride_(1);
+            nCols = size(X,2)/Stride_(2);
             nComponents = size(X,3);
             nSamples = size(X,4);
-            %Cv_ = layer.Cv;
-            %Ch_ = layer.Ch;
             %
             Z = zeros(size(X),'like',X);
             for iSample = 1:nSamples
                 for iComponent = 1:nComponents
-                    Z(:,:,iComponent,iSample) = ...
-                        blockproc(X(:,:,iComponent,iSample),...
-                        layer.Stride,@(x) idct2(x.data)); % Cv_.'*x.data*Ch_);
+                    %Z(:,:,iComponent,iSample) = ...
+                    %    blockproc(X(:,:,iComponent,iSample),...
+                    %    layer.Stride,@(x) Cv_.'*x.data*Ch_);
+                    for iCol = 1:nCols
+                        for iRow = 1:nRows
+                            x = X((iRow-1)*Stride_(1)+1:iRow*Stride_(1),...
+                                (iCol-1)*Stride_(2)+1:iCol*Stride_(2),...
+                                iComponent,iSample);                            
+                            z = Cv_.'*x*Ch_;
+                            Z((iRow-1)*Stride_(1)+1:iRow*Stride_(1),...
+                                (iCol-1)*Stride_(2)+1:iCol*Stride_(2),...
+                                iComponent,iSample) = z;
+                        end
+                    end
                 end
             end
-        end
-       
+        end        
         
         function dLdX = backward(layer,X, Z, dLdZ, memory)
             % (Optional) Backward propagate the derivative of the loss  
@@ -72,17 +85,31 @@ classdef bivariateIdctLayer < nnet.layer.Layer
             %                             learnable parameter
             
             % Layer backward function goes here.
+            Stride_ = layer.Stride;
+            Cv_ = layer.Cv;
+            Ch_ = layer.Ch;
+            nRows = size(dLdZ,1)/Stride_(1);
+            nCols = size(dLdZ,2)/Stride_(2);
             nComponents = size(dLdZ,3);
             nSamples = size(dLdZ,4);
-            %Cv_ = layer.Cv;
-            %Ch_ = layer.Ch;
             %
             dLdX = zeros(size(dLdZ),'like',dLdZ);
             for iSample = 1:nSamples
                 for iComponent = 1:nComponents
-                    dLdX(:,:,iComponent,iSample) = ...
-                        blockproc(dLdZ(:,:,iComponent,iSample),...
-                        layer.Stride,@(x) dct2(x.data)); %Cv_*x.data*Ch_.');
+                    %dLdX(:,:,iComponent,iSample) = ...
+                    %    blockproc(dLdZ(:,:,iComponent,iSample),...
+                    %    layer.Stride,@(x) Cv_*x.data*Ch_.');
+                    for iCol = 1:nCols
+                        for iRow = 1:nRows
+                            z = dLdZ((iRow-1)*Stride_(1)+1:iRow*Stride_(1),...
+                                (iCol-1)*Stride_(2)+1:iCol*Stride_(2),...
+                                iComponent,iSample);                            
+                            x = Cv_*z*Ch_.';
+                            dLdX((iRow-1)*Stride_(1)+1:iRow*Stride_(1),...
+                                (iCol-1)*Stride_(2)+1:iCol*Stride_(2),...
+                                iComponent,iSample) = x;
+                        end
+                    end                    
                 end
             end
         end

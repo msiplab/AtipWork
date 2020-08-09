@@ -1,6 +1,6 @@
 classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
-    %BIVARIATEIDCTLAYER_TESTCASE このクラスの概要をここに記述
-    %   詳細説明をここに記述
+    %BIVARIATEIDCTLAYER_TESTCASE 縺薙�ｮ繧ｯ繝ｩ繧ｹ縺ｮ讎りｦ√ｒ縺薙％縺ｫ險倩ｿｰ
+    %   隧ｳ邏ｰ隱ｬ譏弱ｒ縺薙％縺ｫ險倩ｿｰ
     
     properties (TestParameter)
         stride = { [2 2], [4 4] };
@@ -34,6 +34,10 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
         
         function testPredict(testCase, ...
                 stride, nComponents, height, width, type)
+                
+            import matlab.unittest.constraints.IsEqualTo
+            import matlab.unittest.constraints.AbsoluteTolerance
+            tolObj = AbsoluteTolerance(1e-6,single(1e-6));
             
             % Parameters
             nSamples = 8;
@@ -58,12 +62,17 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Evaluation
             testCase.verifyInstanceOf(actualZ,type);
-            testCase.verifyEqual(actualZ,expctdZ);
+            testCase.verifyThat(actualZ,...
+                IsEqualTo(expctdZ,'Within',tolObj));
             
         end
         
         function testForward(testCase, ...
                 stride, nComponents, height, width, type)
+                        
+            import matlab.unittest.constraints.IsEqualTo
+            import matlab.unittest.constraints.AbsoluteTolerance
+            tolObj = AbsoluteTolerance(1e-6,single(1e-6));
             
             % Parameters
             nSamples = 8;
@@ -88,12 +97,17 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Evaluation
             testCase.verifyInstanceOf(actualZ,type);
-            testCase.verifyEqual(actualZ,expctdZ);
+            testCase.verifyThat(actualZ,...
+                IsEqualTo(expctdZ,'Within',tolObj));
             
         end
         
         function testBackward(testCase, ...
                 stride, nComponents, height, width, type)
+                        
+            import matlab.unittest.constraints.IsEqualTo
+            import matlab.unittest.constraints.AbsoluteTolerance
+            tolObj = AbsoluteTolerance(1e-6,single(1e-6));
             
             % Parameters
             nSamples = 8;
@@ -118,8 +132,8 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Evaluation
             testCase.verifyInstanceOf(actualdLdX,type);
-            testCase.verifyEqual(actualdLdX,expctddLdX);
-            
+            testCase.verifyThat(actualdLdX,...
+                IsEqualTo(expctddLdX,'Within',tolObj));
         end
         
     end
