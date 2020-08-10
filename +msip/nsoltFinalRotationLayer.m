@@ -4,16 +4,15 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
         % (Optional) Layer properties.
         NumberOfChannels
         DecimationFactor
+        Mus
         
         % Layer properties go here.
     end
     
     properties (Learnable)
+        Angles
     end
     
-    properties (Access = private)
-
-    end
     
     methods
         function layer = nsoltFinalRotationLayer(nchs,stride,name)

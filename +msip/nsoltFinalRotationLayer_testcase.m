@@ -55,6 +55,7 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             nDecs = prod(stride);
             % nRows x nCols x nChs x nSamples
             X = randn(nrows,ncols,sum(nchs),nSamples,datatype);
+            angles = randn((nDecs-2)*nDecs/4,1);
             
             % Expected values
             % (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
