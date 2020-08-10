@@ -56,8 +56,15 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             mv = stride(1);
             mh = stride(2);
             %
-            W0T = eye(ps);
-            U0T = eye(pa);
+            if isempty(layer.Angles)
+                W0T = eye(ps);
+                U0T = eye(pa);
+            else
+                anglesW = layer.Angles(1:length(layer.Angles)/2);
+                anglesU = layer.Angles(length(layer.Angles)/2+1:end);
+                W0T = transpose(layer.orthmtxgen(anglesW,1));
+                U0T = transpose(layer.orthmtxgen(anglesU,1));
+            end
             Y = permute(X,[3 1 2 4]);
             Ys = reshape(Y(1:ps,:,:,:),ps,nrows*ncols*nSamples);
             Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
@@ -100,6 +107,50 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             dLdW = [];
         end
         %}
+    end
+    
+    methods (Static, Access = private)
+        
+        function matrix = orthmtxgen(angles,mus,pdAng)
+            
+            if nargin < 3
+                pdAng = 0;
+            end
+            
+            if isempty(angles)
+                matrix = diag(mus);
+            else
+                nDim_ = (1+sqrt(1+8*length(angles)))/2;
+                matrix = eye(nDim_);
+                iAng = 1;
+                for iTop=1:nDim_-1
+                    vt = matrix(iTop,:);
+                    for iBtm=iTop+1:nDim_
+                        angle = angles(iAng);
+                        if iAng == pdAng
+                            angle = angle + pi/2;
+                        end
+                        c = cos(angle); %
+                        s = sin(angle); %
+                        vb = matrix(iBtm,:);
+                        %
+                        u  = s*(vt + vb);
+                        vt = (c + s)*vt;
+                        vb = (c - s)*vb;
+                        vt = vt - u;
+                        if iAng == pdAng
+                            matrix = 0*matrix;
+                        end
+                        matrix(iBtm,:) = vb + u;
+                        %
+                        iAng = iAng + 1;
+                    end
+                    matrix(iTop,:) = vt;
+                end
+                matrix = diag(mus)*matrix;
+            end
+        end
+
     end
 end
 
