@@ -77,9 +77,10 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             nBlks = nrows*ncols;
             for iSample=1:nSamples
                 Zi = Zsa(:,(iSample-1)*nBlks+1:iSample*nBlks);
-                % !!!TODO!!!: inverse perumation in each column
+                Ai = col2im(Zi,stride,[height width],'distinct');
+                % Inverse perumation in each block
                 expctdZ(:,:,1,iSample) = ...
-                    col2im(Zi,stride,[height width],'distinct');    
+                    blockproc(Ai,stride,@testCase.permuteIdctCoefs_);
             end
             
             % Instantiation of target class
@@ -127,9 +128,10 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             nBlks = nrows*ncols;
             for iSample=1:nSamples
                 Zi = Zsa(:,(iSample-1)*nBlks+1:iSample*nBlks);
-                % !!!TODO!!!: inverse perumation in each column
+                Ai = col2im(Zi,stride,[height width],'distinct');
+                % Inverse perumation in each block
                 expctdZ(:,:,1,iSample) = ...
-                    col2im(Zi,stride,[height width],'distinct');    
+                    blockproc(Ai,stride,@testCase.permuteIdctCoefs_);
             end
             
             % Instantiation of target class
@@ -216,6 +218,28 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
                 IsEqualTo(expctddLdX,'Within',tolObj));
         end
         %}
+    end
+    
+    methods (Static, Access = private)
+        
+        function value = permuteIdctCoefs_(x)
+            coefs = x.data;
+            decY_ = x.blockSize(1);
+            decX_ = x.blockSize(2);
+            nQDecsee = ceil(decY_/2)*ceil(decX_/2);
+            nQDecsoo = floor(decY_/2)*floor(decX_/2);
+            nQDecsoe = floor(decY_/2)*ceil(decX_/2);
+            cee = coefs(         1:  nQDecsee);
+            coo = coefs(nQDecsee+1:nQDecsee+nQDecsoo);
+            coe = coefs(nQDecsee+nQDecsoo+1:nQDecsee+nQDecsoo+nQDecsoe);
+            ceo = coefs(nQDecsee+nQDecsoo+nQDecsoe+1:end);
+            value = zeros(decY_,decX_);
+            value(1:2:decY_,1:2:decX_) = reshape(cee,ceil(decY_/2),ceil(decX_/2));
+            value(2:2:decY_,2:2:decX_) = reshape(coo,floor(decY_/2),floor(decX_/2));
+            value(2:2:decY_,1:2:decX_) = reshape(coe,floor(decY_/2),ceil(decX_/2));
+            value(1:2:decY_,2:2:decX_) = reshape(ceo,ceil(decY_/2),floor(decX_/2));
+        end
+        
     end
 end
 

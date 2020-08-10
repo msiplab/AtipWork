@@ -4,7 +4,7 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
         % (Optional) Layer properties.
         NumberOfChannels
         DecimationFactor
-        Mus
+        %Mus
         
         % Layer properties go here.
     end
@@ -62,8 +62,8 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             else
                 anglesW = layer.Angles(1:length(layer.Angles)/2);
                 anglesU = layer.Angles(length(layer.Angles)/2+1:end);
-                W0T = transpose(layer.orthmtxgen(anglesW,1));
-                U0T = transpose(layer.orthmtxgen(anglesU,1));
+                W0T = transpose(layer.orthmtxgen_(anglesW,1));
+                U0T = transpose(layer.orthmtxgen_(anglesU,1));
             end
             Y = permute(X,[3 1 2 4]);
             Ys = reshape(Y(1:ps,:,:,:),ps,nrows*ncols*nSamples);
@@ -76,7 +76,8 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
                 iBlk = 1;
                 for iCol = 1:ncols
                     for iRow = 1:nrows
-                        zi = reshape(Zi(:,iBlk),stride);
+                        zi = layer.permuteIdctCoefs_(...
+                            reshape(Zi(:,iBlk),stride),stride);
                         Z((iRow-1)*mv+1:iRow*mv,(iCol-1)*mh+1:iCol*mh,...
                             1,iSample) = zi;
                         iBlk = iBlk+1;
@@ -111,7 +112,25 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
     
     methods (Static, Access = private)
         
-        function matrix = orthmtxgen(angles,mus,pdAng)
+        function value = permuteIdctCoefs_(x,blockSize)
+            coefs = x;
+            decY_ = blockSize(1);
+            decX_ = blockSize(2);
+            nQDecsee = ceil(decY_/2)*ceil(decX_/2);
+            nQDecsoo = floor(decY_/2)*floor(decX_/2);
+            nQDecsoe = floor(decY_/2)*ceil(decX_/2);
+            cee = coefs(         1:  nQDecsee);
+            coo = coefs(nQDecsee+1:nQDecsee+nQDecsoo);
+            coe = coefs(nQDecsee+nQDecsoo+1:nQDecsee+nQDecsoo+nQDecsoe);
+            ceo = coefs(nQDecsee+nQDecsoo+nQDecsoe+1:end);
+            value = zeros(decY_,decX_,'like',x);
+            value(1:2:decY_,1:2:decX_) = reshape(cee,ceil(decY_/2),ceil(decX_/2));
+            value(2:2:decY_,2:2:decX_) = reshape(coo,floor(decY_/2),floor(decX_/2));
+            value(2:2:decY_,1:2:decX_) = reshape(coe,floor(decY_/2),ceil(decX_/2));
+            value(1:2:decY_,2:2:decX_) = reshape(ceo,ceil(decY_/2),floor(decX_/2));
+        end
+        
+        function matrix = orthmtxgen_(angles,mus,pdAng)
             
             if nargin < 3
                 pdAng = 0;
