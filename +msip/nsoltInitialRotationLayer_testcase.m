@@ -1,12 +1,12 @@
-classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
+classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
     %NSOLTFINALROTATIONLAYER_TESTCASE このクラスの概要をここに記述
     %   詳細説明をここに記述
     %
-    %   コンポーネント別に入力(nComponents):
-    %      nRows x nCols x nChs x nSamples
-    %
-    %   ベクトル配列をブロック配列にして出力:
+    %   ベクトル配列をブロック配列を入力:
     %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
+    %
+    %   コンポーネント別にして出力(nComponents):
+    %      nRows x nCols x nChs x nSamples
     %
     
     properties (TestParameter)
@@ -22,8 +22,8 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
         function testConstructor(testCase, nchs, stride)
             
             % Expected values
-            expctdName = 'V0~';
-            expctdDescription = "NSOLT final rotation ( " ...
+            expctdName = 'V0';
+            expctdDescription = "NSOLT initial rotation ( " ...
                 + "(ps,pa) = (" ...
                 + nchs(1) + "," + nchs(2) + "), "  ...
                 + "(mv,mh) = (" ...
@@ -32,7 +32,7 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltFinalRotationLayer(nchs,stride,expctdName);
+            layer = nsoltInitialRotationLayer(nchs,stride,expctdName);
             
             % Actual values
             actualName = layer.Name;
@@ -42,7 +42,6 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             testCase.verifyEqual(actualName,expctdName);
             testCase.verifyEqual(actualDescription,expctdDescription);
         end
-        
         
         function testPredictGrayscale(testCase, ...
                 nchs, stride, nrows, ncols, datatype)
@@ -54,34 +53,39 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             % Parameters
             nSamples = 8;
             nDecs = prod(stride);
-            % nRows x nCols x nChs x nSamples
-            X = randn(nrows,ncols,sum(nchs),nSamples,datatype);
-            
-            % Expected values
+            nChsTotal = sum(nchs);
             % (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
             height = stride(1)*nrows;
             width = stride(2)*ncols;
+            X = randn(height,width,1,nSamples,datatype);
+            
+            % Expected values
+            % nRows x nCols x nChs x nSamples
             ps = nchs(1);
             pa = nchs(2);
-            W0T = eye(ps,datatype);
-            U0T = eye(pa,datatype);
-            Y = permute(X,[3 1 2 4]);
-            Ys = reshape(Y(1:ps,:,:,:),ps,nrows*ncols*nSamples);
-            Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
-            Zsa = [ W0T(1:nDecs/2,:)*Ys; U0T(1:nDecs/2,:)*Ya ];
-            expctdZ = zeros(height,width,1,nSamples,datatype);
-            nBlks = nrows*ncols;
+            W0 = eye(ps,datatype);
+            U0 = eye(pa,datatype);
+            expctdZ = zeros(nrows,ncols,nChsTotal,nSamples,datatype);
+            Y  = zeros(nChsTotal,nrows,ncols,datatype);
             for iSample=1:nSamples
-                Zi = Zsa(:,(iSample-1)*nBlks+1:iSample*nBlks);
-                Ai = col2im(Zi,stride,[height width],'distinct');
-                % Inverse perumation in each block
-                expctdZ(:,:,1,iSample) = ...
-                    blockproc(Ai,stride,@testCase.permuteIdctCoefs_);
+                % Perumation in each block                
+                Ai = blockproc(X(:,:,1,iSample),stride,...
+                    @testCase.permuteDctCoefs_);
+                % Vectorization of each block
+                Yi = im2col(Ai,stride,'distinct');
+                %
+                Ys = Yi(1:nDecs/2,:);
+                Ya = Yi(nDecs/2+1:end,:);
+                Y(1:ps,:,:) = ...
+                    reshape(W0(:,1:nDecs/2)*Ys,ps,nrows,ncols);
+                Y(ps+1:ps+pa,:,:) = ...
+                    reshape(U0(:,1:nDecs/2)*Ya,pa,nrows,ncols);
+                expctdZ(:,:,:,iSample) = ipermute(Y,[3 1 2 4]);                
             end
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltFinalRotationLayer(nchs,stride,'V0~');
+            layer = nsoltInitialRotationLayer(nchs,stride,'V0');
             
             % Actual values
             actualZ = layer.predict(X);
@@ -107,36 +111,39 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             nSamples = 8;
             nDecs = prod(stride);
             nChsTotal = sum(nchs);
-            % nRows x nCols x nChs x nSamples
-            X = randn(nrows,ncols,sum(nchs),nSamples,datatype);
-            angles = randn((nChsTotal-2)*nChsTotal/4,1);
-            
-            % Expected values
             % (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
             height = stride(1)*nrows;
             width = stride(2)*ncols;
+            X = randn(height,width,1,nSamples,datatype);
+            angles = randn((nChsTotal-2)*nChsTotal/4,1);
+            
+            % Expected values
+            % nRows x nCols x nChs x nSamples
             ps = nchs(1);
             pa = nchs(2);
-            W0T = transpose(genW.generate(angles(1:length(angles)/2),1));
-            U0T = transpose(genU.generate(angles(length(angles)/2+1:end),1));
-            Y = permute(X,[3 1 2 4]);
-            Ys = reshape(Y(1:ps,:,:,:),ps,nrows*ncols*nSamples);
-            Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
-            Zsa = [ W0T(1:nDecs/2,:)*Ys; U0T(1:nDecs/2,:)*Ya ];
-            expctdZ = zeros(height,width,1,nSamples,datatype);
-            nBlks = nrows*ncols;
+            W0 = genW.generate(angles(1:length(angles)/2),1);
+            U0 = genU.generate(angles(length(angles)/2+1:end),1);
+            expctdZ = zeros(nrows,ncols,nChsTotal,nSamples,datatype);
+            Y  = zeros(nChsTotal,nrows,ncols,datatype);
             for iSample=1:nSamples
-                Zi = Zsa(:,(iSample-1)*nBlks+1:iSample*nBlks);
-                % Inverse vectrization of each block
-                Ai = col2im(Zi,stride,[height width],'distinct');
-                % Inverse perumation in each block
-                expctdZ(:,:,1,iSample) = ...
-                    blockproc(Ai,stride,@testCase.permuteIdctCoefs_);
+                % Perumation in each block
+                Ai = blockproc(X(:,:,1,iSample),stride,...
+                    @testCase.permuteDctCoefs_);
+                % Vectorization of each block
+                Yi = im2col(Ai,stride,'distinct');
+                %
+                Ys = Yi(1:nDecs/2,:);
+                Ya = Yi(nDecs/2+1:end,:);
+                Y(1:ps,:,:) = ...
+                    reshape(W0(:,1:nDecs/2)*Ys,ps,nrows,ncols);
+                Y(ps+1:ps+pa,:,:) = ...
+                    reshape(U0(:,1:nDecs/2)*Ya,pa,nrows,ncols);
+                expctdZ(:,:,:,iSample) = ipermute(Y,[3 1 2 4]);
             end
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltFinalRotationLayer(nchs,stride,'V0~');
+            layer = nsoltInitialRotationLayer(nchs,stride,'V0~');
             
             % Actual values
             layer.Angles = angles;
@@ -193,7 +200,7 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltFinalRotationLayer(nchs,stride,'V0~');
+            layer = nsoltInitialRotationLayer(nchs,stride,'V0~');
             
             % Actual values
             layer.Angles = angles;
@@ -256,7 +263,7 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltFinalRotationLayer(nchs,stride,'V0~');
+            layer = nsoltInitialRotationLayer(nchs,stride,'V0~');
             
             % Actual values
             layer.Angles = angles;
@@ -274,23 +281,18 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
     end
     
     methods (Static, Access = private)
+
         
-        function value = permuteIdctCoefs_(x)
+        function value = permuteDctCoefs_(x)
             coefs = x.data;
             decY_ = x.blockSize(1);
             decX_ = x.blockSize(2);
-            nQDecsee = ceil(decY_/2)*ceil(decX_/2);
-            nQDecsoo = floor(decY_/2)*floor(decX_/2);
-            nQDecsoe = floor(decY_/2)*ceil(decX_/2);
-            cee = coefs(         1:  nQDecsee);
-            coo = coefs(nQDecsee+1:nQDecsee+nQDecsoo);
-            coe = coefs(nQDecsee+nQDecsoo+1:nQDecsee+nQDecsoo+nQDecsoe);
-            ceo = coefs(nQDecsee+nQDecsoo+nQDecsoe+1:end);
-            value = zeros(decY_,decX_);
-            value(1:2:decY_,1:2:decX_) = reshape(cee,ceil(decY_/2),ceil(decX_/2));
-            value(2:2:decY_,2:2:decX_) = reshape(coo,floor(decY_/2),floor(decX_/2));
-            value(2:2:decY_,1:2:decX_) = reshape(coe,floor(decY_/2),ceil(decX_/2));
-            value(1:2:decY_,2:2:decX_) = reshape(ceo,ceil(decY_/2),floor(decX_/2));
+            cee = coefs(1:2:end,1:2:end);
+            coo = coefs(2:2:end,2:2:end);
+            coe = coefs(2:2:end,1:2:end);
+            ceo = coefs(1:2:end,2:2:end);
+            value = [ cee(:) ; coo(:) ; coe(:) ; ceo(:) ];
+            value = reshape(value,decY_,decX_);
         end
         
     end
