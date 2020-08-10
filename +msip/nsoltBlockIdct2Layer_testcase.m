@@ -47,9 +47,13 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
             expctdZ = zeros(size(X),datatype);
             for iSample = 1:nSamples
                 for iComponent = 1:nComponents
+                    Y = blockproc(X(:,:,iComponent,iSample),...
+                        stride,...
+                        @testCase.permuteIdctCoefs_);
                     expctdZ(:,:,iComponent,iSample) = ...
-                        blockproc(X(:,:,iComponent,iSample),...
-                        stride,@(x) idct2(x.data));
+                        blockproc(Y,...
+                        stride,...
+                        @(x) idct2(x.data));
                 end
             end
             
@@ -137,6 +141,28 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
                 IsEqualTo(expctddLdX,'Within',tolObj));
         end
         %}
+    end
+    
+    methods (Static, Access = private)
+        
+        function value = permuteIdctCoefs_(x)
+            coefs = x.data;
+            decY_ = x.blockSize(1);
+            decX_ = x.blockSize(2);
+            nQDecsee = ceil(decY_/2)*ceil(decX_/2);
+            nQDecsoo = floor(decY_/2)*floor(decX_/2);
+            nQDecsoe = floor(decY_/2)*ceil(decX_/2);
+            cee = coefs(         1:  nQDecsee);
+            coo = coefs(nQDecsee+1:nQDecsee+nQDecsoo);
+            coe = coefs(nQDecsee+nQDecsoo+1:nQDecsee+nQDecsoo+nQDecsoe);
+            ceo = coefs(nQDecsee+nQDecsoo+nQDecsoe+1:end);
+            value = zeros(decY_,decX_);
+            value(1:2:decY_,1:2:decX_) = reshape(cee,ceil(decY_/2),ceil(decX_/2));
+            value(2:2:decY_,2:2:decX_) = reshape(coo,floor(decY_/2),floor(decX_/2));
+            value(2:2:decY_,1:2:decX_) = reshape(coe,floor(decY_/2),ceil(decX_/2));
+            value(1:2:decY_,2:2:decX_) = reshape(ceo,ceil(decY_/2),floor(decX_/2));
+        end
+        
     end
 end
 

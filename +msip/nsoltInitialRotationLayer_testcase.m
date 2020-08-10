@@ -69,8 +69,8 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             Y  = zeros(nChsTotal,nrows,ncols,datatype);
             for iSample=1:nSamples
                 % Perumation in each block                
-                Ai = blockproc(X(:,:,1,iSample),stride,...
-                    @testCase.permuteDctCoefs_);
+                Ai = X(:,:,1,iSample); %blockproc(X(:,:,1,iSample),stride,...
+                    %@testCase.permuteDctCoefs_);
                 % Vectorization of each block
                 Yi = im2col(Ai,stride,'distinct');
                 %
@@ -127,8 +127,8 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             Y  = zeros(nChsTotal,nrows,ncols,datatype);
             for iSample=1:nSamples
                 % Perumation in each block
-                Ai = blockproc(X(:,:,1,iSample),stride,...
-                    @testCase.permuteDctCoefs_);
+                Ai = X(:,:,1,iSample); %blockproc(X(:,:,1,iSample),stride,...
+                   % @testCase.permuteDctCoefs_);
                 % Vectorization of each block
                 Yi = im2col(Ai,stride,'distinct');
                 %
@@ -280,6 +280,7 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
         %}
     end
     
+    %{
     methods (Static, Access = private)
 
         
@@ -296,5 +297,6 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
         end
         
     end
+    %}
 end
 

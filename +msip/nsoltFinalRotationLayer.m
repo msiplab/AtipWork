@@ -77,8 +77,8 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
                 iBlk = 1;
                 for iCol = 1:ncols
                     for iRow = 1:nrows
-                        zi = layer.permuteIdctCoefs_(...
-                            reshape(Zi(:,iBlk),stride),stride);
+                        zi = ... %layer.permuteIdctCoefs_(...
+                            reshape(Zi(:,iBlk),stride); %,stride);
                         Z((iRow-1)*mv+1:iRow*mv,(iCol-1)*mh+1:iCol*mh,...
                             1,iSample) = zi;
                         iBlk = iBlk+1;
@@ -129,6 +129,7 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
     
     methods (Static, Access = private)
         
+        %{
         function value = permuteIdctCoefs_(x,blockSize)
             coefs = x;
             decY_ = blockSize(1);
@@ -146,6 +147,7 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             value(2:2:decY_,1:2:decX_) = reshape(coe,floor(decY_/2),ceil(decX_/2));
             value(1:2:decY_,2:2:decX_) = reshape(ceo,ceil(decY_/2),floor(decX_/2));
         end
+        %}
         
         function matrix = orthmtxgen_(angles,mus,pdAng)
             

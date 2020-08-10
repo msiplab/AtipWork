@@ -75,8 +75,8 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
                 Zi = Zsa(:,(iSample-1)*nBlks+1:iSample*nBlks);
                 Ai = col2im(Zi,stride,[height width],'distinct');
                 % Inverse perumation in each block
-                expctdZ(:,:,1,iSample) = ...
-                    blockproc(Ai,stride,@testCase.permuteIdctCoefs_);
+                expctdZ(:,:,1,iSample) = Ai; %...
+                    %blockproc(Ai,stride,@testCase.permuteIdctCoefs_);
             end
             
             % Instantiation of target class
@@ -130,8 +130,8 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
                 % Inverse vectrization of each block
                 Ai = col2im(Zi,stride,[height width],'distinct');
                 % Inverse perumation in each block
-                expctdZ(:,:,1,iSample) = ...
-                    blockproc(Ai,stride,@testCase.permuteIdctCoefs_);
+                expctdZ(:,:,1,iSample) = Ai; %...
+                    %blockproc(Ai,stride,@testCase.permuteIdctCoefs_);
             end
             
             % Instantiation of target class

@@ -80,9 +80,9 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
                 iElm = 1;
                 for icol = 1:ncols
                     for irow = 1:nrows
-                        Ai = layer.permuteDctCoefs_(...
+                        Ai = ... %layer.permuteDctCoefs_(...
                             X((irow-1)*mv+1:irow*mv,...
-                            (icol-1)*mh+1:icol*mh,1,iSample),stride);
+                            (icol-1)*mh+1:icol*mh,1,iSample); %,stride);
                         Ys(:,iElm) = Ai(1:nDecs/2);
                         Ya(:,iElm) = Ai(nDecs/2+1:end);
                         iElm = iElm + 1;
@@ -140,7 +140,7 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
     end
     
     methods (Static, Access = private)
-        
+        %{
         function value = permuteDctCoefs_(x,blockSize)
             coefs = x;
             decY_ = blockSize(1);
@@ -152,7 +152,7 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
             value = [ cee(:) ; coo(:) ; coe(:) ; ceo(:) ];
             value = reshape(value,decY_,decX_);
         end
-        
+        %}
         function matrix = orthmtxgen_(angles,mus,pdAng)
             
             if nargin < 3

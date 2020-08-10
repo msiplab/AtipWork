@@ -47,9 +47,11 @@ classdef nsoltBlockDct2Layer_testcase < matlab.unittest.TestCase
             expctdZ = zeros(size(X),datatype);
             for iSample = 1:nSamples
                 for iComponent = 1:nComponents
-                    expctdZ(:,:,iComponent,iSample) = ...
-                        blockproc(X(:,:,iComponent,iSample),...
+                    Y = blockproc(X(:,:,iComponent,iSample),...
                         stride,@(x) dct2(x.data));
+                    expctdZ(:,:,iComponent,iSample) = ...
+                        blockproc(Y,...
+                        stride,@testCase.permuteDctCoefs_);
                 end
             end
             
@@ -138,5 +140,23 @@ classdef nsoltBlockDct2Layer_testcase < matlab.unittest.TestCase
         end
         %}
     end
+    
+    methods (Static, Access = private)
+        
+        
+        function value = permuteDctCoefs_(x)
+            coefs = x.data;
+            decY_ = x.blockSize(1);
+            decX_ = x.blockSize(2);
+            cee = coefs(1:2:end,1:2:end);
+            coo = coefs(2:2:end,2:2:end);
+            coe = coefs(2:2:end,1:2:end);
+            ceo = coefs(1:2:end,2:2:end);
+            value = [ cee(:) ; coo(:) ; coe(:) ; ceo(:) ];
+            value = reshape(value,decY_,decX_);
+        end
+        
+    end
+    
 end
 
