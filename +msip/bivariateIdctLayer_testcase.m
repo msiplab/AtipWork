@@ -67,6 +67,7 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
         end
         
+        %{
         function testForward(testCase, ...
                 stride, nComponents, height, width, datatype)
                         
@@ -135,7 +136,7 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             testCase.verifyThat(actualdLdX,...
                 IsEqualTo(expctddLdX,'Within',tolObj));
         end
-        
+        %}
     end
 end
 

@@ -39,9 +39,10 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             %
             % Inputs:
             %         layer       - Layer to forward propagate through
-            %         X1, ..., Xn - Input data
+            %         X1, ..., Xn - Input data (n: # of components)
             % Outputs:
-            %         Z1, ..., Zm - Outputs of layer forward function
+            %         Z           - Outputs of layer forward function
+            %  
             
             % Layer forward function for prediction goes here.
             nrows = size(X,1);
@@ -86,21 +87,37 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             end
         end
         
-        %{
-        function [dLdX, dLdW] = backward(layer,X, Z, dLdZ, memory)
+        %{        
+        function [Z, memory] = forward(layer, X)
+            % (Optional) Forward input data through the layer at training
+            % time and output the result and a memory value.
+            %
+            % Inputs:
+            %         layer       - Layer to forward propagate through
+            %         X1, ..., Xn - Input data (n: # of components)
+            % Outputs:
+            %         Z           - Outputs of layer forward function
+            %         memory      - Memory value for custom backward propagation
+
+            % Layer forward function for training goes here.
+            Z = layer.predict(X);
+            memory = X;
+        end
+        
+        function [dLdX, dLdW] = backward(layer,~, ~, dLdZ, memory)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
             %
             % Inputs:
             %         layer             - Layer to backward propagate through
-            %         X1, ..., Xn       - Input data
-            %         Z1, ..., Zm       - Outputs of layer forward function
-            %         dLdZ1, ..., dLdZm - Gradients propagated from the next layers
+            %         X1, ..., Xn       - Input data (n: # of components)
+            %         Z                 - Outputs of layer forward function
+            %         dLdZ              - Gradients propagated from the next layers
             %         memory            - Memory value from forward function
             % Outputs:
             %         dLdX1, ..., dLdXn - Derivatives of the loss with respect to the
-            %                             inputs
-            %         dLdW1, ..., dLdWk - Derivatives of the loss with respect to each
+            %                             inputs (n: # of components)
+            %         dLdW              - Derivatives of the loss with respect to each
             %                             learnable parameter
             
             % Layer backward function goes here.

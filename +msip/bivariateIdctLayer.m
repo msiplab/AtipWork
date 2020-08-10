@@ -68,21 +68,18 @@ classdef bivariateIdctLayer < nnet.layer.Layer
             end
         end        
         
-        function dLdX = backward(layer,X, Z, dLdZ, memory)
+        %{        
+        function dLdX = backward(layer,~,~, dLdZ, ~)
             % (Optional) Backward propagate the derivative of the loss  
             % function through the layer.
             %
             % Inputs:
-            %         layer             - Layer to backward propagate through
-            %         X1, ..., Xn       - Input data
-            %         Z1, ..., Zm       - Outputs of layer forward function            
-            %         dLdZ1, ..., dLdZm - Gradients propagated from the next layers
-            %         memory            - Memory value from forward function
+            %         layer             - Layer to backward propagate through          
+            %         dLdZ              - Gradients propagated from the next layers
             % Outputs:
-            %         dLdX1, ..., dLdXn - Derivatives of the loss with respect to the
+            %         dLdX              - Derivatives of the loss with respect to the
             %                             inputs
-            %         dLdW1, ..., dLdWk - Derivatives of the loss with respect to each
-            %                             learnable parameter
+            %
             
             % Layer backward function goes here.
             DecimationFactor_ = layer.DecimationFactor;
@@ -101,10 +98,10 @@ classdef bivariateIdctLayer < nnet.layer.Layer
                     %    layer.DecimationFactor,@(x) Cv_*x.data*Ch_.');
                     for iCol = 1:nCols
                         for iRow = 1:nRows
-                            z = dLdZ((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
+                            dldz = dLdZ((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
                                 (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample);                            
-                            x = Cv_*z*Ch_.';
+                            x = Cv_*dldz*Ch_.';
                             dLdX((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
                                 (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample) = x;
@@ -112,8 +109,9 @@ classdef bivariateIdctLayer < nnet.layer.Layer
                     end                    
                 end
             end
+            
         end
-
+        %}
     end
 end
 
