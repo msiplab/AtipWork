@@ -45,7 +45,11 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
             pa = layer.NumberOfChannels(2);
             nSamples = size(X,4);
             %
-            musU = layer.Mus;                
+            if isempty(layer.Mus)
+                musU = 1;
+            else
+                layer.Mus;
+            end
             if isempty(layer.Angles)
                 UnT = musU*eye(pa);
             else
