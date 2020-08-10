@@ -2,8 +2,8 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
     
     properties
         % (Optional) Layer properties.
-        nChannels
-        Stride
+        NumberOfChannels
+        DecimationFactor
         
         % Layer properties go here.
     end
@@ -21,8 +21,8 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             % This function must have the same name as the class.
             
             % Layer constructor function goes here.
-            layer.nChannels = nchs;
-            layer.Stride = stride;
+            layer.NumberOfChannels = nchs;
+            layer.DecimationFactor = stride;
             layer.Name = name;
             layer.Description = "NSOLT final rotation ( " ...
                 + "(ps,pa) = (" ...
@@ -47,12 +47,12 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             % Layer forward function for prediction goes here.
             nrows = size(X,1);
             ncols = size(X,2);
-            height = layer.Stride(1)*nrows;
-            width = layer.Stride(2)*ncols;
-            ps = layer.nChannels(1);
-            pa = layer.nChannels(2);
+            height = layer.DecimationFactor(1)*nrows;
+            width = layer.DecimationFactor(2)*ncols;
+            ps = layer.NumberOfChannels(1);
+            pa = layer.NumberOfChannels(2);
             nSamples = size(X,4);
-            stride = layer.Stride;
+            stride = layer.DecimationFactor;
             nDecs = prod(stride);
             mv = stride(1);
             mh = stride(2);

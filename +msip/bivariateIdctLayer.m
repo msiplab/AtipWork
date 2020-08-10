@@ -2,7 +2,7 @@ classdef bivariateIdctLayer < nnet.layer.Layer
 
     properties
         % (Optional) Layer properties.
-        Stride
+        DecimationFactor
         
         % Layer properties go here.
     end
@@ -13,19 +13,19 @@ classdef bivariateIdctLayer < nnet.layer.Layer
     end
     
     methods
-        function layer = bivariateIdctLayer(stride,name)
+        function layer = bivariateIdctLayer(DecimationFactor,name)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
             
             % Layer constructor function goes here.
-            layer.Stride = stride;
+            layer.DecimationFactor = DecimationFactor;
             layer.Name = name;
             layer.Description = "Bivariate IDCT of size " ...
-                + layer.Stride(1) + "x" + layer.Stride(2);
+                + layer.DecimationFactor(1) + "x" + layer.DecimationFactor(2);
             layer.Type = '';
             
-            layer.Cv = dctmtx(layer.Stride(1));
-            layer.Ch = dctmtx(layer.Stride(2));
+            layer.Cv = dctmtx(layer.DecimationFactor(1));
+            layer.Ch = dctmtx(layer.DecimationFactor(2));
         end
         
         function Z = predict(layer, X)
@@ -39,11 +39,11 @@ classdef bivariateIdctLayer < nnet.layer.Layer
             %         Z1, ..., Zm - Outputs of layer forward function
             
             % Layer forward function for prediction goes here.
-            Stride_ = layer.Stride;
+            DecimationFactor_ = layer.DecimationFactor;
             Cv_ = layer.Cv;
             Ch_ = layer.Ch;
-            nRows = size(X,1)/Stride_(1);
-            nCols = size(X,2)/Stride_(2);
+            nRows = size(X,1)/DecimationFactor_(1);
+            nCols = size(X,2)/DecimationFactor_(2);
             nComponents = size(X,3);
             nSamples = size(X,4);
             %
@@ -52,15 +52,15 @@ classdef bivariateIdctLayer < nnet.layer.Layer
                 for iComponent = 1:nComponents
                     %Z(:,:,iComponent,iSample) = ...
                     %    blockproc(X(:,:,iComponent,iSample),...
-                    %    layer.Stride,@(x) Cv_.'*x.data*Ch_);
+                    %    layer.DecimationFactor,@(x) Cv_.'*x.data*Ch_);
                     for iCol = 1:nCols
                         for iRow = 1:nRows
-                            x = X((iRow-1)*Stride_(1)+1:iRow*Stride_(1),...
-                                (iCol-1)*Stride_(2)+1:iCol*Stride_(2),...
+                            x = X((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
+                                (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample);                            
                             z = Cv_.'*x*Ch_;
-                            Z((iRow-1)*Stride_(1)+1:iRow*Stride_(1),...
-                                (iCol-1)*Stride_(2)+1:iCol*Stride_(2),...
+                            Z((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
+                                (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample) = z;
                         end
                     end
@@ -85,11 +85,11 @@ classdef bivariateIdctLayer < nnet.layer.Layer
             %                             learnable parameter
             
             % Layer backward function goes here.
-            Stride_ = layer.Stride;
+            DecimationFactor_ = layer.DecimationFactor;
             Cv_ = layer.Cv;
             Ch_ = layer.Ch;
-            nRows = size(dLdZ,1)/Stride_(1);
-            nCols = size(dLdZ,2)/Stride_(2);
+            nRows = size(dLdZ,1)/DecimationFactor_(1);
+            nCols = size(dLdZ,2)/DecimationFactor_(2);
             nComponents = size(dLdZ,3);
             nSamples = size(dLdZ,4);
             %
@@ -98,15 +98,15 @@ classdef bivariateIdctLayer < nnet.layer.Layer
                 for iComponent = 1:nComponents
                     %dLdX(:,:,iComponent,iSample) = ...
                     %    blockproc(dLdZ(:,:,iComponent,iSample),...
-                    %    layer.Stride,@(x) Cv_*x.data*Ch_.');
+                    %    layer.DecimationFactor,@(x) Cv_*x.data*Ch_.');
                     for iCol = 1:nCols
                         for iRow = 1:nRows
-                            z = dLdZ((iRow-1)*Stride_(1)+1:iRow*Stride_(1),...
-                                (iCol-1)*Stride_(2)+1:iCol*Stride_(2),...
+                            z = dLdZ((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
+                                (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample);                            
                             x = Cv_*z*Ch_.';
-                            dLdX((iRow-1)*Stride_(1)+1:iRow*Stride_(1),...
-                                (iCol-1)*Stride_(2)+1:iCol*Stride_(2),...
+                            dLdX((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
+                                (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample) = x;
                         end
                     end                    
