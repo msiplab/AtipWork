@@ -10,7 +10,7 @@ classdef nsoltIntermediateRotationLayer_testcase < matlab.unittest.TestCase
     %
     
     properties (TestParameter)
-        nchs = { [3 3] };
+        nchs = { [3 3], [4 4] };
         datatype = { 'single', 'double' };
         mus = { -1, 1 };
         nrows = struct('small', 4,'medium', 8, 'large', 16);
@@ -172,7 +172,6 @@ classdef nsoltIntermediateRotationLayer_testcase < matlab.unittest.TestCase
             testCase.verifyEqual(actualDescription,expctdDescription);            
             
         end
-        
         
     end
     
