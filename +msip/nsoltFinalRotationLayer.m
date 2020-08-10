@@ -54,9 +54,11 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             nSamples = size(X,4);
             stride = layer.Stride;
             nDecs = prod(stride);
+            mv = stride(1);
+            mh = stride(2);
             %
-            W0T = eye(ps,'like',X);
-            U0T = eye(pa,'like',X);
+            W0T = eye(ps);
+            U0T = eye(pa);
             Y = permute(X,[3 1 2 4]);
             Ys = reshape(Y(1:ps,:,:,:),ps,nrows*ncols*nSamples);
             Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
@@ -65,11 +67,19 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             nBlks = nrows*ncols;
             for iSample=1:nSamples
                 Zi = Zsa(:,(iSample-1)*nBlks+1:iSample*nBlks);
-                Z(:,:,1,iSample) = ...
-                    col2im(Zi,stride,[height width],'distinct');    
+                iBlk = 1;
+                for iCol = 1:ncols
+                    for iRow = 1:nrows
+                        zi = reshape(Zi(:,iBlk),stride);
+                        Z((iRow-1)*mv+1:iRow*mv,(iCol-1)*mh+1:iCol*mh,...
+                            1,iSample) = zi;
+                        iBlk = iBlk+1;
+                    end
+                end
             end
         end
         
+        %{
         function [dLdX, dLdW] = backward(layer,X, Z, dLdZ, memory)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
@@ -90,6 +100,7 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             dLdX = [];
             dLdW = [];
         end
+        %}
     end
 end
 

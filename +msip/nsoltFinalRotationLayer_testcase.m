@@ -90,6 +90,55 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             
         end
         
+        
+        function testPredictGrayscaleRandomAngles(testCase, ...
+                nchs, stride, nrows, ncols, datatype)
+                
+            import matlab.unittest.constraints.IsEqualTo
+            import matlab.unittest.constraints.AbsoluteTolerance
+            tolObj = AbsoluteTolerance(1e-6,single(1e-6));
+            
+            % Parameters
+            nSamples = 8;
+            nDecs = prod(stride);
+            % nRows x nCols x nChs x nSamples
+            X = randn(nrows,ncols,sum(nchs),nSamples,datatype);
+            
+            % Expected values
+            % (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
+            height = stride(1)*nrows;
+            width = stride(2)*ncols;
+            ps = nchs(1);
+            pa = nchs(2);
+            W0T = eye(ps,datatype);
+            U0T = eye(pa,datatype);
+            Y = permute(X,[3 1 2 4]);
+            Ys = reshape(Y(1:ps,:,:,:),ps,nrows*ncols*nSamples);
+            Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
+            Zsa = [ W0T(1:nDecs/2,:)*Ys; U0T(1:nDecs/2,:)*Ya ];
+            expctdZ = zeros(height,width,1,nSamples,datatype);
+            nBlks = nrows*ncols;
+            for iSample=1:nSamples
+                Zi = Zsa(:,(iSample-1)*nBlks+1:iSample*nBlks);
+                expctdZ(:,:,1,iSample) = ...
+                    col2im(Zi,stride,[height width],'distinct');    
+            end
+            
+            % Instantiation of target class
+            import msip.*
+            layer = nsoltFinalRotationLayer(nchs,stride,'V0~');
+            
+            % Actual values
+            actualZ = layer.predict(X);
+            
+            % Evaluation
+            testCase.verifyInstanceOf(actualZ,datatype);
+            testCase.verifyThat(actualZ,...
+                IsEqualTo(expctdZ,'Within',tolObj));
+            
+        end
+        
+        
         %{
         function testForwardGrayScale(testCase, ...
                 stride, nComponents, height, width, datatype)
