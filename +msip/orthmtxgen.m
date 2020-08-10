@@ -20,24 +20,10 @@ classdef orthmtxgen < handle
     %
     
     properties
-        PartialDifference = 'off'
         NumberOfDimensions
     end
     
-    properties (Hidden, Transient)
-        PartialDifferenceSet = ...
-            matlab.system.StringSet({'on','off'});
-    end
-    
     methods
-        function obj = orthmtxgen(pdmode)
-            % Support name-value pair arguments
-            if nargin < 1
-                obj.PartialDifferenceSet = 'off';
-            else
-                obj.PartialDifferenceSet = pdmode;
-            end
-        end
         
         function matrix = generate(obj,angles,mus,pdAng)
             
@@ -94,34 +80,4 @@ classdef orthmtxgen < handle
         
     end
     
-    methods (Access = protected)
-        
-        function s = saveObjectImpl(obj)
-            s = saveObjectImpl@matlab.System(obj);
-            s.NumberOfDimensions = obj.NumberOfDimensions;
-            s.PartialDifference = obj.PartialDifference;
-        end
-        
-        function loadObjectImpl(obj,s,wasLocked)
-            if isfield(s,'PartialDifference')
-                obj.PartialDifference = s.PartialDifference;
-            else
-                obj.PartialDifference = 'off';
-            end
-            obj.NumberOfDimensions = s.NumberOfDimensions;
-            loadObjectImpl@matlab.System(obj,s,wasLocked);
-        end
-        
-        function N = getNumInputsImpl(obj)
-            if strcmp(obj.PartialDifference,'on')
-                N = 3;
-            else
-                N = 2;
-            end
-        end
-        
-        function N = getNumOutputsImpl(~)
-            N = 1;
-        end
-    end
 end

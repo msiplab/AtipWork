@@ -28,7 +28,6 @@ classdef orthmtxgen_testcase < matlab.unittest.TestCase
         end
     end
     
-    
     methods (Test)
 
         % Test for default construction
@@ -216,7 +215,7 @@ classdef orthmtxgen_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            testCase.omgs = orthmtxgen('on');
+            testCase.omgs = orthmtxgen();
             
             % Actual values
             coefActual = generate(testCase.omgs,0,1,1);
@@ -235,7 +234,7 @@ classdef orthmtxgen_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*            
-            testCase.omgs = orthmtxgen('on');
+            testCase.omgs = orthmtxgen();
             
             % Actual values
             coefActual = generate(testCase.omgs,pi/4,1,1);
@@ -254,7 +253,7 @@ classdef orthmtxgen_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*            
-            testCase.omgs = orthmtxgen('on');
+            testCase.omgs = orthmtxgen();
             
             % Actual values
             coefActual = generate(testCase.omgs,pi/4,[ 1 -1 ],1);            
@@ -274,7 +273,7 @@ classdef orthmtxgen_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*            
-            testCase.omgs = orthmtxgen('on');
+            testCase.omgs = orthmtxgen();
             
             % Actual values
             coefActual = generate(testCase.omgs,0,1,1);
@@ -375,7 +374,7 @@ classdef orthmtxgen_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*            
-            testCase.omgs = orthmtxgen('on');
+            testCase.omgs = orthmtxgen();
             
             % Actual values
             coefActual = generate(testCase.omgs,angs,mus,pdAng);            
@@ -421,7 +420,7 @@ classdef orthmtxgen_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*            
-            testCase.omgs = orthmtxgen('on');
+            testCase.omgs = orthmtxgen();
             
             % Actual values
             coefActual = generate(testCase.omgs,angs,mus,pdAng);            
@@ -474,7 +473,7 @@ classdef orthmtxgen_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*            
-            testCase.omgs = orthmtxgen('on');
+            testCase.omgs = orthmtxgen();
             
             % Actual values
             coefActual = generate(testCase.omgs,angs,mus,pdAng);            
@@ -496,14 +495,14 @@ classdef orthmtxgen_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*            
-            testCase.omgs = orthmtxgen('off');            
+            testCase.omgs = orthmtxgen();            
             coefExpctd = 1/delta * ...
                 ( generate(testCase.omgs,angs1,1) ...
                 - generate(testCase.omgs,angs0,1));
             
             % Instantiation of target class
             import msip.*            
-            testCase.omgs = orthmtxgen('on');
+            testCase.omgs = orthmtxgen();
             
             % Actual values
             coefActual = generate(testCase.omgs,angs0,1,pdAng);            

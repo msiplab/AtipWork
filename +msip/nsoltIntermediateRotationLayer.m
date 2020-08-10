@@ -4,6 +4,7 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
         % (Optional) Layer properties.
         NumberOfChannels
         Mus
+        Mode
         
         % Layer properties go here.
     end
@@ -13,14 +14,20 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
     end
     
     methods
-        function layer = nsoltIntermediateRotationLayer(nchs,name)
+        function layer = nsoltIntermediateRotationLayer(nchs,name,mode)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
             
             % Layer constructor function goes here.
             layer.NumberOfChannels = nchs;
             layer.Name = name;
-            layer.Description = "NSOLT intermediate rotation " ...
+            if nargin < 3
+                layer.Mode = 'Synthesis';
+            else
+                layer.Mode = mode;
+            end
+            layer.Description = layer.Mode ...
+                + " NSOLT intermediate rotation " ...
                 + "(ps,pa) = (" ...
                 + nchs(1) + "," + nchs(2) + ")";
             layer.Type = '';
@@ -48,17 +55,24 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
             if isempty(layer.Mus)
                 musU = 1;
             else
-                layer.Mus;
+                musU = layer.Mus;
             end
             if isempty(layer.Angles)
-                UnT = musU*eye(pa);
+                Un = musU*eye(pa);
             else
                 anglesU = layer.Angles;
-                UnT = transpose(layer.orthmtxgen_(anglesU,musU));
+                Un = layer.orthmtxgen_(anglesU,musU);
             end
             Y = permute(X,[3 1 2 4]);
             Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
-            Za = UnT*Ya;
+            if strcmp(layer.Mode,'Analysis')
+                Za = Un*Ya;
+            elseif strcmp(layer.Mode,'Synthesis')
+                Za = Un.'*Ya;
+            else
+                throw(MException(...
+                    'Mode shuld be either of Synthesis or Analysis'))
+            end
             Y(ps+1:ps+pa,:,:,:) = reshape(Za,pa,nrows,ncols,nSamples);
             Z = ipermute(Y,[3 1 2 4]);
         end
