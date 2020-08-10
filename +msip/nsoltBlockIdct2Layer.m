@@ -1,4 +1,4 @@
-classdef bivariateIdctLayer < nnet.layer.Layer
+classdef nsoltBlockIdct2Layer < nnet.layer.Layer
 
     properties
         % (Optional) Layer properties.
@@ -13,7 +13,7 @@ classdef bivariateIdctLayer < nnet.layer.Layer
     end
     
     methods
-        function layer = bivariateIdctLayer(DecimationFactor,name)
+        function layer = nsoltBlockIdct2Layer(DecimationFactor,name)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
             

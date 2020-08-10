@@ -1,4 +1,4 @@
-classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
+classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
     %BIVARIATEIDCTLAYER_TESTCASE このクラスの概要をここに記述
     %   詳細説明をここに記述
     
@@ -21,7 +21,7 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = bivariateIdctLayer(stride,expctdName);
+            layer = nsoltBlockIdct2Layer(stride,expctdName);
             
             % Actual values
             actualName = layer.Name;
@@ -55,7 +55,7 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = bivariateIdctLayer(stride,'E0~');
+            layer = nsoltBlockIdct2Layer(stride,'E0~');
             
             % Actual values
             actualZ = layer.predict(X);
@@ -91,7 +91,7 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = bivariateIdctLayer(stride,'E0~');
+            layer = nsoltBlockIdct2Layer(stride,'E0~');
             
             % Actual values
             actualZ = layer.forward(X);
@@ -126,7 +126,7 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = bivariateIdctLayer(stride,'E0~');
+            layer = nsoltBlockIdct2Layer(stride,'E0~');
             
             % Actual values
             actualdLdX = layer.backward([],[],dLdZ,[]);
