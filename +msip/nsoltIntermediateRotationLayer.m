@@ -70,8 +70,9 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
             elseif strcmp(layer.Mode,'Synthesis')
                 Za = Un.'*Ya;
             else
-                throw(MException(...
-                    'Mode shuld be either of Synthesis or Analysis'))
+                throw(MException('NsoltLayer:InvalidMode',...
+                    '%s : Mode should be either of Synthesis or Analysis',...
+                    layer.Mode))
             end
             Y(ps+1:ps+pa,:,:,:) = reshape(Za,pa,nrows,ncols,nSamples);
             Z = ipermute(Y,[3 1 2 4]);
