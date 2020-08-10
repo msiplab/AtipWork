@@ -1,4 +1,4 @@
-classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
+classdef nsoltBlockDct2Layer_testcase < matlab.unittest.TestCase
     %BIVARIATEIDCTLAYER_TESTCASE このクラスの概要をここに記述
     %   詳細説明をここに記述
     
@@ -15,13 +15,13 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
         function testConstructor(testCase, stride)
             
             % Expected values
-            expctdName = 'E0~';
-            expctdDescription = "Block IDCT of size " ...
+            expctdName = 'E0';
+            expctdDescription = "Block DCT of size " ...
                 + stride(1) + "x"' + stride(2);
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltBlockIdct2Layer(stride,expctdName);
+            layer = nsoltBlockDct2Layer(stride,expctdName);
             
             % Actual values
             actualName = layer.Name;
@@ -49,13 +49,13 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
                 for iComponent = 1:nComponents
                     expctdZ(:,:,iComponent,iSample) = ...
                         blockproc(X(:,:,iComponent,iSample),...
-                        stride,@(x) idct2(x.data));
+                        stride,@(x) dct2(x.data));
                 end
             end
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltBlockIdct2Layer(stride,'E0~');
+            layer = nsoltBlockDct2Layer(stride,'E0');
             
             % Actual values
             actualZ = layer.predict(X);
@@ -66,7 +66,7 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
                 IsEqualTo(expctdZ,'Within',tolObj));
             
         end
-        
+        %}
         %{
         function testForward(testCase, ...
                 stride, nComponents, height, width, datatype)
@@ -91,7 +91,7 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltBlockIdct2Layer(stride,'E0~');
+            layer = nsoltBlockDct2Layer(stride,'E0~');
             
             % Actual values
             actualZ = layer.forward(X);
@@ -126,7 +126,7 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltBlockIdct2Layer(stride,'E0~');
+            layer = nsoltBlockDct2Layer(stride,'E0~');
             
             % Actual values
             actualdLdX = layer.backward([],[],dLdZ,[]);

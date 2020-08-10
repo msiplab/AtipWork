@@ -1,4 +1,4 @@
-classdef nsoltBlockIdct2Layer < nnet.layer.Layer
+classdef nsoltBlockDct2Layer < nnet.layer.Layer
 
     properties
         % (Optional) Layer properties.
@@ -13,14 +13,14 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
     end
     
     methods
-        function layer = nsoltBlockIdct2Layer(DecimationFactor,name)
+        function layer = nsoltBlockDct2Layer(DecimationFactor,name)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
             
             % Layer constructor function goes here.
             layer.DecimationFactor = DecimationFactor;
             layer.Name = name;
-            layer.Description = "Block IDCT of size " ...
+            layer.Description = "Block DCT of size " ...
                 + layer.DecimationFactor(1) + "x" + layer.DecimationFactor(2);
             layer.Type = '';
             
@@ -58,7 +58,7 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
                             x = X((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
                                 (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample);                            
-                            z = Cv_.'*x*Ch_;
+                            z = Cv_*x*Ch_.';
                             Z((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
                                 (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample) = z;
@@ -101,7 +101,7 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
                             dldz = dLdZ((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
                                 (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample);                            
-                            x = Cv_*dldz*Ch_.';
+                            x = Cv_.'*dldz*Ch_;
                             dLdX((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
                                 (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
                                 iComponent,iSample) = x;
