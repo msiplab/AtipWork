@@ -1,27 +1,38 @@
-classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
-    %BIVARIATEIDCTLAYER_TESTCASE このクラスの概要をここに記述
+classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
+    %NSOLTFINALROTATIONLAYER_TESTCASE このクラスの概要をここに記述
     %   詳細説明をここに記述
+    %
+    %   コンポーネント別に入力(nComponents): 
+    %      nRows x nCols x nChs x nSamples
+    %
+    %   ベクトル配列をブロック配列にして出力:
+    %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
+    %
     
     properties (TestParameter)
-        stride = { [2 2], [4 4] };
+        nchs = { [3 3] };
+        stride = { [2 2] };
         datatype = { 'single', 'double' };
-        nComponents = struct('grayscale',1,'rgbcolor',3);
-        height = struct('small', 8,'medium', 16, 'large', 32);
-        width = struct('small', 8,'medium', 16, 'large', 32);
+        nrows = struct('small', 4,'medium', 8, 'large', 16);
+        ncols = struct('small', 4,'medium', 8, 'large', 16);
     end
     
     methods (Test)
         
-        function testConstructor(testCase, stride)
+        function testConstructor(testCase, nchs, stride)
             
             % Expected values
-            expctdName = 'E0~';
-            expctdDescription = "Bivariate IDCT of size " ...
-                + stride(1) + "x"' + stride(2);
+            expctdName = 'V0~';
+            expctdDescription = "NSOLT final rotation ( " ...
+                + "(ps,pa) = (" ...
+                + nchs(1) + "," + nchs(2) + "), "  ...
+                + "(mv,mh) = (" ...
+                + stride(1) + "," + stride(2) + ")" ...
+                + " )";
             
             % Instantiation of target class
             import msip.*
-            layer = bivariateIdctLayer(stride,expctdName);
+            layer = nsoltFinalRotationLayer(nchs,stride,expctdName);
             
             % Actual values
             actualName = layer.Name;
@@ -32,8 +43,8 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             testCase.verifyEqual(actualDescription,expctdDescription);
         end
         
-        function testPredict(testCase, ...
-                stride, nComponents, height, width, datatype)
+        function testPredictGrayscale(testCase, ...
+                nchs, stride, nrows, ncols, datatype)
                 
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
@@ -41,21 +52,33 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Parameters
             nSamples = 8;
-            X = rand(height,width,nComponents,nSamples, datatype);
+            nDecs = prod(stride);
+            % nRows x nCols x nChs x nSamples
+            X = randn(nrows,ncols,sum(nchs),nSamples,datatype);
             
             % Expected values
-            expctdZ = zeros(size(X),datatype);
-            for iSample = 1:nSamples
-                for iComponent = 1:nComponents
-                    expctdZ(:,:,iComponent,iSample) = ...
-                        blockproc(X(:,:,iComponent,iSample),...
-                        stride,@(x) idct2(x.data));
-                end
+            % (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
+            height = stride(1)*nrows;
+            width = stride(2)*ncols;
+            ps = nchs(1);
+            pa = nchs(2);
+            W0T = eye(ps,datatype);
+            U0T = eye(pa,datatype);
+            Y = permute(X,[3 1 2 4]);
+            Ys = reshape(Y(1:ps,:,:,:),ps,nrows*ncols*nSamples);
+            Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
+            Zsa = [ W0T(1:nDecs/2,:)*Ys; U0T(1:nDecs/2,:)*Ya ];
+            expctdZ = zeros(height,width,1,nSamples,datatype);
+            nBlks = nrows*ncols;
+            for iSample=1:nSamples
+                Zi = Zsa(:,(iSample-1)*nBlks+1:iSample*nBlks);
+                expctdZ(:,:,1,iSample) = ...
+                    col2im(Zi,stride,[height width],'distinct');    
             end
             
             % Instantiation of target class
             import msip.*
-            layer = bivariateIdctLayer(stride,'E0~');
+            layer = nsoltFinalRotationLayer(nchs,stride,'V0~');
             
             % Actual values
             actualZ = layer.predict(X);
@@ -67,7 +90,8 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
         end
         
-        function testForward(testCase, ...
+        %{
+        function testForwardGrayScale(testCase, ...
                 stride, nComponents, height, width, datatype)
                         
             import matlab.unittest.constraints.IsEqualTo
@@ -76,10 +100,10 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Parameters
             nSamples = 8;
-            X = rand(height,width,nComponents,nSamples, datatype);
+            X = rand(height,width,nComponents,nSamples, type);
             
             % Expected values
-            expctdZ = zeros(size(X),datatype);
+            expctdZ = zeros(size(X),type);
             for iSample = 1:nSamples
                 for iComponent = 1:nComponents
                     expctdZ(:,:,iComponent,iSample) = ...
@@ -96,14 +120,14 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             actualZ = layer.forward(X);
             
             % Evaluation
-            testCase.verifyInstanceOf(actualZ,datatype);
+            testCase.verifyInstanceOf(actualZ,type);
             testCase.verifyThat(actualZ,...
                 IsEqualTo(expctdZ,'Within',tolObj));
             
         end
         
-        function testBackward(testCase, ...
-                stride, nComponents, height, width, datatype)
+        function testBackwardGrayScale(testCase, ...
+                stride, nComponents, height, width, type)
                         
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
@@ -111,10 +135,10 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             
             % Parameters
             nSamples = 8;
-            dLdZ = rand(height,width,nComponents,nSamples, datatype);
+            dLdZ = rand(height,width,nComponents,nSamples, type);
             
             % Expected values
-            expctddLdX = zeros(size(dLdZ),datatype);
+            expctddLdX = zeros(size(dLdZ),type);
             for iSample = 1:nSamples
                 for iComponent = 1:nComponents
                     expctddLdX(:,:,iComponent,iSample) = ...
@@ -131,11 +155,11 @@ classdef bivariateIdctLayer_testcase < matlab.unittest.TestCase
             actualdLdX = layer.backward([],[],dLdZ,[]);
             
             % Evaluation
-            testCase.verifyInstanceOf(actualdLdX,datatype);
+            testCase.verifyInstanceOf(actualdLdX,type);
             testCase.verifyThat(actualdLdX,...
                 IsEqualTo(expctddLdX,'Within',tolObj));
         end
-        
+        %}
     end
 end
 
