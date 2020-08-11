@@ -52,14 +52,14 @@ u = rgb2gray(im2double(imread('./data/lena.png')));
 % K-特異値分解
 % (K-Singular Value Decomposition)
 % 問題設定 (Problem setting):
-% $$\{\hat{\mathbf{\Phi}},\{ \hat{\mathbf{x}} \}\}=\arg\min_{\{\mathbf{\Phi},\{\mathbf{x}\}\}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{y}_n-\mathbf{\Phi}\hat{\mathbf{x}}_n\|_2^2,\ 
-% \quad\mathrm{s.t.}\ \forall n, \|\mathbf{x}_n\|\leq K$$$
+% $$\{\hat{\mathbf{\Phi}},\{ \hat{\mathbf{x}}_n \}\}=\arg\min_{\{\mathbf{\Phi},\{\mathbf{x}_n\}\}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{y}_n-\mathbf{\Phi}\hat{\mathbf{x}}_n\|_2^2,\ 
+% \quad\mathrm{s.t.}\ \forall n, \|\mathbf{x}_n\|_0\leq K$$$
 % アルゴリズム (Algorithm):
 % スパース近似ステップと辞書更新ステップを繰返す．
 %% 
 % * スパース近似ステップ (Sparse approximation step)
 %% 
-% $$\hat{\mathbf{x}}_n=\frac{1}{2}\arg\min_{\mathbf{x}_n} \|\mathbf{y}_n-\hat{\mathbf{\Phi}}\mathbf{x}_n\|_2^2\ 
+% $$\hat{\mathbf{x}}_n=\arg\min_{\mathbf{x}_n} \frac{1}{2}\|\mathbf{y}_n-\hat{\mathbf{\Phi}}\mathbf{x}_n\|_2^2\ 
 % \quad \mathrm{s.t.}\ \|\mathbf{x}_n\|_0\leq K$$
 %% 
 % * 辞書更新ステップ (Dictionary update step)
