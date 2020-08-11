@@ -52,12 +52,15 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
             decFactor = layer.DecimationFactor;
             decV = decFactor(1);
             decH = decFactor(2);
-            Cv_ = layer.Cv;
+            Cv_T = layer.Cv.';
             Ch_ = layer.Ch;
             nRows = size(X,1);
             nCols = size(X,2);
             nComponents = 1;
             nSamples = size(X,4);
+            nQDecsee = ceil(decV/2)*ceil(decH/2);
+            nQDecsoo = floor(decV/2)*floor(decH/2);
+            nQDecsoe = floor(decV/2)*ceil(decH/2);
             %
             height = decFactor(1)*nRows;
             width = decFactor(2)*nCols;
@@ -69,9 +72,6 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
                         for iRow = 1:nRows
                             coefs = A(:,iRow,iCol,iSample);
                             %x = layer.permuteIdctCoefs_(coefs,decFactor);
-                            nQDecsee = ceil(decV/2)*ceil(decH/2);
-                            nQDecsoo = floor(decV/2)*floor(decH/2);
-                            nQDecsoe = floor(decV/2)*ceil(decH/2);
                             cee = coefs(         1:  nQDecsee);
                             coo = coefs(nQDecsee+1:nQDecsee+nQDecsoo);
                             coe = coefs(nQDecsee+nQDecsoo+1:nQDecsee+nQDecsoo+nQDecsoe);
@@ -81,7 +81,7 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
                                 reshape(coe,floor(decV/2),ceil(decH/2)) reshape(coo,floor(decV/2),floor(decH/2))
                                 ];
                             %
-                            z = Cv_.'*x*Ch_;
+                            z = Cv_T*x*Ch_;
                             Z((iRow-1)*decFactor(1)+1:iRow*decFactor(1),...
                                 (iCol-1)*decFactor(2)+1:iCol*decFactor(2),...
                                 iComponent,iSample) = z;
