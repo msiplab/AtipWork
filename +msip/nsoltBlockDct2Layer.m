@@ -1,5 +1,12 @@
 classdef nsoltBlockDct2Layer < nnet.layer.Layer
-
+    %
+    %   ベクトル配列をブロック配列を入力:
+    %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
+    %
+    %   コンポーネント別に出力(nComponents):
+    %      nRows x nCols x nDecs x nSamples
+    %    
+    
     properties
         % (Optional) Layer properties.
         DecimationFactor
@@ -42,34 +49,39 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
             %         Z1, ..., Zm - Outputs of layer forward function
             
             % Layer forward function for prediction goes here.
-            DecimationFactor_ = layer.DecimationFactor;
+            decFactor = layer.DecimationFactor;
             Cv_ = layer.Cv;
             Ch_ = layer.Ch;
-            nRows = size(X,1)/DecimationFactor_(1);
-            nCols = size(X,2)/DecimationFactor_(2);
+            decV = decFactor(1);
+            decH = decFactor(2);
+            nRows = size(X,1)/decV;
+            nCols = size(X,2)/decH;
+            nDecs = prod(decFactor);
             nComponents = size(X,3);
             nSamples = size(X,4);
             %
-            Z = zeros(size(X),'like',X);
+            A = zeros(nDecs,nRows,nCols,nSamples,'like',X);
             for iSample = 1:nSamples
                 for iComponent = 1:nComponents
-                    %Z(:,:,iComponent,iSample) = ...
-                    %    blockproc(X(:,:,iComponent,iSample),...
-                    %    layer.DecimationFactor,@(x) Cv_.'*x.data*Ch_);
                     for iCol = 1:nCols
                         for iRow = 1:nRows
-                            x = X((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
-                                (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
-                                iComponent,iSample);                            
-                            z = Cv_*x*Ch_.';
-                            z = layer.permuteDctCoefs_(z,DecimationFactor_);
-                            Z((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
-                                (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
-                                iComponent,iSample) = z;
+                            x = X((iRow-1)*decV+1:iRow*decV,...
+                                (iCol-1)*decH+1:iCol*decH,...
+                                iComponent,iSample);
+                            coefs = Cv_*x*Ch_.';
+                            %z = layer.permuteDctCoefs_(coefs,decFactor);
+                            cee = coefs(1:ceil(decV/2),    1:ceil(decH/2));
+                            coo = coefs(ceil(decV/2)+1:end,ceil(decH/2)+1:end);
+                            coe = coefs(ceil(decV/2)+1:end,1:ceil(decH/2));
+                            ceo = coefs(1:ceil(decV/2),    ceil(decH/2)+1:end);
+                            z = [ cee(:) ; coo(:) ; coe(:) ; ceo(:) ];
+                            %
+                            A(:,iRow,iCol,iSample) = z;
                         end
                     end
                 end
             end
+            Z = permute(A,[2 3 1 4]);
         end        
         
         %{        
@@ -118,6 +130,7 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
         %}
     end
     
+    %{
     methods (Static, Access = private)
         function value = permuteDctCoefs_(x,blockSize)
             coefs = x;
@@ -128,8 +141,8 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
             coe = coefs(ceil(decY_/2)+1:end,1:ceil(decX_/2));
             ceo = coefs(1:ceil(decY_/2),    ceil(decX_/2)+1:end);
             value = [ cee(:) ; coo(:) ; coe(:) ; ceo(:) ];
-            value = reshape(value,decY_,decX_);
         end
     end
+    %}
 end
 

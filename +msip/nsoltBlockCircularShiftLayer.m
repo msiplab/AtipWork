@@ -56,7 +56,9 @@ classdef nsoltBlockCircularShiftLayer < nnet.layer.Layer
             elseif strcmp(dir,'Up')
                 shift = [ 0 -1 0 0 ];
             else
-                shift = [ 0 0 0 0 ];
+                throw(MException('NsoltLayer:InvalidDirection',...
+                    '%s : Direction should be either of Right, Left, Down or Up',...
+                    layer.Direction))
             end
             %
             Y = permute(X,[3 1 2 4]); % [ch ver hor smpl]
@@ -66,7 +68,7 @@ classdef nsoltBlockCircularShiftLayer < nnet.layer.Layer
                 Y(1:ps,:,:,:) = circshift(Y(1:ps,:,:,:),shift);
             else
                 throw(MException('NsoltLayer:InvalidTargetChannels',...
-                    '%s : Mode should be either of Lower or Upper',...
+                    '%s : TaregetChannels should be either of Lower or Upper',...
                     layer.TargetChannels))
             end
             Z = ipermute(Y,[3 1 2 4]);

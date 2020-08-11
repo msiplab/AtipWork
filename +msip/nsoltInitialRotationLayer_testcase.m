@@ -2,10 +2,10 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
     %NSOLTFINALROTATIONLAYER_TESTCASE このクラスの概要をここに記述
     %   詳細説明をここに記述
     %
-    %   ベクトル配列をブロック配列を入力:
-    %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
+    %   コンポーネント別に入力(nComponents):
+    %      nRows x nCols x nDecs x nSamples
     %
-    %   コンポーネント別にして出力(nComponents):
+    %   コンポーネント別に出力(nComponents):
     %      nRows x nCols x nChs x nSamples
     %
     
@@ -54,10 +54,8 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             nSamples = 8;
             nDecs = prod(stride);
             nChsTotal = sum(nchs);
-            % (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
-            height = stride(1)*nrows;
-            width = stride(2)*ncols;
-            X = randn(height,width,1,nSamples,datatype);
+            % nRows x nCols x nDecs x nSamples            
+            X = randn(nrows,ncols,nDecs,nSamples,datatype);
             
             % Expected values
             % nRows x nCols x nChs x nSamples
@@ -69,10 +67,8 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             Y  = zeros(nChsTotal,nrows,ncols,datatype);
             for iSample=1:nSamples
                 % Perumation in each block                
-                Ai = X(:,:,1,iSample); %blockproc(X(:,:,1,iSample),stride,...
-                    %@testCase.permuteDctCoefs_);
-                % Vectorization of each block
-                Yi = im2col(Ai,stride,'distinct');
+                Ai = permute(X(:,:,:,iSample),[3 1 2]); 
+                Yi = reshape(Ai,nDecs,nrows,ncols);
                 %
                 Ys = Yi(1:nDecs/2,:);
                 Ya = Yi(nDecs/2+1:end,:);
@@ -80,7 +76,7 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
                     reshape(W0(:,1:nDecs/2)*Ys,ps,nrows,ncols);
                 Y(ps+1:ps+pa,:,:) = ...
                     reshape(U0(:,1:nDecs/2)*Ya,pa,nrows,ncols);
-                expctdZ(:,:,:,iSample) = ipermute(Y,[3 1 2 4]);                
+                expctdZ(:,:,:,iSample) = ipermute(Y,[3 1 2]);                
             end
             
             % Instantiation of target class
@@ -111,10 +107,8 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             nSamples = 8;
             nDecs = prod(stride);
             nChsTotal = sum(nchs);
-            % (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
-            height = stride(1)*nrows;
-            width = stride(2)*ncols;
-            X = randn(height,width,1,nSamples,datatype);
+            % nRows x nCols x nDecs x nSamples            
+            X = randn(nrows,ncols,nDecs,nSamples,datatype);
             angles = randn((nChsTotal-2)*nChsTotal/4,1);
             
             % Expected values
@@ -126,11 +120,9 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             expctdZ = zeros(nrows,ncols,nChsTotal,nSamples,datatype);
             Y  = zeros(nChsTotal,nrows,ncols,datatype);
             for iSample=1:nSamples
-                % Perumation in each block
-                Ai = X(:,:,1,iSample); %blockproc(X(:,:,1,iSample),stride,...
-                   % @testCase.permuteDctCoefs_);
-                % Vectorization of each block
-                Yi = im2col(Ai,stride,'distinct');
+                % Perumation in each block                
+                Ai = permute(X(:,:,:,iSample),[3 1 2]); 
+                Yi = reshape(Ai,nDecs,nrows,ncols);
                 %
                 Ys = Yi(1:nDecs/2,:);
                 Ya = Yi(nDecs/2+1:end,:);
@@ -138,7 +130,7 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
                     reshape(W0(:,1:nDecs/2)*Ys,ps,nrows,ncols);
                 Y(ps+1:ps+pa,:,:) = ...
                     reshape(U0(:,1:nDecs/2)*Ya,pa,nrows,ncols);
-                expctdZ(:,:,:,iSample) = ipermute(Y,[3 1 2 4]);
+                expctdZ(:,:,:,iSample) = ipermute(Y,[3 1 2]);
             end
             
             % Instantiation of target class

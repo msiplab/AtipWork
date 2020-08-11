@@ -1,4 +1,11 @@
 classdef nsoltInitialRotationLayer < nnet.layer.Layer
+    %
+    %   コンポーネント別に入力(nComponents):
+    %      nRows x nCols x nDecs x nSamples
+    %
+    %   コンポーネント別に出力(nComponents):
+    %      nRows x nCols x nChs x nSamples
+    %
     
     properties
         % (Optional) Layer properties.
@@ -45,18 +52,14 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
             %  
             
             % Layer forward function for prediction goes here.
-            height = size(X,1);
-            width = size(X,2);
-            nrows = height/layer.DecimationFactor(1);
-            ncols = width/layer.DecimationFactor(2);
+            nrows = size(X,1);
+            ncols = size(X,2);
             ps = layer.NumberOfChannels(1);
             pa = layer.NumberOfChannels(2);
             nSamples = size(X,4);
             stride = layer.DecimationFactor;
             nDecs = prod(stride);
             nChsTotal = ps + pa;
-            mv = stride(1);
-            mh = stride(2);
             %
             if isempty(layer.Angles)
                 W0 = eye(ps);
@@ -67,36 +70,12 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
                 W0 = layer.orthmtxgen_(anglesW,1);
                 U0 = layer.orthmtxgen_(anglesU,1);
             end
-            Z = zeros(nrows,ncols,nChsTotal,nSamples,'like',X);
-            Y = zeros(nChsTotal,nrows,ncols,'like',X);
-            Ys = zeros(nDecs/2,nrows*ncols,'like',X);
-            Ya = zeros(nDecs/2,nrows*ncols,'like',X);
-            for iSample=1:nSamples
-                % Perumation in each block
-                %Ai = blockproc(X(:,:,1,iSample),stride,...
-                %    @(x) layer.permuteDctCoefs_(x.data,x.blockSize));
-                % Vectorization of each block
-                %Yi = im2col(Ai,stride,'distinct');
-                iElm = 1;
-                for icol = 1:ncols
-                    for irow = 1:nrows
-                        Ai = ... %layer.permuteDctCoefs_(...
-                            X((irow-1)*mv+1:irow*mv,...
-                            (icol-1)*mh+1:icol*mh,1,iSample); %,stride);
-                        Ys(:,iElm) = Ai(1:nDecs/2);
-                        Ya(:,iElm) = Ai(nDecs/2+1:end);
-                        iElm = iElm + 1;
-                    end
-                end
-                %
-                %Ys = Yi(1:nDecs/2,:);
-                %Ya = Yi(nDecs/2+1:end,:);
-                Y(1:ps,:,:) = ...
-                    reshape(W0(:,1:nDecs/2)*Ys,ps,nrows,ncols);
-                Y(ps+1:ps+pa,:,:) = ...
-                    reshape(U0(:,1:nDecs/2)*Ya,pa,nrows,ncols);
-                Z(:,:,:,iSample) = ipermute(Y,[3 1 2 4]);                
-            end
+            Y = reshape(permute(X,[3 1 2 4]),nDecs,nrows*ncols*nSamples);
+            Zs = W0(:,1:nDecs/2)*Y(1:nDecs/2,:);
+            Za = U0(:,1:nDecs/2)*Y(nDecs/2+1:end,:);
+            Z = ipermute(reshape([Zs;Za],nChsTotal,nrows,ncols,nSamples),...
+                [3 1 2 4]);
+
         end
         
         %{        

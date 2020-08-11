@@ -1,11 +1,17 @@
 classdef nsoltBlockDct2Layer_testcase < matlab.unittest.TestCase
     %BIVARIATEIDCTLAYER_TESTCASE このクラスの概要をここに記述
     %   詳細説明をここに記述
+    %
+    %   ベクトル配列をブロック配列を入力:
+    %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
+    %
+    %   コンポーネント別に出力(nComponents):
+    %      nRows x nCols x nDecs x nSamples
+    %    
     
     properties (TestParameter)
         stride = { [2 2], [4 4] };
         datatype = { 'single', 'double' };
-        nComponents = struct('grayscale',1,'rgbcolor',3);
         height = struct('small', 8,'medium', 16, 'large', 32);
         width = struct('small', 8,'medium', 16, 'large', 32);
     end
@@ -32,8 +38,8 @@ classdef nsoltBlockDct2Layer_testcase < matlab.unittest.TestCase
             testCase.verifyEqual(actualDescription,expctdDescription);
         end
         
-        function testPredict(testCase, ...
-                stride, nComponents, height, width, datatype)
+        function testPredictGrayScale(testCase, ...
+                stride, height, width, datatype)
                 
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
@@ -41,18 +47,23 @@ classdef nsoltBlockDct2Layer_testcase < matlab.unittest.TestCase
             
             % Parameters
             nSamples = 8;
+            nComponents = 1;
             X = rand(height,width,nComponents,nSamples, datatype);
             
             % Expected values
-            expctdZ = zeros(size(X),datatype);
+            nrows = height/stride(1);
+            ncols = width/stride(2);
+            ndecs = prod(stride);
+            expctdZ = zeros(nrows,ncols,ndecs,nSamples,datatype);
             for iSample = 1:nSamples
-                for iComponent = 1:nComponents
-                    Y = blockproc(X(:,:,iComponent,iSample),...
-                        stride,@(x) dct2(x.data));
-                    expctdZ(:,:,iComponent,iSample) = ...
-                        blockproc(Y,...
-                        stride,@testCase.permuteDctCoefs_);
-                end
+                % Block DCT
+                Y = blockproc(X(:,:,nComponents,iSample),...
+                    stride,@(x) dct2(x.data));
+                % Rearrange the DCT Coefs.
+                A = blockproc(Y,...
+                    stride,@testCase.permuteDctCoefs_);
+                expctdZ(:,:,:,iSample) = ...
+                    permute(reshape(A,ndecs,nrows,ncols),[2 3 1]);                
             end
             
             % Instantiation of target class
@@ -143,17 +154,13 @@ classdef nsoltBlockDct2Layer_testcase < matlab.unittest.TestCase
     
     methods (Static, Access = private)
         
-        
         function value = permuteDctCoefs_(x)
             coefs = x.data;
-            decY_ = x.blockSize(1);
-            decX_ = x.blockSize(2);
             cee = coefs(1:2:end,1:2:end);
             coo = coefs(2:2:end,2:2:end);
             coe = coefs(2:2:end,1:2:end);
             ceo = coefs(1:2:end,2:2:end);
             value = [ cee(:) ; coo(:) ; coe(:) ; ceo(:) ];
-            value = reshape(value,decY_,decX_);
         end
         
     end

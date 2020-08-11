@@ -1,5 +1,11 @@
 classdef nsoltFinalRotationLayer < nnet.layer.Layer
-    
+    %
+    %   コンポーネント別に入力(nComponents):
+    %      nRows x nCols x nChs x nSamples
+    %
+    %   コンポーネント別に出力(nComponents):
+    %      nRows x nCols x nDecs x nSamples
+    %
     properties
         % (Optional) Layer properties.
         NumberOfChannels
@@ -54,8 +60,6 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             nSamples = size(X,4);
             stride = layer.DecimationFactor;
             nDecs = prod(stride);
-            mv = stride(1);
-            mh = stride(2);
             %
             if isempty(layer.Angles)
                 W0T = eye(ps);
@@ -70,21 +74,7 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             Ys = reshape(Y(1:ps,:,:,:),ps,nrows*ncols*nSamples);
             Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
             Zsa = [ W0T(1:nDecs/2,:)*Ys; U0T(1:nDecs/2,:)*Ya ];
-            Z = zeros(height,width,1,nSamples,'like',X);
-            nBlks = nrows*ncols;
-            for iSample=1:nSamples
-                Zi = Zsa(:,(iSample-1)*nBlks+1:iSample*nBlks);
-                iBlk = 1;
-                for iCol = 1:ncols
-                    for iRow = 1:nrows
-                        zi = ... %layer.permuteIdctCoefs_(...
-                            reshape(Zi(:,iBlk),stride); %,stride);
-                        Z((iRow-1)*mv+1:iRow*mv,(iCol-1)*mh+1:iCol*mh,...
-                            1,iSample) = zi;
-                        iBlk = iBlk+1;
-                    end
-                end
-            end
+            Z = permute(reshape(Zsa,nDecs,nrows,ncols,nSamples),[2 3 1 4]);
         end
         
         %{        
