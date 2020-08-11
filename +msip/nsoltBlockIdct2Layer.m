@@ -28,8 +28,7 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
     end
     
     properties (Access = private)
-        Cv 
-        Ch 
+        Cvh
     end
     
     methods
@@ -50,9 +49,21 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
             
             Cv_ = dctmtx(layer.DecimationFactor(1));
             Ch_ = dctmtx(layer.DecimationFactor(2));
-            layer.Cv = [ Cv_(1:2:end,:) ; Cv_(2:2:end,:) ];
-            layer.Ch = [ Ch_(1:2:end,:) ; Ch_(2:2:end,:) ];
-                
+            Cv_ = [ Cv_(1:2:end,:) ; Cv_(2:2:end,:) ];
+            Ch_ = [ Ch_(1:2:end,:) ; Ch_(2:2:end,:) ];
+            %
+            decV = layer.DecimationFactor(1);
+            decH = layer.DecimationFactor(2);
+            Cve = Cv_(1:ceil(decV/2),:);
+            Cvo = Cv_(ceil(decV/2)+1:end,:);
+            Che = Ch_(1:ceil(decH/2),:);
+            Cho = Ch_(ceil(decH/2)+1:end,:);
+            Cee = kron(Che,Cve);
+            Coo = kron(Cho,Cvo);
+            Coe = kron(Che,Cvo);
+            Ceo = kron(Cho,Cve);
+            layer.Cvh = [Cee; Coo; Coe; Ceo];            
+            
         end
         
         function Z = predict(layer, X)
@@ -69,15 +80,16 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
             decFactor = layer.DecimationFactor;
             decV = decFactor(1);
             decH = decFactor(2);
-            Cv_T = layer.Cv.';
-            Ch_ = layer.Ch;
+            %Cv_T = layer.Cv.';
+            %Ch_ = layer.Ch;
+            Cvh_T = layer.Cvh.';
             nRows = size(X,1);
             nCols = size(X,2);
             nComponents = 1;
             nSamples = size(X,4);
-            nQDecsee = ceil(decV/2)*ceil(decH/2);
-            nQDecsoo = floor(decV/2)*floor(decH/2);
-            nQDecsoe = floor(decV/2)*ceil(decH/2);
+            %nQDecsee = ceil(decV/2)*ceil(decH/2);
+            %nQDecsoo = floor(decV/2)*floor(decH/2);
+            %nQDecsoe = floor(decV/2)*ceil(decH/2);
             %
             height = decFactor(1)*nRows;
             width = decFactor(2)*nCols;
@@ -88,19 +100,20 @@ classdef nsoltBlockIdct2Layer < nnet.layer.Layer
                     for iCol = 1:nCols
                         for iRow = 1:nRows
                             coefs = A(:,iRow,iCol,iSample);
-                            cee = coefs(         1:  nQDecsee);
-                            coo = coefs(nQDecsee+1:nQDecsee+nQDecsoo);
-                            coe = coefs(nQDecsee+nQDecsoo+1:nQDecsee+nQDecsoo+nQDecsoe);
-                            ceo = coefs(nQDecsee+nQDecsoo+nQDecsoe+1:end);
-                            x = [
-                                reshape(cee,ceil(decV/2),ceil(decH/2)) reshape(ceo,ceil(decV/2),floor(decH/2));
-                                reshape(coe,floor(decV/2),ceil(decH/2)) reshape(coo,floor(decV/2),floor(decH/2))
-                                ];
+                            %cee = coefs(         1:  nQDecsee);
+                            %coo = coefs(nQDecsee+1:nQDecsee+nQDecsoo);
+                            %coe = coefs(nQDecsee+nQDecsoo+1:nQDecsee+nQDecsoo+nQDecsoe);
+                            %ceo = coefs(nQDecsee+nQDecsoo+nQDecsoe+1:end);
+                            %x = [
+                            %    reshape(cee,ceil(decV/2),ceil(decH/2)) reshape(ceo,ceil(decV/2),floor(decH/2));
+                            %    reshape(coe,floor(decV/2),ceil(decH/2)) reshape(coo,floor(decV/2),floor(decH/2))
+                            %    ];
                             %
-                            z = Cv_T*x*Ch_;
-                            Z((iRow-1)*decFactor(1)+1:iRow*decFactor(1),...
-                                (iCol-1)*decFactor(2)+1:iCol*decFactor(2),...
-                                iComponent,iSample) = z;
+                            %z = Cv_T*x*Ch_;
+                            Z((iRow-1)*decV+1:iRow*decV,...
+                                (iCol-1)*decH+1:iCol*decH,...
+                                iComponent,iSample) = ...
+                                reshape(Cvh_T*coefs,decV,decH);
                         end
                     end
                 end

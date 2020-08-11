@@ -163,7 +163,7 @@ nCoefs = floor(sparsityRatio*nDims);
 % and Information Processing, 5_, E9. doi:10.1017/ATSIP.2016.3.
 
 % Patch size for training
-szPatchTrn = [16 16]; % > [ (Ny+1)My (Nx+1)Mx ]
+szPatchTrn = [64 64]; % > [ (Ny+1)My (Nx+1)Mx ]
 
 % Construction of layers
 import msip.*

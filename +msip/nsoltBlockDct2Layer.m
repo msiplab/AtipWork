@@ -28,8 +28,7 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
     end
     
     properties (Access = private)
-        Cv 
-        Ch 
+        Cvh
     end
     
     methods
@@ -50,8 +49,20 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
             
             Cv_ = dctmtx(layer.DecimationFactor(1));
             Ch_ = dctmtx(layer.DecimationFactor(2));
-            layer.Cv = [ Cv_(1:2:end,:) ; Cv_(2:2:end,:) ];
-            layer.Ch = [ Ch_(1:2:end,:) ; Ch_(2:2:end,:) ];
+            Cv_ = [ Cv_(1:2:end,:) ; Cv_(2:2:end,:) ];
+            Ch_ = [ Ch_(1:2:end,:) ; Ch_(2:2:end,:) ];
+            %
+            decV = layer.DecimationFactor(1);
+            decH = layer.DecimationFactor(2);
+            Cve = Cv_(1:ceil(decV/2),:);
+            Cvo = Cv_(ceil(decV/2)+1:end,:);
+            Che = Ch_(1:ceil(decH/2),:);
+            Cho = Ch_(ceil(decH/2)+1:end,:);
+            Cee = kron(Che,Cve);
+            Coo = kron(Cho,Cvo);
+            Coe = kron(Che,Cvo);
+            Ceo = kron(Cho,Cve);
+            layer.Cvh = [Cee; Coo; Coe; Ceo];            
             
         end
         
@@ -67,10 +78,11 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
             
             % Layer forward function for prediction goes here.
             decFactor = layer.DecimationFactor;
-            Cv_ = layer.Cv;
-            Ch_T = layer.Ch.';
             decV = decFactor(1);
             decH = decFactor(2);
+            %
+            Cvh_ = layer.Cvh;
+            %
             nRows = size(X,1)/decV;
             nCols = size(X,2)/decH;
             nDecs = prod(decFactor);
@@ -85,15 +97,14 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
                             x = X((iRow-1)*decV+1:iRow*decV,...
                                 (iCol-1)*decH+1:iCol*decH,...
                                 iComponent,iSample);
-                            coefs = Cv_*x*Ch_T;
-                            %z = layer.permuteDctCoefs_(coefs,decFactor);
-                            cee = coefs(1:ceil(decV/2),    1:ceil(decH/2));
-                            coo = coefs(ceil(decV/2)+1:end,ceil(decH/2)+1:end);
-                            coe = coefs(ceil(decV/2)+1:end,1:ceil(decH/2));
-                            ceo = coefs(1:ceil(decV/2),    ceil(decH/2)+1:end);
-                            z = [ cee coo coe ceo ];
+                            %coefs = Cv_*x*Ch_T;
+                            %cee = coefs(1:ceil(decV/2),    1:ceil(decH/2));
+                            %coo = coefs(ceil(decV/2)+1:end,ceil(decH/2)+1:end);
+                            %coe = coefs(ceil(decV/2)+1:end,1:ceil(decH/2));
+                            %ceo = coefs(1:ceil(decV/2),    ceil(decH/2)+1:end);
+                            %z =  [ cee(:); coo(:); coe(:); ceo(:) ];
                             %
-                            A(:,iRow,iCol,iSample) = z(:);
+                            A(:,iRow,iCol,iSample) = Cvh_*x(:);
                         end
                     end
                 end
