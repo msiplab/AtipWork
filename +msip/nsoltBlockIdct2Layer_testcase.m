@@ -1,13 +1,24 @@
 classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
-    %BIVARIATEIDCTLAYER_TESTCASE このクラスの概要をここに記述
-    %   詳細説明をここに記述
+    %NSOLTBLOCKIDCT2LAYER_TESTCASE
     %
-    %   コンポーネント別に入力(nComponents):
+    %   コンポーネント別に入力(nComponents=1のみサポート):
     %      nRows x nCols x nDecs x nSamples
     %
-    %   ベクトル配列をブロック配列にして出力:
+    %   ベクトル配列をブロック配列にして出力(nComponents=1のみサポート):
     %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
     %
+    % Requirements: MATLAB R2020a
+    %
+    % Copyright (c) 2020, Shogo MURAMATSU
+    %
+    % All rights reserved.
+    %
+    % Contact address: Shogo MURAMATSU,
+    %                Faculty of Engineering, Niigata University,
+    %                8050 2-no-cho Ikarashi, Nishi-ku,
+    %                Niigata, 950-2181, JAPAN
+    %
+    % http://msiplab.eng.niigata-u.ac.jp/    
     
     properties (TestParameter)
         stride = { [2 2], [4 4] };
@@ -27,7 +38,9 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltBlockIdct2Layer(stride,expctdName);
+            layer = nsoltBlockIdct2Layer(...
+                'DecimationFactor',stride,...
+                'Name',expctdName);
             
             % Actual values
             actualName = layer.Name;
@@ -68,7 +81,9 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltBlockIdct2Layer(stride,'E0~');
+            layer = nsoltBlockIdct2Layer(...
+                'DecimationFactor',stride,...
+                'Name','E0~');
             
             % Actual values
             actualZ = layer.predict(X);
@@ -80,76 +95,6 @@ classdef nsoltBlockIdct2Layer_testcase < matlab.unittest.TestCase
             
         end
         
-        %{
-        function testForward(testCase, ...
-                stride, nComponents, height, width, datatype)
-                        
-            import matlab.unittest.constraints.IsEqualTo
-            import matlab.unittest.constraints.AbsoluteTolerance
-            tolObj = AbsoluteTolerance(1e-6,single(1e-6));
-            
-            % Parameters
-            nSamples = 8;
-            X = rand(height,width,nComponents,nSamples, datatype);
-            
-            % Expected values
-            expctdZ = zeros(size(X),datatype);
-            for iSample = 1:nSamples
-                for iComponent = 1:nComponents
-                    expctdZ(:,:,iComponent,iSample) = ...
-                        blockproc(X(:,:,iComponent,iSample),...
-                        stride,@(x) idct2(x.data));
-                end
-            end
-            
-            % Instantiation of target class
-            import msip.*
-            layer = nsoltBlockIdct2Layer(stride,'E0~');
-            
-            % Actual values
-            actualZ = layer.forward(X);
-            
-            % Evaluation
-            testCase.verifyInstanceOf(actualZ,datatype);
-            testCase.verifyThat(actualZ,...
-                IsEqualTo(expctdZ,'Within',tolObj));
-            
-        end
-        
-        function testBackward(testCase, ...
-                stride, nComponents, height, width, datatype)
-                        
-            import matlab.unittest.constraints.IsEqualTo
-            import matlab.unittest.constraints.AbsoluteTolerance
-            tolObj = AbsoluteTolerance(1e-6,single(1e-6));
-            
-            % Parameters
-            nSamples = 8;
-            dLdZ = rand(height,width,nComponents,nSamples, datatype);
-            
-            % Expected values
-            expctddLdX = zeros(size(dLdZ),datatype);
-            for iSample = 1:nSamples
-                for iComponent = 1:nComponents
-                    expctddLdX(:,:,iComponent,iSample) = ...
-                        blockproc(dLdZ(:,:,iComponent,iSample),...
-                        stride,@(x) dct2(x.data));
-                end
-            end
-            
-            % Instantiation of target class
-            import msip.*
-            layer = nsoltBlockIdct2Layer(stride,'E0~');
-            
-            % Actual values
-            actualdLdX = layer.backward([],[],dLdZ,[]);
-            
-            % Evaluation
-            testCase.verifyInstanceOf(actualdLdX,datatype);
-            testCase.verifyThat(actualdLdX,...
-                IsEqualTo(expctddLdX,'Within',tolObj));
-        end
-        %}
     end
     
     methods (Static, Access = private)

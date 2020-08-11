@@ -1,4 +1,5 @@
 classdef nsoltBlockDct2Layer < nnet.layer.Layer
+    %NSOLTBLOCKDCT2LAYER
     %
     %   ベクトル配列をブロック配列を入力:
     %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
@@ -6,7 +7,19 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
     %   コンポーネント別に出力(nComponents):
     %      nRows x nCols x nDecs x nSamples
     %    
-    
+    % Requirements: MATLAB R2020a
+    %
+    % Copyright (c) 2020, Shogo MURAMATSU
+    %
+    % All rights reserved.
+    %
+    % Contact address: Shogo MURAMATSU,
+    %                Faculty of Engineering, Niigata University,
+    %                8050 2-no-cho Ikarashi, Nishi-ku,
+    %                Niigata, 950-2181, JAPAN
+    %
+    % http://msiplab.eng.niigata-u.ac.jp/
+        
     properties
         % (Optional) Layer properties.
         DecimationFactor
@@ -20,13 +33,17 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
     end
     
     methods
-        function layer = nsoltBlockDct2Layer(DecimationFactor,name)
+        function layer = nsoltBlockDct2Layer(varargin)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
+            p = inputParser;
+            addParameter(p,'DecimationFactor',[])
+            addParameter(p,'Name','')
+            parse(p,varargin{:})
             
             % Layer constructor function goes here.
-            layer.DecimationFactor = DecimationFactor;
-            layer.Name = name;
+            layer.DecimationFactor = p.Results.DecimationFactor;
+            layer.Name = p.Results.Name;
             layer.Description = "Block DCT of size " ...
                 + layer.DecimationFactor(1) + "x" + layer.DecimationFactor(2);
             layer.Type = '';

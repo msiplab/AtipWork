@@ -1,4 +1,24 @@
 classdef nsoltAtomExtensionLayer < nnet.layer.Layer
+    %NSOLTATOMEXTENSIONLAYER
+    %
+    %   コンポーネント別に入力(nComponents=1のみサポート):
+    %      nRows x nCols x nChsTotal x nSamples
+    %
+    %   コンポーネント別に出力(nComponents=1のみサポート):
+    %      nRows x nCols x nChsTotal x nSamples
+    %
+    % Requirements: MATLAB R2020a
+    %
+    % Copyright (c) 2020, Shogo MURAMATSU
+    %
+    % All rights reserved.
+    %
+    % Contact address: Shogo MURAMATSU,
+    %                Faculty of Engineering, Niigata University,
+    %                8050 2-no-cho Ikarashi, Nishi-ku,
+    %                Niigata, 950-2181, JAPAN
+    %
+    % http://msiplab.eng.niigata-u.ac.jp/
     
     properties
         % (Optional) Layer properties.
@@ -10,25 +30,33 @@ classdef nsoltAtomExtensionLayer < nnet.layer.Layer
     end
     
     methods
-        function layer = nsoltAtomExtensionLayer(nchs,name,dir,target)
+        function layer = nsoltAtomExtensionLayer(varargin)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
+            p = inputParser;
+            addParameter(p,'Name','')
+            addParameter(p,'NumberOfChannels',[])
+            addParameter(p,'Direction','')
+            addParameter(p,'TargetChannels','')
+            parse(p,varargin{:})
             
             % Layer constructor function goes here.
-            layer.NumberOfChannels = nchs;
-            layer.Name = name;
-            layer.Direction = dir;
-            layer.TargetChannels = target;
+            layer.NumberOfChannels = p.Results.NumberOfChannels;
+            layer.Name = p.Results.Name;
+            layer.Direction = p.Results.Direction;
+            layer.TargetChannels = p.Results.TargetChannels;
             layer.Description =  layer.Direction ...
                 + " shift " ...
                 + layer.TargetChannels ...
                 + " Coefs. " ...
                 + "(ps,pa) = (" ...
-                + nchs(1) + "," + nchs(2) + ")";
+                + layer.NumberOfChannels(1) + "," ...
+                + layer.NumberOfChannels(2) + ")";
             
             layer.Type = '';
             
         end
+        
         
         function Z = predict(layer, X)
             % Forward input data through the layer at prediction time and

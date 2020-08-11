@@ -1,13 +1,24 @@
 classdef nsoltIntermediateRotationLayer_testcase < matlab.unittest.TestCase
-    %NSOLTFINALROTATIONLAYER_TESTCASE このクラスの概要をここに記述
-    %   詳細説明をここに記述
-    %
+    %NSOLTINTERMEDIATEROTATIONLAYER_TESTCASE 
+    %   
     %   コンポーネント別に入力(nComponents):
     %      nRows x nCols x nChsTotal x nSamples
     %
     %   コンポーネント別に出力(nComponents):
     %      nRows x nCols x nChsTotal x nSamples
     %
+    % Requirements: MATLAB R2020a
+    %
+    % Copyright (c) 2020, Shogo MURAMATSU
+    %
+    % All rights reserved.
+    %
+    % Contact address: Shogo MURAMATSU,
+    %                Faculty of Engineering, Niigata University,
+    %                8050 2-no-cho Ikarashi, Nishi-ku,
+    %                Niigata, 950-2181, JAPAN
+    %
+    % http://msiplab.eng.niigata-u.ac.jp/
     
     properties (TestParameter)
         nchs = { [3 3], [4 4] };
@@ -30,7 +41,9 @@ classdef nsoltIntermediateRotationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltIntermediateRotationLayer(nchs,expctdName);
+            layer = nsoltIntermediateRotationLayer(...
+                'NumberOfChannels',nchs,...
+                'Name',expctdName);
             
             % Actual values
             actualName = layer.Name;
@@ -69,7 +82,9 @@ classdef nsoltIntermediateRotationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltIntermediateRotationLayer(nchs,'Vn~');
+            layer = nsoltIntermediateRotationLayer(...
+                'NumberOfChannels',nchs,...
+                'Name','Vn~');
             
             % Actual values
             layer.Mus = mus;
@@ -111,7 +126,9 @@ classdef nsoltIntermediateRotationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltIntermediateRotationLayer(nchs,'Vn~');
+            layer = nsoltIntermediateRotationLayer(...
+                'NumberOfChannels',nchs,...
+                'Name','Vn~');
             
             % Actual values
             layer.Mus = mus;
@@ -157,7 +174,10 @@ classdef nsoltIntermediateRotationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltIntermediateRotationLayer(nchs,'Vn','Analysis');
+            layer = nsoltIntermediateRotationLayer(...
+                'NumberOfChannels',nchs,...
+                'Name','Vn',...
+                'Mode','Analysis');
             
             % Actual values
             layer.Mus = mus;

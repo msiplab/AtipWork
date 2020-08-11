@@ -1,4 +1,19 @@
 classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
+    %NSOLTINTERMEDIATEROTATIONLAYER
+    %
+    % Requirements: MATLAB R2020a
+    %
+    % Copyright (c) 2020, Shogo MURAMATSU
+    %
+    % All rights reserved.
+    %
+    % Contact address: Shogo MURAMATSU,
+    %                Faculty of Engineering, Niigata University,
+    %                8050 2-no-cho Ikarashi, Nishi-ku,
+    %                Niigata, 950-2181, JAPAN
+    %
+    % http://msiplab.eng.niigata-u.ac.jp/
+    
     
     properties
         % (Optional) Layer properties.
@@ -14,22 +29,26 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
     end
     
     methods
-        function layer = nsoltIntermediateRotationLayer(nchs,name,mode)
+        function layer = nsoltIntermediateRotationLayer(varargin)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
+            p = inputParser;
+            addParameter(p,'NumberOfChannels',[])
+            addParameter(p,'Mus',[])
+            addParameter(p,'Mode','Synthesis')
+            addParameter(p,'Name','')
+            parse(p,varargin{:})
             
             % Layer constructor function goes here.
-            layer.NumberOfChannels = nchs;
-            layer.Name = name;
-            if nargin < 3
-                layer.Mode = 'Synthesis';
-            else
-                layer.Mode = mode;
-            end
+            layer.NumberOfChannels = p.Results.NumberOfChannels;
+            layer.Name = p.Results.Name;
+            layer.Mode = p.Results.Mode;
+            layer.Mus = p.Results.Mus;
             layer.Description = layer.Mode ...
                 + " NSOLT intermediate rotation " ...
                 + "(ps,pa) = (" ...
-                + nchs(1) + "," + nchs(2) + ")";
+                + layer.NumberOfChannels(1) + "," ...
+                + layer.NumberOfChannels(2) + ")";
             layer.Type = '';
             
         end
@@ -78,44 +97,6 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
             Z = ipermute(Y,[3 1 2 4]);
         end
         
-        %{        
-        function [Z, memory] = forward(layer, X)
-            % (Optional) Forward input data through the layer at training
-            % time and output the result and a memory value.
-            %
-            % Inputs:
-            %         layer       - Layer to forward propagate through
-            %         X1, ..., Xn - Input data (n: # of components)
-            % Outputs:
-            %         Z           - Outputs of layer forward function
-            %         memory      - Memory value for custom backward propagation
-
-            % Layer forward function for training goes here.
-            Z = layer.predict(X);
-            memory = X;
-        end
-        
-        function [dLdX, dLdW] = backward(layer,~, ~, dLdZ, memory)
-            % (Optional) Backward propagate the derivative of the loss
-            % function through the layer.
-            %
-            % Inputs:
-            %         layer             - Layer to backward propagate through
-            %         X1, ..., Xn       - Input data (n: # of components)
-            %         Z                 - Outputs of layer forward function
-            %         dLdZ              - Gradients propagated from the next layers
-            %         memory            - Memory value from forward function
-            % Outputs:
-            %         dLdX1, ..., dLdXn - Derivatives of the loss with respect to the
-            %                             inputs (n: # of components)
-            %         dLdW              - Derivatives of the loss with respect to each
-            %                             learnable parameter
-            
-            % Layer backward function goes here.
-            dLdX = [];
-            dLdW = [];
-        end
-        %}
     end
     
     methods (Static, Access = private)

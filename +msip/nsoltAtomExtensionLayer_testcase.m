@@ -1,13 +1,24 @@
 classdef nsoltAtomExtensionLayer_testcase < matlab.unittest.TestCase
-    %NSOLTFINALROTATIONLAYER_TESTCASE このクラスの概要をここに記述
-    %   詳細説明をここに記述
+    %NSOLTATOMEXTENSIONLAYER_TESTCASE
     %
-    %   コンポーネント別に入力(nComponents):
+    %   コンポーネント別に入力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
     %
-    %   コンポーネント別に出力(nComponents):
+    %   コンポーネント別に出力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
     %
+    % Requirements: MATLAB R2020a
+    %
+    % Copyright (c) 2020, Shogo MURAMATSU
+    %
+    % All rights reserved.
+    %
+    % Contact address: Shogo MURAMATSU,
+    %                Faculty of Engineering, Niigata University,
+    %                8050 2-no-cho Ikarashi, Nishi-ku,
+    %                Niigata, 950-2181, JAPAN
+    %
+    % http://msiplab.eng.niigata-u.ac.jp/
     
     properties (TestParameter)
         nchs = { [3 3], [4 4] };
@@ -31,8 +42,11 @@ classdef nsoltAtomExtensionLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltAtomExtensionLayer(nchs,...
-                expctdName,expctdDirection,expctdTargetChannels);
+            layer = nsoltAtomExtensionLayer(...
+                'NumberOfChannels',nchs,...
+                'Name',expctdName,...
+                'Direction',expctdDirection,...
+                'TargetChannels',expctdTargetChannels);
             
             % Actual values
             actualName = layer.Name;
@@ -92,7 +106,11 @@ classdef nsoltAtomExtensionLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltAtomExtensionLayer(nchs,'Qn~',dir,target);
+            layer = nsoltAtomExtensionLayer(...
+                'NumberOfChannels',nchs,...
+                'Name','Qn~',...
+                'Direction',dir,...
+                'TargetChannel',target);
             
             % Actual values
             actualZ = layer.predict(X);
@@ -149,7 +167,11 @@ classdef nsoltAtomExtensionLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltAtomExtensionLayer(nchs,'Qn~',dir,target);
+            layer = nsoltAtomExtensionLayer(...
+                'NumberOfChannels',nchs,...
+                'Name','Qn~',...
+                'Direction',dir,...
+                'TargetChannels',target);
             
             % Actual values
             actualZ = layer.predict(X);
