@@ -50,6 +50,8 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
             % Layer constructor function goes here.
             layer.NumberOfChannels = p.Results.NumberOfChannels;
             layer.DecimationFactor = p.Results.DecimationFactor;
+            layer.Mus = p.Results.Mus;
+            layer.Angles = p.Results.Angles;
             layer.Name = p.Results.Name;
             layer.Description = "NSOLT final rotation ( " ...
                 + "(ps,pa) = (" ...
@@ -60,6 +62,13 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
                 + layer.DecimationFactor(2) + ")" ...
                 + " )";
             layer.Type = '';
+            
+                        
+            if isempty(layer.Angles)
+                nChsTotal = sum(layer.NumberOfChannels);
+                nAngles = (nChsTotal-2)*nChsTotal/4;
+                layer.Angles = zeros(nAngles,1);
+            end
             
         end
         
@@ -120,7 +129,11 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
                 matrix = diag(mus);
             else
                 nDim_ = (1+sqrt(1+8*length(angles)))/2;
-                matrix = eye(nDim_);
+                %matrix = eye(nDim_,'like',angles);
+                matrix = zeros(nDim_,'like',angles);
+                for idx = 1:nDim_
+                    matrix(idx,idx) = 1;
+                end
                 iAng = 1;
                 for iTop=1:nDim_-1
                     vt = matrix(iTop,:);

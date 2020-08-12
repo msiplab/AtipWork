@@ -33,7 +33,6 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
         Angles
     end
     
-    
     methods
         function layer = nsoltInitialRotationLayer(varargin)
             % (Optional) Create a myLayer.
@@ -43,12 +42,15 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
             addParameter(p,'DecimationFactor',[])
             addParameter(p,'Name','')
             addParameter(p,'Mus',[])
+            addParameter(p,'Angles',[])
             parse(p,varargin{:})
             
             % Layer constructor function goes here.
             layer.NumberOfChannels = p.Results.NumberOfChannels;
             layer.DecimationFactor = p.Results.DecimationFactor;
             layer.Name = p.Results.Name;
+            layer.Mus = p.Results.Mus;
+            layer.Angles = p.Results.Angles;
             layer.Description = "NSOLT initial rotation ( " ...
                 + "(ps,pa) = (" ...
                 + layer.NumberOfChannels(1) + "," ...
@@ -58,7 +60,12 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
                 + layer.DecimationFactor(2) + ")" ...
                 + " )";
             layer.Type = '';
-            
+                        
+            if isempty(layer.Angles)
+                nChsTotal = sum(layer.NumberOfChannels);
+                nAngles = (nChsTotal-2)*nChsTotal/4;
+                layer.Angles = zeros(nAngles,1);
+            end
         end
         
         function Z = predict(layer, X)
@@ -105,61 +112,11 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
                 [3 1 2 4]);
 
         end
-        
-        %{        
-        function [Z, memory] = forward(layer, X)
-            % (Optional) Forward input data through the layer at training
-            % time and output the result and a memory value.
-            %
-            % Inputs:
-            %         layer       - Layer to forward propagate through
-            %         X1, ..., Xn - Input data (n: # of components)
-            % Outputs:
-            %         Z           - Outputs of layer forward function
-            %         memory      - Memory value for custom backward propagation
 
-            % Layer forward function for training goes here.
-            Z = layer.predict(X);
-            memory = X;
-        end
-        
-        function [dLdX, dLdW] = backward(layer,~, ~, dLdZ, memory)
-            % (Optional) Backward propagate the derivative of the loss
-            % function through the layer.
-            %
-            % Inputs:
-            %         layer             - Layer to backward propagate through
-            %         X1, ..., Xn       - Input data (n: # of components)
-            %         Z                 - Outputs of layer forward function
-            %         dLdZ              - Gradients propagated from the next layers
-            %         memory            - Memory value from forward function
-            % Outputs:
-            %         dLdX1, ..., dLdXn - Derivatives of the loss with respect to the
-            %                             inputs (n: # of components)
-            %         dLdW              - Derivatives of the loss with respect to each
-            %                             learnable parameter
-            
-            % Layer backward function goes here.
-            dLdX = [];
-            dLdW = [];
-        end
-        %}
     end
     
     methods (Static, Access = private)
-        %{
-        function value = permuteDctCoefs_(x,blockSize)
-            coefs = x;
-            decY_ = blockSize(1);
-            decX_ = blockSize(2);
-            cee = coefs(1:2:end,1:2:end);
-            coo = coefs(2:2:end,2:2:end);
-            coe = coefs(2:2:end,1:2:end);
-            ceo = coefs(1:2:end,2:2:end);
-            value = [ cee(:) ; coo(:) ; coe(:) ; ceo(:) ];
-            value = reshape(value,decY_,decX_);
-        end
-        %}
+
         function matrix = orthmtxgen_(angles,mus,pdAng)
             
             if nargin < 3
@@ -170,7 +127,11 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
                 matrix = diag(mus);
             else
                 nDim_ = (1+sqrt(1+8*length(angles)))/2;
-                matrix = eye(nDim_);
+                %matrix = eye(nDim_,'like',angles);
+                matrix = zeros(nDim_,'like',angles);
+                for idx = 1:nDim_
+                    matrix(idx,idx) = 1;
+                end
                 iAng = 1;
                 for iTop=1:nDim_-1
                     vt = matrix(iTop,:);

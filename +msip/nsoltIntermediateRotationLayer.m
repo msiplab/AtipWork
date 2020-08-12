@@ -34,6 +34,7 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
             % This function must have the same name as the class.
             p = inputParser;
             addParameter(p,'NumberOfChannels',[])
+            addParameter(p,'Angles',[])
             addParameter(p,'Mus',[])
             addParameter(p,'Mode','Synthesis')
             addParameter(p,'Name','')
@@ -43,6 +44,7 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
             layer.NumberOfChannels = p.Results.NumberOfChannels;
             layer.Name = p.Results.Name;
             layer.Mode = p.Results.Mode;
+            layer.Angles = p.Results.Angles;
             layer.Mus = p.Results.Mus;
             layer.Description = layer.Mode ...
                 + " NSOLT intermediate rotation " ...
@@ -50,6 +52,12 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
                 + layer.NumberOfChannels(1) + "," ...
                 + layer.NumberOfChannels(2) + ")";
             layer.Type = '';
+            
+            if isempty(layer.Angles)
+                nChsTotal = sum(layer.NumberOfChannels);
+                nAngles = (nChsTotal-2)*nChsTotal/8;
+                layer.Angles = zeros(nAngles,1);
+            end
             
         end
         
@@ -129,7 +137,11 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
                 matrix = diag(mus);
             else
                 nDim_ = (1+sqrt(1+8*length(angles)))/2;
-                matrix = eye(nDim_);
+                %matrix = eye(nDim_,'like',angles);
+                matrix = zeros(nDim_,'like',angles);
+                for idx = 1:nDim_
+                    matrix(idx,idx) = 1;
+                end
                 iAng = 1;
                 for iTop=1:nDim_-1
                     vt = matrix(iTop,:);
