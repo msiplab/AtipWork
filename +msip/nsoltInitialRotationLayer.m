@@ -24,6 +24,7 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
         % (Optional) Layer properties.
         NumberOfChannels
         DecimationFactor
+        NoDcLeakage
         Mus
         
         % Layer properties go here.
@@ -43,6 +44,7 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
             addParameter(p,'Name','')
             addParameter(p,'Mus',[])
             addParameter(p,'Angles',[])
+            addParameter(p,'NoDcLeakage',false);
             parse(p,varargin{:})
             
             % Layer constructor function goes here.
@@ -51,6 +53,7 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
             layer.Name = p.Results.Name;
             layer.Mus = p.Results.Mus;
             layer.Angles = p.Results.Angles;
+            layer.NoDcLeakage = p.Results.NoDcLeakage;
             layer.Description = "NSOLT initial rotation ( " ...
                 + "(ps,pa) = (" ...
                 + layer.NumberOfChannels(1) + "," ...
@@ -60,12 +63,16 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
                 + layer.DecimationFactor(2) + ")" ...
                 + " )";
             layer.Type = '';
-                        
+
+            nChsTotal = sum(layer.NumberOfChannels);
+            nAngles = (nChsTotal-2)*nChsTotal/4;
             if isempty(layer.Angles)
-                nChsTotal = sum(layer.NumberOfChannels);
-                nAngles = (nChsTotal-2)*nChsTotal/4;
                 layer.Angles = zeros(nAngles,1);
             end
+            if length(layer.Angles)~=nAngles
+                error('Invalid # of angles')
+            end
+            
         end
         
         function Z = predict(layer, X)
@@ -93,6 +100,9 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
                 muW = 1;
                 muU = 1;
             else
+                if layer.NoDcLeakage
+                    layer.Mus(1) = 1;
+                end
                 muW = layer.Mus(1:ps);
                 muU = layer.Mus(ps+1:end);
             end
@@ -100,6 +110,10 @@ classdef nsoltInitialRotationLayer < nnet.layer.Layer
                 W0 = eye(ps);
                 U0 = eye(pa);
             else
+                if layer.NoDcLeakage
+                    layer.Angles(1:length(layer.Angles)/2-1) = ...
+                        zeros(length(layer.Angles)/2-1,1,'like',layer.Angles);
+                end
                 anglesW = layer.Angles(1:length(layer.Angles)/2);
                 anglesU = layer.Angles(length(layer.Angles)/2+1:end);
                 W0 = layer.orthmtxgen_(anglesW,muW);

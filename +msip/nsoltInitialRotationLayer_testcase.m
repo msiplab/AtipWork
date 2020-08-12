@@ -68,7 +68,7 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             nSamples = 8;
             nDecs = prod(stride);
             nChsTotal = sum(nchs);
-            % nRows x nCols x nDecs x nSamples            
+            % nRows x nCols x nDecs x nSamples
             X = randn(nrows,ncols,nDecs,nSamples,datatype);
             
             % Expected values
@@ -80,8 +80,8 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             expctdZ = zeros(nrows,ncols,nChsTotal,nSamples,datatype);
             Y  = zeros(nChsTotal,nrows,ncols,datatype);
             for iSample=1:nSamples
-                % Perumation in each block                
-                Ai = permute(X(:,:,:,iSample),[3 1 2]); 
+                % Perumation in each block
+                Ai = permute(X(:,:,:,iSample),[3 1 2]);
                 Yi = reshape(Ai,nDecs,nrows,ncols);
                 %
                 Ys = Yi(1:nDecs/2,:);
@@ -90,7 +90,7 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
                     reshape(W0(:,1:nDecs/2)*Ys,ps,nrows,ncols);
                 Y(ps+1:ps+pa,:,:) = ...
                     reshape(U0(:,1:nDecs/2)*Ya,pa,nrows,ncols);
-                expctdZ(:,:,:,iSample) = ipermute(Y,[3 1 2]);                
+                expctdZ(:,:,:,iSample) = ipermute(Y,[3 1 2]);
             end
             
             % Instantiation of target class
@@ -124,7 +124,7 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             nSamples = 8;
             nDecs = prod(stride);
             nChsTotal = sum(nchs);
-            % nRows x nCols x nDecs x nSamples            
+            % nRows x nCols x nDecs x nSamples
             X = randn(nrows,ncols,nDecs,nSamples,datatype);
             angles = randn((nChsTotal-2)*nChsTotal/4,1);
             
@@ -137,8 +137,8 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
             expctdZ = zeros(nrows,ncols,nChsTotal,nSamples,datatype);
             Y  = zeros(nChsTotal,nrows,ncols,datatype);
             for iSample=1:nSamples
-                % Perumation in each block                
-                Ai = permute(X(:,:,:,iSample),[3 1 2]); 
+                % Perumation in each block
+                Ai = permute(X(:,:,:,iSample),[3 1 2]);
                 Yi = reshape(Ai,nDecs,nrows,ncols);
                 %
                 Ys = Yi(1:nDecs/2,:);
@@ -167,8 +167,67 @@ classdef nsoltInitialRotationLayer_testcase < matlab.unittest.TestCase
                 IsEqualTo(expctdZ,'Within',tolObj));
             
         end
-
-
+        
+        function testPredictGrayscaleWithRandomAnglesNoDcLeackage(testCase, ...
+                nchs, stride, nrows, ncols, datatype)
+            
+            import matlab.unittest.constraints.IsEqualTo
+            import matlab.unittest.constraints.AbsoluteTolerance
+            tolObj = AbsoluteTolerance(1e-6,single(1e-6));
+            import msip.*
+            genW = orthmtxgen();
+            genU = orthmtxgen();
+            
+            % Parameters
+            nSamples = 8;
+            nDecs = prod(stride);
+            nChsTotal = sum(nchs);
+            % nRows x nCols x nDecs x nSamples
+            X = randn(nrows,ncols,nDecs,nSamples,datatype);
+            angles = randn((nChsTotal-2)*nChsTotal/4,1);
+            
+            % Expected values
+            % nRows x nCols x nChs x nSamples
+            ps = nchs(1);
+            pa = nchs(2);
+            anglesNoDc = angles;
+            anglesNoDc(1:length(angles)/2-1,1)=zeros(length(angles)/2-1,1);
+            W0 = genW.generate(anglesNoDc(1:length(angles)/2),1);
+            U0 = genU.generate(anglesNoDc(length(angles)/2+1:end),1);
+            expctdZ = zeros(nrows,ncols,nChsTotal,nSamples,datatype);
+            Y  = zeros(nChsTotal,nrows,ncols,datatype);
+            for iSample=1:nSamples
+                % Perumation in each block
+                Ai = permute(X(:,:,:,iSample),[3 1 2]);
+                Yi = reshape(Ai,nDecs,nrows,ncols);
+                %
+                Ys = Yi(1:nDecs/2,:);
+                Ya = Yi(nDecs/2+1:end,:);
+                Y(1:ps,:,:) = ...
+                    reshape(W0(:,1:nDecs/2)*Ys,ps,nrows,ncols);
+                Y(ps+1:ps+pa,:,:) = ...
+                    reshape(U0(:,1:nDecs/2)*Ya,pa,nrows,ncols);
+                expctdZ(:,:,:,iSample) = ipermute(Y,[3 1 2]);
+            end
+            
+            % Instantiation of target class
+            import msip.*
+            layer = nsoltInitialRotationLayer(...
+                'NumberOfChannels',nchs,...
+                'DecimationFactor',stride,...
+                'NoDcLeakage',true,...
+                'Name','V0~');
+            
+            % Actual values
+            layer.Angles = angles;
+            actualZ = layer.predict(X);
+            
+            % Evaluation
+            testCase.verifyInstanceOf(actualZ,datatype);
+            testCase.verifyThat(actualZ,...
+                IsEqualTo(expctdZ,'Within',tolObj));
+            
+        end
     end
     
 end

@@ -52,13 +52,15 @@ classdef nsoltIntermediateRotationLayer < nnet.layer.Layer
                 + layer.NumberOfChannels(1) + "," ...
                 + layer.NumberOfChannels(2) + ")";
             layer.Type = '';
-            
+
+            nChsTotal = sum(layer.NumberOfChannels);
+            nAngles = (nChsTotal-2)*nChsTotal/8;
             if isempty(layer.Angles)
-                nChsTotal = sum(layer.NumberOfChannels);
-                nAngles = (nChsTotal-2)*nChsTotal/8;
                 layer.Angles = zeros(nAngles,1);
             end
-            
+            if length(layer.Angles)~=nAngles
+                error('Invalid # of angles')
+            end
         end
         
         function Z = predict(layer, X)
