@@ -37,20 +37,11 @@ nDecs = prod(decFactors);
 % Number of channels
 nChannels = [3 3];
 redundancyRatio = sum(nChannels)/nDecs
-
 % Sparsity ratio
-sparsityRatio = 0.1;
+sparsityRatio = 0.4;
 
 % Number of iterations
-nIters = 30;
-%% 画像の読込
-% (Read image)
-%% 
-% * $\mathbf{u}\in\mathbb{R}^{N}$
-
-% Read image
-u = rgb2gray(im2single(imread('./data/lena.png')));
-nDims = numel(u);
+nIters = 10;
 % 畳込み辞書学習
 % (Convolutional dictionary learning)
 % 問題設定 (Problem setting):
@@ -63,7 +54,8 @@ nDims = numel(u);
 % 
 % 
 % アルゴリズム (Algorithm):
-% スパース近似ステップと辞書更新ステップを繰返す．
+% スパース近似ステップと辞書更新ステップを繰返す．(Iterate the sparse approximation step and the dictionary 
+% update step.)
 %% 
 % * スパース近似ステップ (Sparse approximation step)
 %% 
@@ -75,33 +67,34 @@ nDims = numel(u);
 % $$\hat{\mathbf{\theta}}=\arg\min_{\mathbf{\theta}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{v}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{s}}_n\|_2^2$$
 % 
 % $$\hat{\mathbf{D}}=\mathbf{D}_{\hat{\mathbf{\theta}}$$
-% 
-% 
-% 
-% 係数の数 (Number of coefficients)
-
-nCoefs = floor(sparsityRatio*nDims);
 % 二変量ラティス構造冗長フィルタバンク
 % (Bivariate lattice-structure oversampled filter banks )
 % 
-% 例としてチャンネル数 $P$ （偶数）, ポリフェーズ次数 $(N_\mathrm{v},N_\mathrm{h})$ （偶数）のタイプI の非分離冗長重複変換(NSOLT)
+% 例としてチャンネル数 $P$ （偶数）, ポリフェーズ次数 $(N_\mathrm{v},N_\mathrm{h})$ （偶数）のタイプI の非分離冗長重複変換(NSOLT) 
+% (As an example, let us adopt a non-separable oversampled lapped transform (NSOLT) 
+% of  type-I with the number of channels (even) and polyphase order (even):
 % 
-% $$\mathbf{E}(z_\mathrm{v},z_\mathbf{h})=\left(\prod_{k_\mathrm{h}=1}^{N_\mathrm{h}/2}{\mathbf{V}_{2k_\mathrm{h}}^{\{\mathrm{h}\}}}\bar{\mathbf{Q}}(z_\mathrm{h}){\mathbf{V}_{2k_\mathrm{h}-1}^{\{\mathrm{h}\}}}{\mathbf{Q}}(z_\mathrm{h})\right)%\left(\prod_{k_{\mathrm{v}}=1}^{N_\mathrm{v}/2}{\mathbf{V}_{2k_\mathrm{v}}^{\{\mathrm{v}\}}}\bar{\mathbf{Q}}(z_\mathrm{v}){\mathbf{V}_{2k_\mathrm{v}-1}^{\{\mathrm{v}\}}}{\mathbf{Q}}(z_\mathrm{v})\right)%\mathbf{V}_0\mathbf{E}_0$$
+% $$\mathbf{E}(z_\mathrm{v},z_\mathbf{h})=\left(\prod_{k_\mathrm{h}=1}^{N_\mathrm{h}/2}{\mathbf{V}_{2k_\mathrm{h}}^{\{\mathrm{h}\}}}\bar{\mathbf{Q}}(z_\mathrm{h}){\mathbf{V}_{2k_\mathrm{h}-1}^{\{\mathrm{h}\}}}{\mathbf{Q}}(z_\mathrm{h})\right)%\left(\prod_{k_{\mathrm{v}}=1}^{N_\mathrm{v}/2}{\mathbf{V}_{2k_\mathrm{v}}^{\{\mathrm{v}\}}}\bar{\mathbf{Q}}(z_\mathrm{v}){\mathbf{V}_{2k_\mathrm{v}-1}^{\{\mathrm{v}\}}}{\mathbf{Q}}(z_\mathrm{v})\right)%\mathbf{V}_0\mathbf{E}_0,$$
 % 
-% $$\mathbf{R}(z_\mathrm{v},z_\mathbf{h})=\mathbf{E}^T(z_\mathrm{v}^{-1},z_\mathrm{h}^{-1})$$
+% $$\mathbf{R}(z_\mathrm{v},z_\mathbf{h})=\mathbf{E}^T(z_\mathrm{v}^{-1},z_\mathrm{h}^{-1}),$$
 % 
-% を採用する．ここで，
+% を採用する．ここで，(where)
 %% 
-% * $\mathbf{E}(z_\mathrm{v},z_\mathrm{h})$:  分析フィルタバンクの$P\times M$タイプⅠポリフェーズ行列
-% * $\mathbf{R}(z_\mathrm{v},z_\mathrm{h})$: 合成フィルタバンクの $M\times P$タイプⅡポリフェーズ行列
-% * $z_d\in\mathbb{C}, d\in\{\mathrm{v},\mathrm{h}\}$: Z-変換の方向 $d$の変数
-% * $N_d\in \mathbb{N}, d\in\{\mathrm{v},\mathrm{h}\}$: 方向 $d$ のポリフェーズ次数（重複ブロック数）
+% * $\mathbf{E}(z_\mathrm{v},z_\mathrm{h})$:  分析フィルタバンクの$P\times M$タイプⅠポリフェーズ行列 
+% (Type-I polyphase matrix of the analysis filter bank)
+% * $\mathbf{R}(z_\mathrm{v},z_\mathrm{h})$: 合成フィルタバンクの $M\times P$タイプⅡポリフェーズ行列 
+% (Type-II polyphase matrix in the synthesis filter bank)
+% * $z_d\in\mathbb{C}, d\in\{\mathrm{v},\mathrm{h}\}$: Z-変換の方向 $d$の変数 (The parameter 
+% of Z-transformation direction)
+% * $N_d\in \mathbb{N}, d\in\{\mathrm{v},\mathrm{h}\}$: 方向 $d$ のポリフェーズ次数（重複ブロック数）(Polyphase 
+% order in direction $d$ (number of overlapping blocks))
 % * $\mathbf{V}_0=\left(\begin{array}{cc}\mathbf{W}_{0} & \mathbf{O} \\\mathbf{O} 
 % & \mathbf{U}_0\end{array}\right)%\left(\begin{array}{c}\mathbf{I}_{M/2} \\ \mathbf{O} 
 % \\\mathbf{I}_{M/2} \\\mathbf{O}\end{array}\right)\in\mathbb{R}^{P\times M}$,$\mathbf{V}_n^{\{d\}}=\left(\begin{array}{cc}\mathbf{I}_{P/2} 
 % & \mathbf{O} \\\mathbf{O} & \mathbf{U}_n^{\{d\}}\end{array}\right)\in\mathbb{R}^{P\times 
 % P}, d\in\{\mathrm{v},\mathrm{h}\}$, ただし， $\mathbf{W}_0, \mathbf{U}_0,\mathbf{U}_n^{\{d\}}\in\mathbb{R}^{P/2\times 
-% P/2}$は直交行列．
+% P/2}$は直交行列．(where$\mathbf{W}_0, \mathbf{U}_0,\mathbf{U}_n^{\{d\}}\in\mathbb{R}^{P/2\times 
+% P/2}$are orthonromal matrices.)
 % * $\mathbf{Q}(z)=\mathbf{B}_{P}\left(\begin{array}{cc} \mathbf{I}_{P/2} &  
 % \mathbf{O} \\ \mathbf{O} &  z^{-1}\mathbf{I}_{P/2}\end{array}\right)\mathbf{B}_{P}$, 
 % $\bar{\mathbf{Q}}(z)=\mathbf{B}_{P}\left(\begin{array}{cc} z\mathbf{I}_{P/2} 
@@ -134,21 +127,21 @@ nCoefs = floor(sparsityRatio*nDims);
 % 
 % 
 % カスタムレイヤとネットワークの定義
-% 合成NSOLT (Synthesis NSOLT)の実装にDeep Learning Toolbox のカスタムレイヤを利用．
+% 合成NSOLT (Synthesis NSOLT)の実装にDeep Learning Toolbox のカスタムレイヤを利用．(Use a custom 
+% layer of Deep Learning Toolbox to implement Synthesis NSOLT (Synthesis NSOLT).)
 % 
-% 学習レイヤの定義 (w/ Learnable properties)
+% 学習レイヤの定義 (Definition of layers w/ Learnable properties)
 %% 
 % * Final rotation: $\mathbf{V}_0^T$ (msip.nsoltFinalRotationLayer)
 % * Intermediate rotation: ${\mathbf{V}_n^{\{d\}}}^T$ (msip.nsoltIntermediateRotationLayer)
 %% 
-% 非学習レイヤの定義 (w/o Learnable properties)
+% 非学習レイヤの定義 (Definition of layers w/o Learnable properties)
 %% 
 % * Bivariate inverese DCT (2-D IDCT): $\mathbf{E}_0^T=\mathbf{E}_0^{-1}$ (msip.nsoltBlockDctLayer)
-% * Vertical up concatenation: $\mathbf{Q}^T(z_\mathrm{v}^{-1})$ (msip.nsoltAtomExtensionLayer)
-% * Vertical down concatenation: $\bar{\mathbf{Q}}^T(z_\mathrm{v}^{-1})$  (msip.nsoltAtomExtensionLayer)
-% * Horizontal left concatenation: $\mathbf{Q}^T(z_\mathrm{h}^{-1})$ (msip.nsoltAtomExtensionLayer)
-% * Horizontal right concatenation: $\bar{\mathbf{Q}}^T(z_\mathrm{h}^{-1})$ 
-% (msip.nsoltAtomExtensionLayer)
+% * Vertical up extension: $\mathbf{Q}^T(z_\mathrm{v}^{-1})$ (msip.nsoltAtomExtensionLayer)
+% * Vertical down extension: $\bar{\mathbf{Q}}^T(z_\mathrm{v}^{-1})$  (msip.nsoltAtomExtensionLayer)
+% * Horizontal left extension: $\mathbf{Q}^T(z_\mathrm{h}^{-1})$ (msip.nsoltAtomExtensionLayer)
+% * Horizontal right extension: $\bar{\mathbf{Q}}^T(z_\mathrm{h}^{-1})$ (msip.nsoltAtomExtensionLayer)
 %% 
 % 【References】 
 %% 
@@ -163,7 +156,7 @@ nCoefs = floor(sparsityRatio*nDims);
 % and Information Processing, 5_, E9. doi:10.1017/ATSIP.2016.3.
 
 % Patch size for training
-szPatchTrn = [64 64]; % > [ (Ny+1)My (Nx+1)Mx ]
+szPatchTrn = [16 16]; % > [ (Ny+1)My (Nx+1)Mx ]
 
 % Construction of layers
 import msip.*
@@ -179,8 +172,10 @@ analysisNsoltLayers = [
     nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vv1','Mode','Analysis','Mus',-1)
     nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qvuu','Direction','Up','TargetChannels','Upper')
     nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vv2','Mode','Analysis')
+    ...regressionLayer('Name','subband images')
     ]
 synthesisNsoltLayers = [
+    imageInputLayer([szPatchTrn./decFactors sum(nChannels)],'Name','subband images','Normalization','none')
     nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vv2~','Mode','Synthesis')
     nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qvuu~','Direction','Down','TargetChannels','Upper')
     nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vv1~','Mode','Synthesis','Mus',-1)
@@ -191,60 +186,162 @@ synthesisNsoltLayers = [
     nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qhrl~','Direction','Left','TargetChannels','Lower') 
     nsoltFinalRotationLayer('NumberOfChannels',nChannels,'DecimationFactor',decFactors,'Name','V0~')
     nsoltBlockIdct2Layer('DecimationFactor',decFactors,'Name','E0~') 
-    regressionLayer('Name','output')
+    ....regressionLayer('Name','output')
     ]
 % Layer graph
-lgraph = layerGraph([analysisNsoltLayers synthesisNsoltLayers]);
+analysislgraph = layerGraph(analysisNsoltLayers);
+synthesislgraph = layerGraph(synthesisNsoltLayers);
 figure(1)
-plot(lgraph)
-% Construction of whole network.
-net = SeriesNetwork([analysisNsoltLayers synthesisNsoltLayers])
+subplot(1,2,1)
+plot(analysislgraph)
+title('Analysis NSOLT')
+subplot(1,2,2)
+plot(synthesislgraph)
+title('Synthesis NSOLT')
+% Construction of deep learning network.
+analysisnet = dlnetwork(analysislgraph);
+synthesisnet = dlnetwork(synthesislgraph);
 % 完全再構成の確認
 % (Confirmation of perfect reconstruction)
 
 x = rand(szPatchTrn,'single');
-y = net.predict(x);
-display("PSNR: " + psnr(x,y) + " dB")
+dlx = dlarray(x,'SSC'); % Deep learning array (SSC: Spatial,Spatial,Channel)
+dls = analysisnet.predict(dlx);
+dly = synthesisnet.predict(dls);
+display("MSE: " + num2str(mse(dlx,dly)))
+% 要素画像の初期状態
+% (Initial state of the atomic images)
+
+subbandImages = dlarray(zeros([szPatchTrn./decFactors sum(nChannels)],'single'),'SSC');
+atomicImages = zeros([szPatchTrn 1 sum(nChannels)]);
+for iAtom = 1:sum(nChannels)
+    deltaImage = subbandImages;
+    deltaImage(round(end/2),round(end/2),iAtom)  = 1;
+    atomicImages(:,:,1,iAtom) = extractdata(synthesisnet.predict(deltaImage));
+end
+figure(2)
+montage(circshift(imresize(atomicImages,8,'nearest'),[8 8 0])+.5,'BorderSize',[2 2])
+title('Atomic images of initial NSOLT')
+% 教師画像の準備 
+% (Preparation of traning image)
+% 
+% 画像データストアからパッチをランダム抽出
+
+imds = imageDatastore("./data/lena.png","ReadFcn",@(x) im2single(rgb2gray(imread(x))));
+patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',32);
+figure(3)
+minibatch = preview(patchds);
+responses = minibatch.ResponseImage;
+montage(responses,'Size',[2 4]);
 % スパース近似ステップと辞書更新ステップの繰り返し
+% (Alternative iteration of sparse approximation step and dictioary update step)
 %% 
-% * スパース近似： 繰返しハード閾値処理 (OMP)
-% * 辞書更新： 特異値分解と1-ランク近似 (SVD and 1-rank approximation)
+% * スパース近似 (Sparse approximation)： 繰返しハード閾値処理 (Iterative hard thresholding)
+% * 辞書更新 (Dictionary update)： 確率的勾配降下法 (Stochastic gradient descent)
+%% 
+% 訓練パラメータの設定 (Setting of training configurations)
+
+% Construction of whole network.
+opts = trainingOptions('sgdm', ... % Stochastig gradient descent
+    ...'Plots','training-progress', ...
+    'MaxEpochs',30);
 %% 
 % 交互ステップの繰返し計算 (Iterative calculation of alternative steps)
 
-%cost = zeros(1,nIters);
 for iIter = 1:nIters
+    
+    % Sparse approximation (Applied to produce an object of TransformedDatastore)
+    coefimgds = transform(patchds,@(x) iht4inputimage(x,analysisnet,synthesisnet,sparsityRatio));
+    
+    % Synthesis dictionary update
+    trainlgraph = synthesislgraph.addLayers(regressionLayer('Name','regression output'));
+    trainlgraph = trainlgraph.connectLayers('E0~','regression output');
+    synthesisdagnet = trainNetwork(coefimgds,trainlgraph,opts);
 
-    % Sparse approximation
-
-    % Dictionary update
-
-    %cost(iIter) = ...
+    % Analysis dictionary update (Copy parameters from synthesizer to
+    % analyzer)
+    synthesislgraph = layerGraph(synthesisdagnet); 
+    synthesislgraph = removeLayers(synthesislgraph,'regression output');
+    synthesisnet = dlnetwork(synthesislgraph);
+    analysisnet = copyparameters(synthesisnet,analysisnet);
+    
+    % Check the adjoint relation (perfect reconstruction)
+    x = rand(szPatchTrn,'single');
+    dlx = dlarray(x,'SSC'); % Deep learning array (SSC: Spatial,Spatial,Channel)
+    dls = analysisnet.predict(dlx);
+    dly = synthesisnet.predict(dls);
+    display("MSE: " + num2str(mse(dlx,dly)))
+    
 end
-%% 
-% コスト評価のグラフ (Graph of cost variation)
-
-figure(2)
-%plot(cost)
-xlabel('Number of iteration')
-ylabel('Cost')
-grid on
 %% 
 % 要素ベクトルを要素画像に変換 (Reshape the atoms into atomic images)
 
-%{
-atomicImages = zeros(stride(1),stride(2),nChannels);
-for iAtom = 1:nChannels
-    atomicImages(:,:,iAtom) = reshape(Phi(:,iAtom),stride(1),stride(2));
+for iAtom = 1:sum(nChannels)
+    deltaImage = subbandImages;
+    deltaImage(round(end/2),round(end/2),iAtom)  = 1;
+    atomicImages(:,:,1,iAtom) = extractdata(synthesisnet.predict(deltaImage));
 end
 figure(4)
-montage(imresize(atomicImages,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nChannels/8) 8])
-title('Atomic images of K-SVD')
-%}
-% 
+montage(circshift(imresize(atomicImages,8,'nearest'),[8 8 0])+.5,'BorderSize',[2 2])
+title('Atomic images of trained NSOLT')
 % 繰返しハード閾値処理 
 % (Function of iterative hard thresholding)
+% 
+% パッチペアの入力側をIHTによりスパース係数に置換．NSOLTはパーセバルタイト性を満たすため正規化を省略．(The input images of 
+% the patch pairs are replaced with sparse coefficients obtained by IHT, where 
+% normalization is omitted for the Parseval tight property of NSOLT.)
+% 
+% 【Reference】
+%% 
+% * T. Blumensath and M. E. Davies, "Normalized Iterative Hard Thresholding: 
+% Guaranteed Stability and Performance," in IEEE Journal of Selected Topics in 
+% Signal Processing, vol. 4, no. 2, pp. 298-309, April 2010, doi: 10.1109/JSTSP.2010.2042411.
 
-% T. Blumensath and M. E. Davies, "Normalized Iterative Hard Thresholding: Guaranteed Stability and Performance," in IEEE Journal of Selected Topics in Signal Processing, vol. 4, no. 2, pp. 298-309, April 2010, doi: 10.1109/JSTSP.2010.2042411.
+function newds = iht4inputimage(oldds,analyzer,synthesizer,sparsityRatio)
+% Loop to apply IHT process for every input patch
+newds = oldds;
+nImgs = length(oldds.InputImage);
+for iImg = 1:nImgs
+    v = dlarray(oldds.InputImage{iImg},'SSC');
+    [~,coefs] = iht(v,analyzer,synthesizer,sparsityRatio);
+    newds.InputImage{iImg} = coefs;
+end
+end
+
+function [y,coefs] = iht(x,analyzer,synthesizer,sparsityRatio)
+% Iterative hard thresholding w/o normalization
+% (A Parseval tight frame is assumed)
+gamma = (1.-1e-3);
+nIters = 5;
+nCoefs = floor(sparsityRatio*numel(x));
+coefs = 0*analyzer.predict(x);
+% IHT
+for iter=1:nIters
+    % Gradient descent
+    y = synthesizer.predict(coefs);
+    coefs = coefs - gamma*analyzer.predict(y-x);
+    % Hard thresholding
+    [~, idxsort ] = sort(abs(extractdata(coefs(:))),1,'descend');
+    indexSet = idxsort(1:nCoefs);
+    mask = zeros(size(coefs),'like',coefs);
+    mask(indexSet) = 1;
+    coefs = mask.*coefs;
+    %
+    %fprintf("IHT(%d) MSE: %6.4f",iter,mse(x,y));
+end
+end
+% 分析辞書（随伴作用素）の設定
+% 合成辞書パラメータの分析辞書（随伴作用素）へのコピー
+
+function newanalysisnet = copyparameters(synthesisnet,oldanalysisnet)
+newanalysisnet = oldanalysisnet;
+analysisLearnables = oldanalysisnet.Learnables;
+synthesisLearnables = synthesisnet.Learnables;
+nLearnables = height(analysisLearnables);
+for iLearnable = 1:nLearnables
+    t = synthesisLearnables(nLearnables-iLearnable+1,:);
+    newanalysisnet.Learnables(iLearnable,:) = t; 
+end
+end
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

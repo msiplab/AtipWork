@@ -113,44 +113,6 @@ classdef nsoltAtomExtensionLayer < nnet.layer.Layer
             Z = ipermute(Y,[3 1 2 4])/2.0;
         end
         
-        %{
-        function [Z, memory] = forward(layer, X)
-            % (Optional) Forward input data through the layer at training
-            % time and output the result and a memory value.
-            %
-            % Inputs:
-            %         layer       - Layer to forward propagate through
-            %         X1, ..., Xn - Input data (n: # of components)
-            % Outputs:
-            %         Z           - Outputs of layer forward function
-            %         memory      - Memory value for custom backward propagation
-
-            % Layer forward function for training goes here.
-            Z = layer.predict(X);
-            memory = X;
-        end
-        
-        function [dLdX, dLdW] = backward(layer,~, ~, dLdZ, memory)
-            % (Optional) Backward propagate the derivative of the loss
-            % function through the layer.
-            %
-            % Inputs:
-            %         layer             - Layer to backward propagate through
-            %         X1, ..., Xn       - Input data (n: # of components)
-            %         Z                 - Outputs of layer forward function
-            %         dLdZ              - Gradients propagated from the next layers
-            %         memory            - Memory value from forward function
-            % Outputs:
-            %         dLdX1, ..., dLdXn - Derivatives of the loss with respect to the
-            %                             inputs (n: # of components)
-            %         dLdW              - Derivatives of the loss with respect to each
-            %                             learnable parameter
-            
-            % Layer backward function goes here.
-            dLdX = [];
-            dLdW = [];
-        end
-        %}
     end
     
     methods (Static, Access = private)

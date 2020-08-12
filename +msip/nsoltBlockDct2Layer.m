@@ -111,66 +111,8 @@ classdef nsoltBlockDct2Layer < nnet.layer.Layer
             end
             Z = permute(A,[2 3 1 4]);
         end        
-        
-        %{        
-        function dLdX = backward(layer,~,~, dLdZ, ~)
-            % (Optional) Backward propagate the derivative of the loss  
-            % function through the layer.
-            %
-            % Inputs:
-            %         layer             - Layer to backward propagate through          
-            %         dLdZ              - Gradients propagated from the next layers
-            % Outputs:
-            %         dLdX              - Derivatives of the loss with respect to the
-            %                             inputs
-            %
-            
-            % Layer backward function goes here.
-            DecimationFactor_ = layer.DecimationFactor;
-            Cv_ = layer.Cv;
-            Ch_ = layer.Ch;
-            nRows = size(dLdZ,1)/DecimationFactor_(1);
-            nCols = size(dLdZ,2)/DecimationFactor_(2);
-            nComponents = size(dLdZ,3);
-            nSamples = size(dLdZ,4);
-            %
-            dLdX = zeros(size(dLdZ),'like',dLdZ);
-            for iSample = 1:nSamples
-                for iComponent = 1:nComponents
-                    %dLdX(:,:,iComponent,iSample) = ...
-                    %    blockproc(dLdZ(:,:,iComponent,iSample),...
-                    %    layer.DecimationFactor,@(x) Cv_*x.data*Ch_.');
-                    for iCol = 1:nCols
-                        for iRow = 1:nRows
-                            dldz = dLdZ((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
-                                (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
-                                iComponent,iSample);                            
-                            x = Cv_.'*dldz*Ch_;
-                            dLdX((iRow-1)*DecimationFactor_(1)+1:iRow*DecimationFactor_(1),...
-                                (iCol-1)*DecimationFactor_(2)+1:iCol*DecimationFactor_(2),...
-                                iComponent,iSample) = x;
-                        end
-                    end                    
-                end
-            end
-            
-        end
-        %}
+
     end
     
-    %{
-    methods (Static, Access = private)
-        function value = permuteDctCoefs_(x,blockSize)
-            coefs = x;
-            decY_ = blockSize(1);
-            decX_ = blockSize(2);
-            cee = coefs(1:ceil(decY_/2),    1:ceil(decX_/2));
-            coo = coefs(ceil(decY_/2)+1:end,ceil(decX_/2)+1:end);
-            coe = coefs(ceil(decY_/2)+1:end,1:ceil(decX_/2));
-            ceo = coefs(1:ceil(decY_/2),    ceil(decX_/2)+1:end);
-            value = [ cee(:) ; coo(:) ; coe(:) ; ceo(:) ];
-        end
-    end
-    %}
 end
 
