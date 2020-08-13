@@ -31,17 +31,18 @@ msip.download_img
 % * 繰返し回数 (Number of iterations)
 
 % Decimation factor (Strides)
-decFactors = [2 2];
+decFactors = [4 4];
 nDecs = prod(decFactors);
 
-% Number of channels
-nChannels = [3 3];
+% Number of channels ( sum(nChannels) >= prod(decFactors) )
+nChannels = [10 10];
 redundancyRatio = sum(nChannels)/nDecs
+
 % Sparsity ratio
 sparsityRatio = 0.4;
 
 % Number of iterations
-nIters = 10;
+nIters = 5;
 % 畳込み辞書学習
 % (Convolutional dictionary learning)
 % 問題設定 (Problem setting):
@@ -145,48 +146,117 @@ nIters = 10;
 %% 
 % 【References】 
 %% 
-% * S. Muramatsu, T. Kobayashi, M. Hiki and H. Kikuchi, "Boundary Operation 
-% of 2-D Nonseparable Linear-Phase Paraunitary Filter Banks," in IEEE Transactions 
-% on Image Processing, vol. 21, no. 4, pp. 2314-2318, April 2012, doi: 10.1109/TIP.2011.2181527.
 % * S. Muramatsu, K. Furuya and N. Yuki, "Multidimensional Nonseparable Oversampled 
 % Lapped Transforms: Theory and Design," in IEEE Transactions on Signal Processing, 
 % vol. 65, no. 5, pp. 1251-1264, 1 March1, 2017, doi: 10.1109/TSP.2016.2633240.
+% * S. Muramatsu, T. Kobayashi, M. Hiki and H. Kikuchi, "Boundary Operation 
+% of 2-D Nonseparable Linear-Phase Paraunitary Filter Banks," in IEEE Transactions 
+% on Image Processing, vol. 21, no. 4, pp. 2314-2318, April 2012, doi: 10.1109/TIP.2011.2181527.
+% * S. Muramatsu, M. Ishii and Z. Chen, "Efficient parameter optimization for 
+% example-based design of nonseparable oversampled lapped transform," 2016 IEEE 
+% International Conference on Image Processing (ICIP), Phoenix, AZ, 2016, pp. 
+% 3618-3622, doi: 10.1109/ICIP.2016.7533034.
 % * Furuya, K., Hara, S., Seino, K., & Muramatsu, S. (2016). Boundary operation 
 % of 2D non-separable oversampled lapped transforms. _APSIPA Transactions on Signal 
 % and Information Processing, 5_, E9. doi:10.1017/ATSIP.2016.3.
 
 % Patch size for training
-szPatchTrn = [16 16]; % > [ (Ny+1)My (Nx+1)Mx ]
+szPatchTrn = [32 32]; % > [ (Ny+1)My (Nx+1)Mx ]
 
 % Construction of layers
 import msip.*
 analysisNsoltLayers = [
-    imageInputLayer(szPatchTrn,'Name','input','Normalization','none')
-    nsoltBlockDct2Layer('DecimationFactor',decFactors,'Name','E0')
-    nsoltInitialRotationLayer('NumberOfChannels',nChannels,'DecimationFactor',decFactors,'Name','V0')
-    nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qhrl','Direction','Right','TargetChannels','Lower')
-    nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vh1','Mode','Analysis','Mus',-1)
-    nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qhlu','Direction','Left','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vh2','Mode','Analysis')
-    nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qvdl','Direction','Down','TargetChannels','Lower')
-    nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vv1','Mode','Analysis','Mus',-1)
-    nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qvuu','Direction','Up','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vv2','Mode','Analysis')
-    ...regressionLayer('Name','subband images')
+    imageInputLayer(szPatchTrn,...
+        'Name','input','Normalization','none')
+        
+    nsoltBlockDct2Layer('Name','E0',...
+        'DecimationFactor',decFactors)
+    nsoltInitialRotationLayer('Name','V0',...
+        'NumberOfChannels',nChannels,'DecimationFactor',decFactors,...
+        'NoDcLeakage',true)
+        
+    nsoltAtomExtensionLayer('Name','Qh1rl',...
+        'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Lower')
+    nsoltIntermediateRotationLayer('Name','Vh1',...
+        'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
+    nsoltAtomExtensionLayer('Name','Qh2lu',...
+        'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Upper')
+    nsoltIntermediateRotationLayer('Name','Vh2',...
+        'NumberOfChannels',nChannels,'Mode','Analysis')
+    %{    
+    nsoltAtomExtensionLayer('Name','Qh3rl',...
+        'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Lower')
+    nsoltIntermediateRotationLayer('Name','Vh3',...
+        'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
+    nsoltAtomExtensionLayer('Name','Qh4lu',...
+        'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Upper')
+    nsoltIntermediateRotationLayer('Name','Vh4',...
+        'NumberOfChannels',nChannels,'Mode','Analysis')        
+    %}    
+    nsoltAtomExtensionLayer('Name','Qv1dl',...
+        'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Lower')
+    nsoltIntermediateRotationLayer('Name','Vv1',...
+        'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
+    nsoltAtomExtensionLayer('Name','Qv2uu',...
+        'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Upper')
+    nsoltIntermediateRotationLayer('Name','Vv2',...
+        'NumberOfChannels',nChannels,'Mode','Analysis')
+    %{    
+    nsoltAtomExtensionLayer('Name','Qv3dl',...
+        'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Lower')
+    nsoltIntermediateRotationLayer('Name','Vv3',...
+        'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
+    nsoltAtomExtensionLayer('Name','Qv4uu',...
+        'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Upper')
+    nsoltIntermediateRotationLayer('Name','Vv4',...
+        'NumberOfChannels',nChannels,'Mode','Analysis')        
+    %}    
     ]
 synthesisNsoltLayers = [
-    imageInputLayer([szPatchTrn./decFactors sum(nChannels)],'Name','subband images','Normalization','none')
-    nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vv2~','Mode','Synthesis')
-    nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qvuu~','Direction','Down','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vv1~','Mode','Synthesis','Mus',-1)
-    nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qvdl~','Direction','Up','TargetChannels','Lower')
-    nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vh2~','Mode','Synthesis')
-    nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qhlu~','Direction','Right','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('NumberOfChannels',nChannels,'Name','Vh1~','Mode','Synthesis','Mus',-1)
-    nsoltAtomExtensionLayer('NumberOfChannels',nChannels,'Name','Qhrl~','Direction','Left','TargetChannels','Lower') 
-    nsoltFinalRotationLayer('NumberOfChannels',nChannels,'DecimationFactor',decFactors,'Name','V0~')
-    nsoltBlockIdct2Layer('DecimationFactor',decFactors,'Name','E0~') 
-    ....regressionLayer('Name','output')
+    imageInputLayer([szPatchTrn./decFactors sum(nChannels)],...
+        'Name','subband images','Normalization','none')
+    %{    
+    nsoltIntermediateRotationLayer('Name','Vv4~',...
+        'NumberOfChannels',nChannels,'Mode','Synthesis')
+    nsoltAtomExtensionLayer('Name','Qv4uu~',...
+        'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Upper')
+    nsoltIntermediateRotationLayer('Name','Vv3~',...
+        'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
+    nsoltAtomExtensionLayer('Name','Qv3dl~',...
+        'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Lower')        
+    %}    
+    nsoltIntermediateRotationLayer('Name','Vv2~',...
+        'NumberOfChannels',nChannels,'Mode','Synthesis')
+    nsoltAtomExtensionLayer('Name','Qv2uu~',...
+        'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Upper')
+    nsoltIntermediateRotationLayer('Name','Vv1~',...
+        'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
+    nsoltAtomExtensionLayer('Name','Qv1dl~',...
+        'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Lower')
+    %{
+    nsoltIntermediateRotationLayer('Name','Vh4~',...
+        'NumberOfChannels',nChannels,'Mode','Synthesis')
+    nsoltAtomExtensionLayer('Name','Qh4lu~',...
+        'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Upper')
+    nsoltIntermediateRotationLayer('Name','Vh3~',...
+        'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
+    nsoltAtomExtensionLayer('Name','Qh3rl~',...
+        'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Lower')        
+    %}    
+    nsoltIntermediateRotationLayer('Name','Vh2~',...
+        'NumberOfChannels',nChannels,'Mode','Synthesis')
+    nsoltAtomExtensionLayer('Name','Qh2lu~',...
+        'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Upper')
+    nsoltIntermediateRotationLayer('Name','Vh1~',...
+        'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
+    nsoltAtomExtensionLayer('Name','Qh1rl~',...
+        'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Lower') 
+        
+    nsoltFinalRotationLayer('Name','V0~',...
+        'NumberOfChannels',nChannels,'DecimationFactor',decFactors,...
+        'NoDcLeakage',true)        
+    nsoltBlockIdct2Layer('Name','E0~',...
+        'DecimationFactor',decFactors) 
     ]
 % Layer graph
 analysislgraph = layerGraph(analysisNsoltLayers);
@@ -201,6 +271,13 @@ title('Synthesis NSOLT')
 % Construction of deep learning network.
 analysisnet = dlnetwork(analysislgraph);
 synthesisnet = dlnetwork(synthesislgraph);
+nLearnables = height(synthesisnet.Learnables);
+for iLearnable = 1:nLearnables
+    synthesisnet.Learnables.Value(iLearnable) = ...
+    cellfun(@(x) x+1e-1*randn(), ...
+    synthesisnet.Learnables.Value(iLearnable),'UniformOutput',false);
+end
+analysisnet = copyparameters(synthesisnet,analysisnet);
 % 完全再構成の確認
 % (Confirmation of perfect reconstruction)
 
@@ -220,14 +297,14 @@ for iAtom = 1:sum(nChannels)
     atomicImages(:,:,1,iAtom) = extractdata(synthesisnet.predict(deltaImage));
 end
 figure(2)
-montage(circshift(imresize(atomicImages,8,'nearest'),[8 8 0])+.5,'BorderSize',[2 2])
+montage(circshift(imresize(atomicImages,8,'nearest'),[20 20 0])+.5,'BorderSize',[2 2])
 title('Atomic images of initial NSOLT')
 % 教師画像の準備 
 % (Preparation of traning image)
 % 
 % 画像データストアからパッチをランダム抽出
 
-imds = imageDatastore("./data/lena.png","ReadFcn",@(x) im2single(rgb2gray(imread(x))));
+imds = imageDatastore("./data/barbara.png","ReadFcn",@(x) im2single(imread(x)));
 patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',32);
 figure(3)
 minibatch = preview(patchds);
@@ -282,14 +359,23 @@ for iAtom = 1:sum(nChannels)
     atomicImages(:,:,1,iAtom) = extractdata(synthesisnet.predict(deltaImage));
 end
 figure(4)
-montage(circshift(imresize(atomicImages,8,'nearest'),[8 8 0])+.5,'BorderSize',[2 2])
+montage(circshift(imresize(atomicImages,8,'nearest'),[20 20 0])+.5,'BorderSize',[2 2])
 title('Atomic images of trained NSOLT')
 % 繰返しハード閾値処理 
 % (Function of iterative hard thresholding)
 % 
-% パッチペアの入力側をIHTによりスパース係数に置換．NSOLTはパーセバルタイト性を満たすため正規化を省略．(The input images of 
-% the patch pairs are replaced with sparse coefficients obtained by IHT, where 
-% normalization is omitted for the Parseval tight property of NSOLT.)
+% パッチペアの入力側をIHTによりスパース係数に置換．NSOLTはパーセバルタイト性 ($\mathbf{DD}^T=\mathbf{I}$) を満たすため正規化を省略．(The 
+% input images of the patch pairs are replaced with sparse coefficients obtained 
+% by IHT, where normalization is omitted for the Parseval tight property of NSOLT.)
+% 
+% $$\mathbf{s}^{(t+1)}\leftarrow \mathcal{H}_{T_K}\left(\mathbf{s}^{(t)}-\gamma 
+% \hat{\mathbf{D}}^T\left(\hat{\mathbf{D}}\mathbf{s}-\mathbf{v}\right)\right)$$
+% 
+% $$t\leftarrow t+1$$
+% 
+% ただし，(where)
+% 
+% $$\mathcal{H}_{T_K}(\mathbf{x})=\mathrm{sgn}(\mathbf{x})\odot\max(\mathrm{abs}(\mathbf{x}),T_K\mathbf{1})$$
 % 
 % 【Reference】
 %% 
@@ -312,7 +398,7 @@ function [y,coefs] = iht(x,analyzer,synthesizer,sparsityRatio)
 % Iterative hard thresholding w/o normalization
 % (A Parseval tight frame is assumed)
 gamma = (1.-1e-3);
-nIters = 5;
+nIters = 10;
 nCoefs = floor(sparsityRatio*numel(x));
 coefs = 0*analyzer.predict(x);
 % IHT
@@ -339,8 +425,8 @@ analysisLearnables = oldanalysisnet.Learnables;
 synthesisLearnables = synthesisnet.Learnables;
 nLearnables = height(analysisLearnables);
 for iLearnable = 1:nLearnables
-    t = synthesisLearnables(nLearnables-iLearnable+1,:);
-    newanalysisnet.Learnables(iLearnable,:) = t; 
+    t = synthesisLearnables.Value(nLearnables-iLearnable+1);
+    newanalysisnet.Learnables.Value(iLearnable) = t; 
 end
 end
 %% 
