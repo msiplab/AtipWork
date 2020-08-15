@@ -171,7 +171,7 @@ classdef nsoltFinalRotationLayer_testcase < matlab.unittest.TestCase
             ps = nchs(1);
             pa = nchs(2);
             anglesNoDc = angles;
-            anglesNoDc(1:length(angles)/2-1,1)=zeros(length(angles)/2-1,1);
+            anglesNoDc(1:ps-1,1)=zeros(ps-1,1);
             W0T = transpose(genW.generate(anglesNoDc(1:length(angles)/2),1));
             U0T = transpose(genU.generate(anglesNoDc(length(angles)/2+1:end),1));
             Y = permute(X,[3 1 2 4]);

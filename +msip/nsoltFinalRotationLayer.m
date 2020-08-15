@@ -110,8 +110,8 @@ classdef nsoltFinalRotationLayer < nnet.layer.Layer
                 U0T = eye(pa);
             else
                 if layer.NoDcLeakage
-                    layer.Angles(1:length(layer.Angles)/2-1) = ...
-                        zeros(length(layer.Angles)/2-1,1,'like',layer.Angles);
+                    layer.Angles(1:ps-1) = ...
+                        zeros(ps-1,1,'like',layer.Angles);
                 end
                 anglesW = layer.Angles(1:length(layer.Angles)/2);
                 anglesU = layer.Angles(length(layer.Angles)/2+1:end);
