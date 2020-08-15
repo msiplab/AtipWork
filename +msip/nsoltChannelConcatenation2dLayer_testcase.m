@@ -1,5 +1,5 @@
-classdef nsoltChannelConcatenationLayer_testcase < matlab.unittest.TestCase
-    %NSOLTCHANNELCONCATENATIONLAYER_TESTCASE
+classdef nsoltChannelConcatenation2dLayer_testcase < matlab.unittest.TestCase
+    %NSOLTCHANNELCONCATENATION2DLAYERTESTCASE
     %
     %   ２コンポーネント入力(nComponents=2のみサポート):
     %      nRows x nCols x 1 x nSamples
@@ -8,6 +8,11 @@ classdef nsoltChannelConcatenationLayer_testcase < matlab.unittest.TestCase
     %   １コンポーネント出力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
     %
+    %
+    % Exported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr    
+    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU
@@ -28,6 +33,15 @@ classdef nsoltChannelConcatenationLayer_testcase < matlab.unittest.TestCase
         ncols = struct('small', 4,'medium', 8, 'large', 16);
     end
     
+    methods (TestClassTeardown)
+        function finalCheck(~)
+            import msip.*
+            layer = nsoltChannelConcatenation2dLayer();
+            fprintf("\n --- Check layer for 2-D images ---\n");
+            checkLayer(layer,{[8 8 1], [8 8 5]},'ObservationDimension',4)
+        end
+    end
+    
     methods (Test)
         
         function testConstructor(testCase)
@@ -38,7 +52,7 @@ classdef nsoltChannelConcatenationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltChannelConcatenationLayer('Name',expctdName);
+            layer = nsoltChannelConcatenation2dLayer('Name',expctdName);
             
             % Actual values
             actualName = layer.Name;
@@ -69,7 +83,7 @@ classdef nsoltChannelConcatenationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltChannelConcatenationLayer('Name','Cn');
+            layer = nsoltChannelConcatenation2dLayer('Name','Cn');
             
             % Actual values
             actualZ = layer.predict(X1,X2);
@@ -80,7 +94,42 @@ classdef nsoltChannelConcatenationLayer_testcase < matlab.unittest.TestCase
                 IsEqualTo(expctdZ,'Within',tolObj));
             
         end
-
+                
+        function testBackward(testCase,nchs,nrows,ncols,datatype)
+            
+            import matlab.unittest.constraints.IsEqualTo
+            import matlab.unittest.constraints.AbsoluteTolerance
+            tolObj = AbsoluteTolerance(1e-6,single(1e-6));
+            
+            % Parameters
+            nSamples = 8;
+            nChsTotal = sum(nchs);
+            % nRows x nCols x nChsTotal x nSamples
+            dLdZ = randn(nrows,ncols,nChsTotal,nSamples,datatype);
+            
+            % Expected values
+            % nRows x nCols x 1 x nSamples
+            expctddLdX1 = dLdZ(:,:,1,:);
+            % nRows x nCols x (nChsTotal-1) x nSamples 
+            expctddLdX2 = dLdZ(:,:,2:end,:);
+            
+            % Instantiation of target class
+            import msip.*
+            layer = nsoltChannelConcatenation2dLayer('Name','Cn');
+            
+            % Actual values
+            [actualdLdX1,actualdLdX2] = layer.backward([],[],[],dLdZ,[]);
+            
+            % Evaluation
+            testCase.verifyInstanceOf(actualdLdX1,datatype);
+            testCase.verifyInstanceOf(actualdLdX2,datatype);            
+            testCase.verifyThat(actualdLdX1,...
+                IsEqualTo(expctddLdX1,'Within',tolObj));
+            testCase.verifyThat(actualdLdX2,...
+                IsEqualTo(expctddLdX2,'Within',tolObj));            
+            
+        end
+        
     end
     
 end

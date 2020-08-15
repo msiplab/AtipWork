@@ -1,5 +1,5 @@
-classdef nsoltChannelConcatenationLayer < nnet.layer.Layer
-    %NSOLTCHANNELSEPARATIONLAYER
+classdef nsoltChannelConcatenation2dLayer < nnet.layer.Layer
+    %NSOLTCHANNELSEPARATION2DLAYER
     %
     %   １コンポーネント入力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
@@ -8,6 +8,11 @@ classdef nsoltChannelConcatenationLayer < nnet.layer.Layer
     %      nRows x nCols x 1 x nSamples
     %      nRows x nCols x (nChsTotal-1) x nSamples    
     %
+    %
+    % Exported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr    
+    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU
@@ -28,7 +33,7 @@ classdef nsoltChannelConcatenationLayer < nnet.layer.Layer
     end
     
     methods
-        function layer = nsoltChannelConcatenationLayer(varargin)
+        function layer = nsoltChannelConcatenation2dLayer(varargin)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
             p = inputParser;
@@ -39,10 +44,11 @@ classdef nsoltChannelConcatenationLayer < nnet.layer.Layer
             layer.Name = p.Results.Name;
             layer.Description =  "Channel concatenation";
             layer.Type = '';
+            layer.NumInputs = 2;
             
         end
         
-        function Z = predict(layer, X1,X2)
+        function Z = predict(~, X1,X2)
             % Forward input data through the layer at prediction time and
             % output the result.
             %
@@ -57,6 +63,26 @@ classdef nsoltChannelConcatenationLayer < nnet.layer.Layer
             Z = cat(3,X1,X2);
         end
         
+        function [dLdX1,dLdX2] = backward(~,~, ~, ~, dLdZ, ~)
+            % (Optional) Backward propagate the derivative of the loss  
+            % function through the layer.
+            %
+            % Inputs:
+            %         layer             - Layer to backward propagate through
+            %         X1, ..., Xn       - Input data
+            %         Z1, ..., Zm       - Outputs of layer forward function            
+            %         dLdZ1, ..., dLdZm - Gradients propagated from the next layers
+            %         memory            - Memory value from forward function
+            % Outputs:
+            %         dLdX1, ..., dLdXn - Derivatives of the loss with respect to the
+            %                             inputs
+            %         dLdW1, ..., dLdWk - Derivatives of the loss with respect to each
+            %                             learnable parameter
+            
+            % Layer forward function for prediction goes here.
+            dLdX1 = dLdZ(:,:,1,:);
+            dLdX2 = dLdZ(:,:,2:end,:);
+        end
     end
     
 end

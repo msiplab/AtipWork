@@ -1,5 +1,5 @@
-classdef nsoltChannelSeparationLayer_testcase < matlab.unittest.TestCase
-    %NSOLTCHANNELSEPARATIONLAYER_TESTCASE
+classdef nsoltChannelSeparation2dLayer_testcase < matlab.unittest.TestCase
+    %NSOLTCHANNELSEPARATION2DLAYERTESTCASE
     %
     %   １コンポーネント入力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
@@ -8,6 +8,11 @@ classdef nsoltChannelSeparationLayer_testcase < matlab.unittest.TestCase
     %      nRows x nCols x 1 x nSamples
     %      nRows x nCols x (nChsTotal-1) x nSamples    
     %
+    %
+    % Exported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr    
+    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU
@@ -28,6 +33,15 @@ classdef nsoltChannelSeparationLayer_testcase < matlab.unittest.TestCase
         ncols = struct('small', 4,'medium', 8, 'large', 16);
     end
     
+    methods (TestClassTeardown)
+        function finalCheck(~)
+            import msip.*
+            layer = nsoltChannelSeparation2dLayer();
+            fprintf("\n --- Check layer for 2-D images ---\n");
+            checkLayer(layer,[8 8 6],'ObservationDimension',4)
+        end
+    end
+    
     methods (Test)
         
         function testConstructor(testCase)
@@ -38,7 +52,7 @@ classdef nsoltChannelSeparationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltChannelSeparationLayer('Name',expctdName);
+            layer = nsoltChannelSeparation2dLayer('Name',expctdName);
             
             % Actual values
             actualName = layer.Name;
@@ -69,7 +83,7 @@ classdef nsoltChannelSeparationLayer_testcase < matlab.unittest.TestCase
             
             % Instantiation of target class
             import msip.*
-            layer = nsoltChannelSeparationLayer('Name','Sp');
+            layer = nsoltChannelSeparation2dLayer('Name','Sp');
             
             % Actual values
             [actualZ1,actualZ2] = layer.predict(X);
@@ -84,6 +98,41 @@ classdef nsoltChannelSeparationLayer_testcase < matlab.unittest.TestCase
             
         end
 
+        function testBackward(testCase,nchs,nrows,ncols,datatype)
+            
+            import matlab.unittest.constraints.IsEqualTo
+            import matlab.unittest.constraints.AbsoluteTolerance
+            tolObj = AbsoluteTolerance(1e-6,single(1e-6));
+            
+            % Parameters
+            nSamples = 8;
+            nChsTotal = sum(nchs);
+            % nRows x nCols x 1 x nSamples
+            dLdZ1 = randn(nrows,ncols,1,nSamples,datatype);
+            % nRows x nCols x (nChsTotal-1) x nSamples 
+            dLdZ2 = randn(nrows,ncols,nChsTotal-1,nSamples,datatype);
+            
+            % Expected values
+            % nRows x nCols x nChsTotal x nSamples
+            expctddLdX = cat(3,dLdZ1,dLdZ2);
+            
+            % Instantiation of target class
+            import msip.*
+            layer = nsoltChannelSeparation2dLayer('Name','Sp');
+            
+            % Actual values
+            actualdLdX = layer.backward([],[],[],dLdZ1,dLdZ2,[]);
+            
+            % Evaluation
+            testCase.verifyInstanceOf(actualdLdX,datatype);
+            testCase.verifyThat(actualdLdX,...
+                IsEqualTo(expctddLdX,'Within',tolObj));
+            
+        end
+
+         
+        
+        
     end
     
 end
