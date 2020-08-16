@@ -29,20 +29,59 @@ msip.download_img
 % * チャンネル数 (Number of channels)
 % * スパース率 (Sparsity ratio)
 % * 繰返し回数 (Number of iterations)
+% * 初期回転角乱数の標準偏差 (Standard deviation of initial angles)
+% * 訓練用パッチサイズ(Patch size for training)
+% * 訓練用パッチ数 (Number of patches)
 
 % Decimation factor (Strides)
-decFactors = [4 4];
+decFactors = [4 4]; % [My Mx]
 nDecs = prod(decFactors);
 
 % Number of channels ( sum(nChannels) >= prod(decFactors) )
-nChannels = [10 10];
+nChannels = [10 10]; % [Ps Pa]
 redundancyRatio = sum(nChannels)/nDecs
-
 % Sparsity ratio
-sparsityRatio = 0.4;
+sparsityRatio = 1/8;
 
 % Number of iterations
-nIters = 5;
+nIters = 10;
+
+% Standard deviation of initial angles
+stdInitAng = 1e-1;
+
+% Patch size for training
+szPatchTrn = [32 32]; % > [ (Ny+1)My (Nx+1)Mx ]
+
+% Number of patchs per image
+nSubImgs = 128;
+%% 
+% 辞書更新パラメータの設定 (Setting of dictionary update step)
+
+opts = trainingOptions('sgdm', ... % Stochastic gradient descent w/ momentum
+    ...'Momentum', 0.9000,...
+    ...'InitialLearnRate',0.0100,...
+    ...'LearnRateScheduleSettings','none',...
+    'L2Regularization',0.0,...1.0000e-04,...
+    ...'GradientThresholdMethod','l2norm',...
+    ...'GradientThreshold',Inf,...
+    'MaxEpochs',20,...
+    'MiniBatchSize',64,...
+    ...'Verbose',1,...
+    ...'VerboseFrequency',50,...
+    ...'ValidationData',[],...
+    ...'ValidationFrequency',50,...
+    ...'ValidationPatience',Inf,...
+    ...'Shuffle','once',...
+    ...'CheckpointPath','',...
+    ...'ExecutionEnvironment','auto',...
+    ...'WorkerLoad',[],...
+    ...'OutputFcn',[],...
+    'Plots','none',...'training-progress',...
+    ...'SequenceLength','longest',...
+    ...'SequencePaddingValue',0,...
+    ...'SequencePaddingDirection','right',...
+    ...'DispatchInBackground',0,...
+    'ResetInputNormalization',0);...1
 % 畳込み辞書学習
 % (Convolutional dictionary learning)
 % 問題設定 (Problem setting):
@@ -71,9 +110,11 @@ nIters = 5;
 % 二変量ラティス構造冗長フィルタバンク
 % (Bivariate lattice-structure oversampled filter banks )
 % 
-% 例としてチャンネル数 $P$ （偶数）, ポリフェーズ次数 $(N_\mathrm{v},N_\mathrm{h})$ （偶数）のタイプI の非分離冗長重複変換(NSOLT) 
+% 例としてチャンネル数 $P=P_\mathrm{s}+P_\mathrm{a}$ （偶対称チャンネル $P_\mathrm{s}$=奇対称チャンネル 
+% $P_\mathrm{a}$）, ポリフェーズ次数 $(N_\mathrm{v},N_\mathrm{h})$ （偶数）のタイプI の非分離冗長重複変換(NSOLT) 
 % (As an example, let us adopt a non-separable oversampled lapped transform (NSOLT) 
-% of  type-I with the number of channels (even) and polyphase order (even):
+% of  type-I with the number of channels (the numbers of even and odd symmetric 
+% channels are identical to each other) and polyphase order (even):
 % 
 % $$\mathbf{E}(z_\mathrm{v},z_\mathbf{h})=\left(\prod_{k_\mathrm{h}=1}^{N_\mathrm{h}/2}{\mathbf{V}_{2k_\mathrm{h}}^{\{\mathrm{h}\}}}\bar{\mathbf{Q}}(z_\mathrm{h}){\mathbf{V}_{2k_\mathrm{h}-1}^{\{\mathrm{h}\}}}{\mathbf{Q}}(z_\mathrm{h})\right)%\left(\prod_{k_{\mathrm{v}}=1}^{N_\mathrm{v}/2}{\mathbf{V}_{2k_\mathrm{v}}^{\{\mathrm{v}\}}}\bar{\mathbf{Q}}(z_\mathrm{v}){\mathbf{V}_{2k_\mathrm{v}-1}^{\{\mathrm{v}\}}}{\mathbf{Q}}(z_\mathrm{v})\right)%\mathbf{V}_0\mathbf{E}_0,$$
 % 
@@ -107,18 +148,18 @@ nIters = 5;
 % can be constructed by 
 % 
 % $$\mathbf{U}(\mathbf{\theta},\mathbf{\mu}) \colon = \left(\begin{array}{cc} 
-% \mu_0 & 0& 0\\ 0 & \mu_1 & 0 \\ 0 & 0 & \mu_2 \end{array}\right)%\left(\begin{array}{cc}  
-% 0 & 0 & 0 \\0 & \cos\theta_2& -\sin\theta_2 \\ 0 & \sin\theta_2 & \cos\theta_2 
-% \end{array}\right)%\left(\begin{array}{cc} \cos\theta_1& 0 & -\sin\theta_1  
-% \\  0 & 0 & 0 \\\sin\theta_1 & 0 &  \cos\theta_1  \end{array}\right)%\left(\begin{array}{cc} 
+% \mu_1 & 0& 0\\ 0 & \mu_1 & 0 \\ 0 & 0 & \mu_2 \end{array}\right)%\left(\begin{array}{ccc}  
+% 1 & 0 & 0 \\0 & \cos\theta_2& -\sin\theta_2 \\ 0 & \sin\theta_2 & \cos\theta_2 
+% \end{array}\right)%\left(\begin{array}{ccc} \cos\theta_1& 0 & -\sin\theta_1  
+% \\  0 & 1 & 0 \\\sin\theta_1 & 0 &  \cos\theta_1  \end{array}\right)%\left(\begin{array}{ccc} 
 % \cos\theta_0& -\sin\theta_0 & 0 \\ \sin\theta_0 & \cos\theta_0 & 0 \\ 0 & 0 
-% & 0 \end{array}\right),$$
+% & 1 \end{array}\right),$$
 % 
-% $${\mathbf{U}(\mathbf{\theta},\mathbf{\mu})}^T = %\left(\begin{array}{cc} 
+% $${\mathbf{U}(\mathbf{\theta},\mathbf{\mu})}^T = %\left(\begin{array}{ccc} 
 % \cos\theta_0& \sin\theta_0 & 0 \\ -\sin\theta_0 & \cos\theta_0 & 0 \\ 0 & 0 
-% & 0 \end{array}\right)%\left(\begin{array}{cc} \cos\theta_1& 0 & \sin\theta_1  
-% \\  0 & 0 & 0 \\-\sin\theta_1 & 0 &  \cos\theta_1  \end{array}\right)%\left(\begin{array}{cc}  
-% 0 & 0 & 0 \\0 & \cos\theta_2& \sin\theta_2 \\ 0 & -\sin\theta_2 & \cos\theta_2 
+% & 1 \end{array}\right)%\left(\begin{array}{ccc} \cos\theta_1& 0 & \sin\theta_1  
+% \\  0 & 1 & 0 \\-\sin\theta_1 & 0 &  \cos\theta_1  \end{array}\right)%\left(\begin{array}{ccc} 
+% 1 & 0 & 0 \\0 & \cos\theta_2& \sin\theta_2 \\ 0 & -\sin\theta_2 & \cos\theta_2 
 % \end{array}\right)%\left(\begin{array}{cc} \mu_0 & 0& 0\\ 0 & \mu_1 & 0 \\ 0 
 % & 0 & \mu_2 \end{array}\right),$$
 % 
@@ -128,24 +169,27 @@ nIters = 5;
 % 
 % 
 % カスタムレイヤとネットワークの定義
+% (Definition of cunsom layers and networks)
+% 
 % 合成NSOLT (Synthesis NSOLT)の実装にDeep Learning Toolbox のカスタムレイヤを利用．(Use a custom 
 % layer of Deep Learning Toolbox to implement Synthesis NSOLT (Synthesis NSOLT).)
 % 
 % 学習レイヤの定義 (Definition of layers w/ Learnable properties)
 %% 
-% * Final rotation: $\mathbf{V}_0^T$ (msip.nsoltFinalRotationLayer)
-% * Intermediate rotation: ${\mathbf{V}_n^{\{d\}}}^T$ (msip.nsoltIntermediateRotationLayer)
+% * Final rotation: $\mathbf{V}_0^T$ (msip.nsoltFinalRotation2dLayer)
+% * Intermediate rotation: ${\mathbf{V}_n^{\{d\}}}^T$ (msip.nsoltIntermediateRotation2dLayer)
 %% 
 % 非学習レイヤの定義 (Definition of layers w/o Learnable properties)
 %% 
 % * Bivariate inverese DCT (2-D IDCT): $\mathbf{E}_0^T=\mathbf{E}_0^{-1}$ (msip.nsoltBlockDctLayer)
-% * Vertical up extension: $\mathbf{Q}^T(z_\mathrm{v}^{-1})$ (msip.nsoltAtomExtensionLayer)
-% * Vertical down extension: $\bar{\mathbf{Q}}^T(z_\mathrm{v}^{-1})$  (msip.nsoltAtomExtensionLayer)
-% * Horizontal left extension: $\mathbf{Q}^T(z_\mathrm{h}^{-1})$ (msip.nsoltAtomExtensionLayer)
-% * Horizontal right extension: $\bar{\mathbf{Q}}^T(z_\mathrm{h}^{-1})$ (msip.nsoltAtomExtensionLayer)
+% * Vertical up extension: $\mathbf{Q}^T(z_\mathrm{v}^{-1})$ (msip.nsoltAtomExtension2dLayer)
+% * Vertical down extension: $\bar{\mathbf{Q}}^T(z_\mathrm{v}^{-1})$  (msip.nsoltAtomExtension2dLayer)
+% * Horizontal left extension: $\mathbf{Q}^T(z_\mathrm{h}^{-1})$ (msip.nsoltAtomExtension2dLayer)
+% * Horizontal right extension: $\bar{\mathbf{Q}}^T(z_\mathrm{h}^{-1})$ (msip.nsoltAtomExtension2dLayer)
 %% 
 % 【References】 
 %% 
+% * MATLAB SaivDr Package: <https://github.com/msiplab/SaivDr https://github.com/msiplab/SaivDr>
 % * S. Muramatsu, K. Furuya and N. Yuki, "Multidimensional Nonseparable Oversampled 
 % Lapped Transforms: Theory and Design," in IEEE Transactions on Signal Processing, 
 % vol. 65, no. 5, pp. 1251-1264, 1 March1, 2017, doi: 10.1109/TSP.2016.2633240.
@@ -160,55 +204,52 @@ nIters = 5;
 % of 2D non-separable oversampled lapped transforms. _APSIPA Transactions on Signal 
 % and Information Processing, 5_, E9. doi:10.1017/ATSIP.2016.3.
 
-% Patch size for training
-szPatchTrn = [32 32]; % > [ (Ny+1)My (Nx+1)Mx ]
-
 % Construction of layers
 import msip.*
 analysisNsoltLayers = [
     imageInputLayer(szPatchTrn,...
         'Name','input','Normalization','none')
         
-    nsoltBlockDct2Layer('Name','E0',...
+    nsoltBlockDct2dLayer('Name','E0',...
         'DecimationFactor',decFactors)
-    nsoltInitialRotationLayer('Name','V0',...
+    nsoltInitialRotation2dLayer('Name','V0',...
         'NumberOfChannels',nChannels,'DecimationFactor',decFactors,...
         'NoDcLeakage',true)
         
-    nsoltAtomExtensionLayer('Name','Qh1rl',...
+    nsoltAtomExtension2dLayer('Name','Qh1rl',...
         'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Lower')
-    nsoltIntermediateRotationLayer('Name','Vh1',...
+    nsoltIntermediateRotation2dLayer('Name','Vh1',...
         'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
-    nsoltAtomExtensionLayer('Name','Qh2lu',...
+    nsoltAtomExtension2dLayer('Name','Qh2lu',...
         'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('Name','Vh2',...
+    nsoltIntermediateRotation2dLayer('Name','Vh2',...
         'NumberOfChannels',nChannels,'Mode','Analysis')
     %{    
-    nsoltAtomExtensionLayer('Name','Qh3rl',...
+    nsoltAtomExtension2dLayer('Name','Qh3rl',...
         'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Lower')
-    nsoltIntermediateRotationLayer('Name','Vh3',...
+    nsoltIntermediateRotation2dLayer('Name','Vh3',...
         'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
-    nsoltAtomExtensionLayer('Name','Qh4lu',...
+    nsoltAtomExtension2dLayer('Name','Qh4lu',...
         'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('Name','Vh4',...
+    nsoltIntermediateRotation2dLayer('Name','Vh4',...
         'NumberOfChannels',nChannels,'Mode','Analysis')        
     %}    
-    nsoltAtomExtensionLayer('Name','Qv1dl',...
+    nsoltAtomExtension2dLayer('Name','Qv1dl',...
         'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Lower')
-    nsoltIntermediateRotationLayer('Name','Vv1',...
+    nsoltIntermediateRotation2dLayer('Name','Vv1',...
         'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
-    nsoltAtomExtensionLayer('Name','Qv2uu',...
+    nsoltAtomExtension2dLayer('Name','Qv2uu',...
         'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('Name','Vv2',...
+    nsoltIntermediateRotation2dLayer('Name','Vv2',...
         'NumberOfChannels',nChannels,'Mode','Analysis')
     %{    
-    nsoltAtomExtensionLayer('Name','Qv3dl',...
+    nsoltAtomExtension2dLayer('Name','Qv3dl',...
         'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Lower')
-    nsoltIntermediateRotationLayer('Name','Vv3',...
+    nsoltIntermediateRotation2dLayer('Name','Vv3',...
         'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
-    nsoltAtomExtensionLayer('Name','Qv4uu',...
+    nsoltAtomExtension2dLayer('Name','Qv4uu',...
         'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('Name','Vv4',...
+    nsoltIntermediateRotation2dLayer('Name','Vv4',...
         'NumberOfChannels',nChannels,'Mode','Analysis')        
     %}    
     ]
@@ -216,46 +257,46 @@ synthesisNsoltLayers = [
     imageInputLayer([szPatchTrn./decFactors sum(nChannels)],...
         'Name','subband images','Normalization','none')
     %{    
-    nsoltIntermediateRotationLayer('Name','Vv4~',...
+    nsoltIntermediateRotation2dLayer('Name','Vv4~',...
         'NumberOfChannels',nChannels,'Mode','Synthesis')
-    nsoltAtomExtensionLayer('Name','Qv4uu~',...
+    nsoltAtomExtension2dLayer('Name','Qv4uu~',...
         'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('Name','Vv3~',...
+    nsoltIntermediateRotation2dLayer('Name','Vv3~',...
         'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
-    nsoltAtomExtensionLayer('Name','Qv3dl~',...
+    nsoltAtomExtension2dLayer('Name','Qv3dl~',...
         'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Lower')        
     %}    
-    nsoltIntermediateRotationLayer('Name','Vv2~',...
+    nsoltIntermediateRotation2dLayer('Name','Vv2~',...
         'NumberOfChannels',nChannels,'Mode','Synthesis')
-    nsoltAtomExtensionLayer('Name','Qv2uu~',...
+    nsoltAtomExtension2dLayer('Name','Qv2uu~',...
         'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('Name','Vv1~',...
+    nsoltIntermediateRotation2dLayer('Name','Vv1~',...
         'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
-    nsoltAtomExtensionLayer('Name','Qv1dl~',...
+    nsoltAtomExtension2dLayer('Name','Qv1dl~',...
         'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Lower')
     %{
-    nsoltIntermediateRotationLayer('Name','Vh4~',...
+    nsoltIntermediateRotation2dLayer('Name','Vh4~',...
         'NumberOfChannels',nChannels,'Mode','Synthesis')
-    nsoltAtomExtensionLayer('Name','Qh4lu~',...
+    nsoltAtomExtension2dLayer('Name','Qh4lu~',...
         'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('Name','Vh3~',...
+    nsoltIntermediateRotation2dLayer('Name','Vh3~',...
         'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
-    nsoltAtomExtensionLayer('Name','Qh3rl~',...
+    nsoltAtomExtension2dLayer('Name','Qh3rl~',...
         'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Lower')        
     %}    
-    nsoltIntermediateRotationLayer('Name','Vh2~',...
+    nsoltIntermediateRotation2dLayer('Name','Vh2~',...
         'NumberOfChannels',nChannels,'Mode','Synthesis')
-    nsoltAtomExtensionLayer('Name','Qh2lu~',...
+    nsoltAtomExtension2dLayer('Name','Qh2lu~',...
         'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Upper')
-    nsoltIntermediateRotationLayer('Name','Vh1~',...
+    nsoltIntermediateRotation2dLayer('Name','Vh1~',...
         'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
-    nsoltAtomExtensionLayer('Name','Qh1rl~',...
+    nsoltAtomExtension2dLayer('Name','Qh1rl~',...
         'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Lower') 
         
-    nsoltFinalRotationLayer('Name','V0~',...
+    nsoltFinalRotation2dLayer('Name','V0~',...
         'NumberOfChannels',nChannels,'DecimationFactor',decFactors,...
         'NoDcLeakage',true)        
-    nsoltBlockIdct2Layer('Name','E0~',...
+    nsoltBlockIdct2dLayer('Name','E0~',...
         'DecimationFactor',decFactors) 
     ]
 % Layer graph
@@ -274,7 +315,7 @@ synthesisnet = dlnetwork(synthesislgraph);
 nLearnables = height(synthesisnet.Learnables);
 for iLearnable = 1:nLearnables
     synthesisnet.Learnables.Value(iLearnable) = ...
-    cellfun(@(x) x+1e-1*randn(), ...
+    cellfun(@(x) x+stdInitAng*randn(), ...
     synthesisnet.Learnables.Value(iLearnable),'UniformOutput',false);
 end
 analysisnet = copyparameters(synthesisnet,analysisnet);
@@ -302,10 +343,10 @@ title('Atomic images of initial NSOLT')
 % 教師画像の準備 
 % (Preparation of traning image)
 % 
-% 画像データストアからパッチをランダム抽出
+% 画像データストアからパッチをランダム抽出 (Randomly extracting patches from the image data store)
 
 imds = imageDatastore("./data/barbara.png","ReadFcn",@(x) im2single(imread(x)));
-patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',32);
+patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',nSubImgs);
 figure(3)
 minibatch = preview(patchds);
 responses = minibatch.ResponseImage;
@@ -315,13 +356,6 @@ montage(responses,'Size',[2 4]);
 %% 
 % * スパース近似 (Sparse approximation)： 繰返しハード閾値処理 (Iterative hard thresholding)
 % * 辞書更新 (Dictionary update)： 確率的勾配降下法 (Stochastic gradient descent)
-%% 
-% 訓練パラメータの設定 (Setting of training configurations)
-
-% Construction of whole network.
-opts = trainingOptions('sgdm', ... % Stochastig gradient descent
-    ...'Plots','training-progress', ...
-    'MaxEpochs',30);
 %% 
 % 交互ステップの繰返し計算 (Iterative calculation of alternative steps)
 
@@ -369,7 +403,7 @@ title('Atomic images of trained NSOLT')
 % by IHT, where normalization is omitted for the Parseval tight property of NSOLT.)
 % 
 % $$\mathbf{s}^{(t+1)}\leftarrow \mathcal{H}_{T_K}\left(\mathbf{s}^{(t)}-\gamma 
-% \hat{\mathbf{D}}^T\left(\hat{\mathbf{D}}\mathbf{s}-\mathbf{v}\right)\right)$$
+% \hat{\mathbf{D}}^T\left(\hat{\mathbf{D}}\mathbf{s}^{(t)}-\mathbf{v}\right)\right)$$
 % 
 % $$t\leftarrow t+1$$
 % 
@@ -398,7 +432,7 @@ function [y,coefs] = iht(x,analyzer,synthesizer,sparsityRatio)
 % Iterative hard thresholding w/o normalization
 % (A Parseval tight frame is assumed)
 gamma = (1.-1e-3);
-nIters = 10;
+nIters = 20;
 nCoefs = floor(sparsityRatio*numel(x));
 coefs = 0*analyzer.predict(x);
 % IHT
@@ -417,7 +451,10 @@ for iter=1:nIters
 end
 end
 % 分析辞書（随伴作用素）の設定
-% 合成辞書パラメータの分析辞書（随伴作用素）へのコピー
+% (Setting up the analytical dictionary (adjoint operator))
+% 
+% 合成辞書パラメータの分析辞書（随伴作用素）へのコピー (Copying synthesis dictionary parameters to the 
+% analyisis dictionary (the adjoint operator))
 
 function newanalysisnet = copyparameters(synthesisnet,oldanalysisnet)
 newanalysisnet = oldanalysisnet;
