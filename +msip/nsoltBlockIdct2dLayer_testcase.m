@@ -1,17 +1,16 @@
 classdef nsoltBlockIdct2dLayer_testcase < matlab.unittest.TestCase
     %NSOLTBLOCKIDCT2DLAYERTESTCASE
     %
+    % Imported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr    
+    %
     %   コンポーネント別に入力:
     %      nRows x nCols x nDecs x nSamples
     %
     %   ベクトル配列をブロック配列にして出力:
     %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
     %
-    %
-    % Exported and modified from SaivDr package
-    %
-    %    https://github.com/msiplab/SaivDr    
-    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU
@@ -26,7 +25,7 @@ classdef nsoltBlockIdct2dLayer_testcase < matlab.unittest.TestCase
     % http://msiplab.eng.niigata-u.ac.jp/
     
     properties (TestParameter)
-        stride = { [2 2], [4 4] };
+        stride = { [1 1], [2 2], [2 4], [4 1], [4 4] };
         datatype = { 'single', 'double' };
         height = struct('small', 8,'medium', 16, 'large', 32);
         width = struct('small', 8,'medium', 16, 'large', 32);
@@ -75,14 +74,15 @@ classdef nsoltBlockIdct2dLayer_testcase < matlab.unittest.TestCase
         
         function testPredictGrayScale(testCase, ...
                 stride, height, width, datatype)
+            import saivdr.dictionary.utility.Direction
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
             tolObj = AbsoluteTolerance(1e-6,single(1e-6));
             
             % Parameters
             nSamples = 8;
-            nrows = height/stride(1);
-            ncols = width/stride(2);
+            nrows = height/stride(Direction.VERTICAL);
+            ncols = width/stride(Direction.HORIZONTAL);
             nDecs = prod(stride);
             nComponents = 1;
             X = rand(nrows,ncols,nDecs,nSamples,datatype);
@@ -118,14 +118,15 @@ classdef nsoltBlockIdct2dLayer_testcase < matlab.unittest.TestCase
         
         function testPredictRgbColor(testCase, ...
                 stride, height, width, datatype)
+            import saivdr.dictionary.utility.Direction
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
             tolObj = AbsoluteTolerance(1e-6,single(1e-6));
             
             % Parameters
             nSamples = 8;
-            nrows = height/stride(1);
-            ncols = width/stride(2);
+            nrows = height/stride(Direction.VERTICAL);
+            ncols = width/stride(Direction.HORIZONTAL);
             nDecs = prod(stride);
             nComponents = 3; % RGB
             Xr = rand(nrows,ncols,nDecs,nSamples,datatype);
@@ -180,6 +181,7 @@ classdef nsoltBlockIdct2dLayer_testcase < matlab.unittest.TestCase
         
         function testBackwardGrayScale(testCase, ...
                 stride, height, width, datatype)
+            import saivdr.dictionary.utility.Direction
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
             tolObj = AbsoluteTolerance(1e-6,single(1e-6));
@@ -190,8 +192,8 @@ classdef nsoltBlockIdct2dLayer_testcase < matlab.unittest.TestCase
             dLdZ = rand(height,width,nComponents,nSamples, datatype);
             
             % Expected values
-            nrows = height/stride(1);
-            ncols = width/stride(2);
+            nrows = height/stride(Direction.VERTICAL);
+            ncols = width/stride(Direction.HORIZONTAL);
             ndecs = prod(stride);
             expctddLdX = zeros(nrows,ncols,ndecs,nSamples,datatype);
             for iSample = 1:nSamples
@@ -223,6 +225,7 @@ classdef nsoltBlockIdct2dLayer_testcase < matlab.unittest.TestCase
         
         function testBackwardRgbColor(testCase, ...
                 stride, height, width, datatype)
+            import saivdr.dictionary.utility.Direction
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
             tolObj = AbsoluteTolerance(1e-6,single(1e-6));
@@ -233,8 +236,8 @@ classdef nsoltBlockIdct2dLayer_testcase < matlab.unittest.TestCase
             dLdZ = rand(height,width,nComponents,nSamples, datatype);
             
             % Expected values
-            nrows = height/stride(1);
-            ncols = width/stride(2);
+            nrows = height/stride(Direction.VERTICAL);
+            ncols = width/stride(Direction.HORIZONTAL);
             ndecs = prod(stride);
             expctddLdXr = zeros(nrows,ncols,ndecs,nSamples,datatype);
             expctddLdXg = zeros(nrows,ncols,ndecs,nSamples,datatype);

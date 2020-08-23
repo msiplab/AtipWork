@@ -1,14 +1,7 @@
 classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer
     %NSOLTINTERMEDIATEROTATION2DLAYER
     %
-    %
-    %   コンポーネント別に入力(nComponents):
-    %      nRows x nCols x nChsTotal x nSamples
-    %
-    %   コンポーネント別に出力(nComponents):
-    %      nRows x nCols x nChsTotal x nSamples
-    %
-    % Exported and modified from SaivDr package
+    % Imported and modified from SaivDr package
     %
     %    https://github.com/msiplab/SaivDr
     %
@@ -81,7 +74,7 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer
             %         X1, ..., Xn - Input data (n: # of components)
             % Outputs:
             %         Z           - Outputs of layer forward function
-            %
+            %  
             import msip.*
             
             % Layer forward function for prediction goes here.
@@ -97,7 +90,7 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer
                 musU = layer.Mus;
             end
             anglesU = layer.Angles;
-            Un = layer.fcn_orthmtxgen_(anglesU,musU);
+            Un = fcn_orthmtxgen(anglesU,musU);
             %
             Y = permute(X,[3 1 2 4]);
             Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
@@ -116,13 +109,13 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer
         
         function [dLdX, dLdW] = ...
                 backward(layer, X, ~, dLdZ, ~)
-            % (Optional) Backward propagate the derivative of the loss
+            % (Optional) Backward propagate the derivative of the loss  
             % function through the layer.
             %
             % Inputs:
             %         layer             - Layer to backward propagate through
             %         X1, ..., Xn       - Input data
-            %         Z1, ..., Zm       - Outputs of layer forward function
+            %         Z1, ..., Zm       - Outputs of layer forward function            
             %         dLdZ1, ..., dLdZm - Gradients propagated from the next layers
             %         memory            - Memory value from forward function
             % Outputs:
@@ -133,7 +126,7 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer
             import msip.*
             nrows = size(dLdZ,1);
             ncols = size(dLdZ,2);
-            nSamples = size(dLdZ,4);
+            nSamples = size(dLdZ,4);            
             anglesU = layer.Angles;
             musU = layer.Mus;
             ps = layer.NumberOfChannels(1);
@@ -141,14 +134,14 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer
             
             % Layer backward function goes here.
             % dLdX = dZdX x dLdZ
-            Un = layer.fcn_orthmtxgen_(anglesU,musU,0);
+            Un = fcn_orthmtxgen(anglesU,musU,0);
             adLd_ = permute(dLdZ,[3 1 2 4]);
             cdLd_low = reshape(adLd_(ps+1:ps+pa,:,:,:),...
                 pa,nrows*ncols*nSamples);
             if strcmp(layer.Mode,'Analysis')
-                cdLd_low = Un.'*cdLd_low;
+                cdLd_low = Un.'*cdLd_low;                
             else
-                cdLd_low = Un*cdLd_low;
+                cdLd_low = Un*cdLd_low;                
             end
             adLd_(ps+1:ps+pa,:,:,:) = reshape(cdLd_low,...
                 pa,nrows,ncols,nSamples);
@@ -158,10 +151,10 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer
             nAngles = length(anglesU);
             dLdW = zeros(nAngles,1,'like',dLdZ);
             for iAngle = 1:nAngles
-                dUn = layer.fcn_orthmtxgen_(anglesU,musU,iAngle);
+                dUn = fcn_orthmtxgen(anglesU,musU,iAngle);
                 a_ = permute(X,[3 1 2 4]);
                 c_low = reshape(a_(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
-                if strcmp(layer.Mode,'Analysis')
+                if strcmp(layer.Mode,'Analysis')                
                     c_low = dUn*c_low;
                 else
                     c_low = dUn.'*c_low;
@@ -176,79 +169,6 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer
         
         
     end
-    
-    methods (Static, Access = private)
-        
-        function matrix = fcn_orthmtxgen_(angles,mus,pdAng)
-            %FCN_ORTHONORMALMATRIXGENERATE
-            %
-            % Function realization of
-            % saivdr.dictionary.utility.OrthonormalMatrixGenerationSystem
-            % for supporting dlarray (Deep learning array for custom training
-            % loops)
-            %
-            % Requirements: MATLAB R2020a
-            %
-            % Copyright (c) 2020, Shogo MURAMATSU
-            %
-            % All rights reserved.
-            %
-            % Contact address: Shogo MURAMATSU,
-            %                Faculty of Engineering, Niigata University,
-            %                8050 2-no-cho Ikarashi, Nishi-ku,
-            %                Niigata, 950-2181, JAPAN
-            %
-            % http://msiplab.eng.niigata-u.ac.jp/
-            
-            if nargin < 3
-                pdAng = 0;
-            end
-            
-            nDim_ = (1+sqrt(1+8*length(angles)))/2;
-            if isempty(angles)
-                matrix = zeros(nDim_);
-            else
-                matrix = zeros(nDim_,'like',angles);
-            end
-            for idx = 1:nDim_
-                matrix(idx,idx) = 1;
-            end
-            if ~isempty(angles)
-                iAng = 1;
-                for iTop=1:nDim_-1
-                    vt = matrix(iTop,:);
-                    for iBtm=iTop+1:nDim_
-                        angle = angles(iAng);
-                        if iAng == pdAng
-                            angle = angle + pi/2;
-                        end
-                        c = cos(angle); %
-                        s = sin(angle); %
-                        vb = matrix(iBtm,:);
-                        %
-                        u  = s*(vt + vb);
-                        vt = (c + s)*vt;
-                        vb = (c - s)*vb;
-                        vt = vt - u;
-                        if iAng == pdAng
-                            matrix = 0*matrix;
-                        end
-                        matrix(iBtm,:) = vb + u;
-                        %
-                        iAng = iAng + 1;
-                    end
-                    matrix(iTop,:) = vt;
-                end
-            end
-            if isscalar(mus)
-                matrix = mus*matrix;
-            elseif ~isempty(mus)
-                for idx = 1:nDim_
-                    matrix(idx,:) = mus(idx)*matrix(idx,:);
-                end
-            end
-        end
-        
-    end
+
 end
 

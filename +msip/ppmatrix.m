@@ -1,7 +1,7 @@
 classdef ppmatrix < handle
     %PPMATRIX Univariate polyphase matrix
     %
-    % Exported and modified from SaivDr package
+    % Imported and modified from SaivDr package
     %
     %    https://github.com/msiplab/SaivDr
     %

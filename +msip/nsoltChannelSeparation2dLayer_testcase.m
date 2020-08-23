@@ -1,6 +1,10 @@
 classdef nsoltChannelSeparation2dLayer_testcase < matlab.unittest.TestCase
     %NSOLTCHANNELSEPARATION2DLAYERTESTCASE
     %
+    % Imported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr    
+    %
     %   １コンポーネント入力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
     %
@@ -8,11 +12,6 @@ classdef nsoltChannelSeparation2dLayer_testcase < matlab.unittest.TestCase
     %      nRows x nCols x 1 x nSamples
     %      nRows x nCols x (nChsTotal-1) x nSamples    
     %
-    %
-    % Exported and modified from SaivDr package
-    %
-    %    https://github.com/msiplab/SaivDr    
-    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU

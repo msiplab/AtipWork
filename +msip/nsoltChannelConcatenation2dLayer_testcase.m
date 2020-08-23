@@ -1,6 +1,10 @@
 classdef nsoltChannelConcatenation2dLayer_testcase < matlab.unittest.TestCase
     %NSOLTCHANNELCONCATENATION2DLAYERTESTCASE
     %
+    % Imported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr    
+    %
     %   ２コンポーネント入力(nComponents=2のみサポート):
     %      nRows x nCols x 1 x nSamples
     %      nRows x nCols x (nChsTotal-1) x nSamples    
@@ -8,11 +12,6 @@ classdef nsoltChannelConcatenation2dLayer_testcase < matlab.unittest.TestCase
     %   １コンポーネント出力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
     %
-    %
-    % Exported and modified from SaivDr package
-    %
-    %    https://github.com/msiplab/SaivDr    
-    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU

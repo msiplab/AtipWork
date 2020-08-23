@@ -1,17 +1,16 @@
 classdef nsoltBlockIdct2dLayer < nnet.layer.Layer
     %NSOLTBLOCKIDCT2DLAYER
     %
+    % Imported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr    
+    %
     %   コンポーネント別に入力(nComponents):
     %      nRows x nCols x nDecs x nSamples
     %
     %   ベクトル配列をブロック配列にして出力:
     %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
     %
-    %
-    % Exported and modified from SaivDr package
-    %
-    %    https://github.com/msiplab/SaivDr    
-    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU
@@ -40,6 +39,7 @@ classdef nsoltBlockIdct2dLayer < nnet.layer.Layer
         function layer = nsoltBlockIdct2dLayer(varargin)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
+            import saivdr.dictionary.utility.Direction                                                
             p = inputParser;
             addParameter(p,'DecimationFactor',[])
             addParameter(p,'Name','')
@@ -50,14 +50,14 @@ classdef nsoltBlockIdct2dLayer < nnet.layer.Layer
             layer.DecimationFactor = p.Results.DecimationFactor;
             layer.Name = p.Results.Name;
             layer.Description = "Block IDCT of size " ...
-                + layer.DecimationFactor(1) + "x" ...
-                + layer.DecimationFactor(2);
+                + layer.DecimationFactor(Direction.VERTICAL) + "x" ...
+                + layer.DecimationFactor(Direction.HORIZONTAL);
             layer.Type = '';
             layer.NumInputs = p.Results.NumberOfComponents;
             layer.NumOutputs = 1;
 
-            decV = layer.DecimationFactor(1);
-            decH = layer.DecimationFactor(2);
+            decV = layer.DecimationFactor(Direction.VERTICAL);
+            decH = layer.DecimationFactor(Direction.HORIZONTAL);
 
             Cv_ = dctmtx(decV);
             Ch_ = dctmtx(decH);
@@ -132,14 +132,15 @@ classdef nsoltBlockIdct2dLayer < nnet.layer.Layer
             %                             inputs
             %         dLdW1, ..., dLdWk - Derivatives of the loss with respect to each
             %                             learnable parameter
+            import saivdr.dictionary.utility.Direction                                                                        
             nComponents = layer.NumInputs;        
             dLdZ = varargin{layer.NumInputs+layer.NumOutputs+1};
             varargout = cell(1,nComponents);
                         
             % Layer forward function for prediction goes here.
             decFactor = layer.DecimationFactor;
-            decV = decFactor(1);
-            decH = decFactor(2);
+            decV = decFactor(Direction.VERTICAL);
+            decH = decFactor(Direction.HORIZONTAL);
             %
             Cvh_ = layer.Cvh;
             %

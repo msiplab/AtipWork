@@ -1,6 +1,10 @@
 classdef nsoltChannelConcatenation2dLayer < nnet.layer.Layer
     %NSOLTCHANNELSEPARATION2DLAYER
     %
+    % Imported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr    
+    %
     %   １コンポーネント入力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
     %
@@ -8,11 +12,6 @@ classdef nsoltChannelConcatenation2dLayer < nnet.layer.Layer
     %      nRows x nCols x 1 x nSamples
     %      nRows x nCols x (nChsTotal-1) x nSamples    
     %
-    %
-    % Exported and modified from SaivDr package
-    %
-    %    https://github.com/msiplab/SaivDr    
-    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU
@@ -44,7 +43,8 @@ classdef nsoltChannelConcatenation2dLayer < nnet.layer.Layer
             layer.Name = p.Results.Name;
             layer.Description =  "Channel concatenation";
             layer.Type = '';
-            layer.NumInputs = 2;
+            %layer.NumInputs = 2;
+            layer.InputNames = { 'dc', 'ac' };
             
         end
         

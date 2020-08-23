@@ -1,17 +1,16 @@
 classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
-    %NSOLTINTERMEDIATEROTATION2DLAYERTESTCASE 
-    %   
+    %NSOLTINTERMEDIATEROTATION2DLAYERTESTCASE
+    %
+    % Imported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr
+    %
     %   コンポーネント別に入力(nComponents):
     %      nRows x nCols x nChsTotal x nSamples
     %
     %   コンポーネント別に出力(nComponents):
     %      nRows x nCols x nChsTotal x nSamples
     %
-    %
-    % Exported and modified from SaivDr package
-    %
-    %    https://github.com/msiplab/SaivDr    
-    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU
@@ -114,11 +113,12 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
         
         function testPredictGrayscaleWithRandomAngles(testCase, ...
                 nchs, nrows, ncols, mus, datatype)
+            
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
             tolObj = AbsoluteTolerance(1e-6,single(1e-6));
-            import msip.*
-            genU = orthmtxgen();
+            import saivdr.dictionary.utility.*
+            genU = OrthonormalMatrixGenerationSystem();
             
             % Parameters
             nSamples = 8;
@@ -131,7 +131,7 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
             % nRows x nCols x nChsTotal x nSamples
             ps = nchs(1);
             pa = nchs(2);
-            UnT = transpose(genU.generate(angles,mus));
+            UnT = transpose(genU.step(angles,mus));
             Y = permute(X,[3 1 2 4]);
             Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
             Za = UnT*Ya;
@@ -158,11 +158,12 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
         
         function testPredictGrayscaleAnalysisMode(testCase, ...
                 nchs, nrows, ncols, mus, datatype)
-            import msip.*
+            
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
             tolObj = AbsoluteTolerance(1e-6,single(1e-6));
-            genU = orthmtxgen();
+            import saivdr.dictionary.utility.*
+            genU = OrthonormalMatrixGenerationSystem();
             
             % Parameters
             nSamples = 8;
@@ -175,7 +176,7 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
             % nRows x nCols x nChsTotal x nSamples
             ps = nchs(1);
             pa = nchs(2);
-            Un = genU.generate(angles,mus);
+            Un = genU.step(angles,mus);
             Y = permute(X,[3 1 2 4]);
             Ya = reshape(Y(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
             Za = Un*Ya;
@@ -208,11 +209,13 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
         
         function testBackwardGrayscale(testCase, ...
                 nchs, nrows, ncols, mus, datatype)
-            import msip.*
+            
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
             tolObj = AbsoluteTolerance(1e-4,single(1e-4));
-            genU = orthmtxgen();
+            import saivdr.dictionary.utility.*
+            genU = OrthonormalMatrixGenerationSystem(...
+                'PartialDifference','on');
             
             % Parameters
             nSamples = 8;
@@ -230,7 +233,7 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
             pa = nchs(2);
             
             % dLdX = dZdX x dLdZ
-            Un = genU.generate(angles,mus,0);
+            Un = genU.step(angles,mus,0);
             adLd_ = permute(dLdZ,[3 1 2 4]);
             cdLd_low = reshape(adLd_(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
             cdLd_low = Un*cdLd_low;
@@ -240,7 +243,7 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
             % dLdWi = <dLdZ,(dVdWi)X>
             expctddLdW = zeros(nAngles,1,datatype);
             for iAngle = 1:nAngles
-                dUn_T = transpose(genU.generate(angles,mus,iAngle));
+                dUn_T = transpose(genU.step(angles,mus,iAngle));
                 a_ = permute(X,[3 1 2 4]);
                 c_low = reshape(a_(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
                 c_low = dUn_T*c_low;
@@ -272,11 +275,13 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
         
         function testBackwardGrayscaleWithRandomAngles(testCase, ...
                 nchs, nrows, ncols, mus, datatype)
-            import msip.*
+    
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
             tolObj = AbsoluteTolerance(1e-4,single(1e-4));
-            genU = orthmtxgen();
+            import saivdr.dictionary.utility.*
+            genU = OrthonormalMatrixGenerationSystem(...
+                'PartialDifference','on');
             
             % Parameters
             nSamples = 8;
@@ -294,7 +299,7 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
             pa = nchs(2);
             
             % dLdX = dZdX x dLdZ
-            Un = genU.generate(angles,mus,0);
+            Un = genU.step(angles,mus,0);
             adLd_ = permute(dLdZ,[3 1 2 4]);
             cdLd_low = reshape(adLd_(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
             cdLd_low = Un*cdLd_low;
@@ -304,7 +309,7 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
             % dLdWi = <dLdZ,(dVdWi)X>
             expctddLdW = zeros(nAngles,1,datatype);
             for iAngle = 1:nAngles
-                dUn_T = transpose(genU.generate(angles,mus,iAngle));
+                dUn_T = transpose(genU.step(angles,mus,iAngle));
                 a_ = permute(X,[3 1 2 4]);
                 c_low = reshape(a_(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
                 c_low = dUn_T*c_low;
@@ -322,6 +327,7 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
                 'Name','Vn~');
             layer.Mus = mus;
             layer.Angles = angles;            
+            expctdZ = layer.predict(X);
             
             % Actual values
             [actualdLdX,actualdLdW] = layer.backward(X,[],dLdZ,[]);
@@ -337,11 +343,12 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
         
         function testBackwardGrayscaleAnalysisMode(testCase, ...
                 nchs, nrows, ncols, mus, datatype)
-            import msip.*
             import matlab.unittest.constraints.IsEqualTo
             import matlab.unittest.constraints.AbsoluteTolerance
             tolObj = AbsoluteTolerance(1e-4,single(1e-4));
-            genU = orthmtxgen();
+            import saivdr.dictionary.utility.*
+            genU = OrthonormalMatrixGenerationSystem(...
+                'PartialDifference','on');
             
             % Parameters
             nSamples = 8;
@@ -359,7 +366,7 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
             pa = nchs(2);
             
             % dLdX = dZdX x dLdZ
-            UnT = transpose(genU.generate(angles,mus,0));
+            UnT = transpose(genU.step(angles,mus,0));
             adLd_ = permute(dLdZ,[3 1 2 4]);
             cdLd_low = reshape(adLd_(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
             cdLd_low = UnT*cdLd_low;
@@ -369,7 +376,7 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
             % dLdWi = <dLdZ,(dVdWi)X>
             expctddLdW = zeros(nAngles,1,datatype);
             for iAngle = 1:nAngles
-                dUn = genU.generate(angles,mus,iAngle);
+                dUn = genU.step(angles,mus,iAngle);
                 a_ = permute(X,[3 1 2 4]);
                 c_low = reshape(a_(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
                 c_low = dUn*c_low;
@@ -388,7 +395,8 @@ classdef nsoltIntermediateRotation2dLayer_testcase < matlab.unittest.TestCase
                 'Mode','Analysis');
             layer.Mus = mus;
             layer.Angles = angles;
-
+            expctdZ = layer.predict(X);
+            
             % Actual values
             [actualdLdX,actualdLdW] = layer.backward(X,[],dLdZ,[]);
             

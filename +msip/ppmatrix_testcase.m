@@ -1,9 +1,10 @@
 classdef ppmatrix_testcase < matlab.unittest.TestCase
     %PPMATRIX_TESTCASE Test case for univariate polyphase matrix
     %
-    % Exported and modified from SaivDr package
+    % Imported and modified from SaivDr package
     %
     %    https://github.com/msiplab/SaivDr
+    %
     %
     % Requirements: MATLAB R2015b
     %

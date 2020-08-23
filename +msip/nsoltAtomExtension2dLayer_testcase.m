@@ -1,17 +1,16 @@
 classdef nsoltAtomExtension2dLayer_testcase < matlab.unittest.TestCase
     %NSOLTATOMEXTENSION2DLAYERTESTCASE
     %
+    % Imported and modified from SaivDr package
+    %
+    %    https://github.com/msiplab/SaivDr    
+    %
     %   コンポーネント別に入力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
     %
     %   コンポーネント別に出力(nComponents=1のみサポート):
     %      nRows x nCols x nChsTotal x nSamples
     %
-    %
-    % Exported and modified from SaivDr package
-    %
-    %    https://github.com/msiplab/SaivDr    
-    %    
     % Requirements: MATLAB R2020a
     %
     % Copyright (c) 2020, Shogo MURAMATSU
