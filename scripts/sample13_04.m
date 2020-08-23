@@ -34,26 +34,35 @@ msip.download_img
 % * 訓練用パッチ数 (Number of patches)
 
 % Decimation factor (Strides)
-decFactors = [4 4]; % [My Mx]
-nDecs = prod(decFactors);
+decFactor = [2 2]; % [My Mx]
+nDecs = prod(decFactor);
 
 % Number of channels ( sum(nChannels) >= prod(decFactors) )
-nChannels = [10 10]; % [Ps Pa]
+nChannels = [3 3]; % [Ps Pa]
 redundancyRatio = sum(nChannels)/nDecs
+% Polyphase order
+ppOrder = [4 4];
+
+% Tree levels
+nLevels = 3;
+
 % Sparsity ratio
-sparsityRatio = 1/8;
+sparsityRatio = 0.1;
 
 % Number of iterations
-nIters = 8;
+nIters = 5;
 
 % Standard deviation of initial angles
 stdInitAng = pi/6; % 1e-1;
 
 % Patch size for training
-szPatchTrn = [32 32]; % > [ (Ny+1)My (Nx+1)Mx ]
+szPatchTrn = [64 64]; % > [ (Ny+1)My (Nx+1)Mx ]
 
 % Number of patchs per image
 nSubImgs = 128;
+
+% No DC leackage
+noDcLeakage = true;
 %% 
 % 辞書更新パラメータの設定 (Setting of dictionary update step)
 
@@ -82,31 +91,7 @@ opts = trainingOptions('sgdm', ... % Stochastic gradient descent w/ momentum
     ...'SequencePaddingDirection','right',...
     ...'DispatchInBackground',0,...
     'ResetInputNormalization',0);...1
-% 畳込み辞書学習
-% (Convolutional dictionary learning)
-% 問題設定 (Problem setting):
-% $$\{\hat{\mathbf{\theta}},\{ \hat{\mathbf{s}}_n \}\}=\arg\min_{\{\mathbf{\theta},\{\mathbf{s}_n\}\}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{v}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{s}}_n\|_2^2,\ 
-% \quad\mathrm{s.t.}\ \forall n, \|\mathbf{s}_n\|_0\leq K,$$$
 % 
-% ただし， $\mathbf{D}_{\mathbf{\theta}}$ は $\mathbf{\theta}}$を設計パラメータとする畳込み辞書とする．(where 
-% $\mathbf{D}_{\mathbf{\theta}}$ is a convolutional dictionary with the design 
-% parameter vector $\mathbf{\theta}}$.)
-% 
-% 
-% アルゴリズム (Algorithm):
-% スパース近似ステップと辞書更新ステップを繰返す．(Iterate the sparse approximation step and the dictionary 
-% update step.)
-%% 
-% * スパース近似ステップ (Sparse approximation step)
-%% 
-% $$\hat{\mathbf{s}}_n=\arg\min_{\mathbf{s}_n}\frac{1}{2} \|\mathbf{v}_n-\hat{\mathbf{D}}\mathbf{s}_n\|_2^2\ 
-% \quad \mathrm{s.t.}\ \|\mathbf{s}_n\|_0\leq K$$
-%% 
-% * 辞書更新ステップ (Dictionary update step)
-%% 
-% $$\hat{\mathbf{\theta}}=\arg\min_{\mathbf{\theta}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{v}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{s}}_n\|_2^2$$
-% 
-% $$\hat{\mathbf{D}}=\mathbf{D}_{\hat{\mathbf{\theta}}$$
 % 二変量ラティス構造冗長フィルタバンク
 % (Bivariate lattice-structure oversampled filter banks )
 % 
@@ -204,104 +189,63 @@ opts = trainingOptions('sgdm', ... % Stochastic gradient descent w/ momentum
 % of 2D non-separable oversampled lapped transforms. _APSIPA Transactions on Signal 
 % and Information Processing, 5_, E9. doi:10.1017/ATSIP.2016.3.
 
-% Construction of layers
 import msip.*
-analysisNsoltLayers = [
-    imageInputLayer(szPatchTrn,...
-        'Name','input','Normalization','none')
-        
-    nsoltBlockDct2dLayer('Name','E0',...
-        'DecimationFactor',decFactors)
-    nsoltInitialRotation2dLayer('Name','V0',...
-        'NumberOfChannels',nChannels,'DecimationFactor',decFactors,...
-        'NoDcLeakage',true)
-        
-    nsoltAtomExtension2dLayer('Name','Qh1rl',...
-        'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Lower')
-    nsoltIntermediateRotation2dLayer('Name','Vh1',...
-        'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
-    nsoltAtomExtension2dLayer('Name','Qh2lu',...
-        'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Upper')
-    nsoltIntermediateRotation2dLayer('Name','Vh2',...
-        'NumberOfChannels',nChannels,'Mode','Analysis')
-    %{    
-    nsoltAtomExtension2dLayer('Name','Qh3rl',...
-        'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Lower')
-    nsoltIntermediateRotation2dLayer('Name','Vh3',...
-        'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
-    nsoltAtomExtension2dLayer('Name','Qh4lu',...
-        'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Upper')
-    nsoltIntermediateRotation2dLayer('Name','Vh4',...
-        'NumberOfChannels',nChannels,'Mode','Analysis')        
-    %}    
-    nsoltAtomExtension2dLayer('Name','Qv1dl',...
-        'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Lower')
-    nsoltIntermediateRotation2dLayer('Name','Vv1',...
-        'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
-    nsoltAtomExtension2dLayer('Name','Qv2uu',...
-        'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Upper')
-    nsoltIntermediateRotation2dLayer('Name','Vv2',...
-        'NumberOfChannels',nChannels,'Mode','Analysis')
-    %{    
-    nsoltAtomExtension2dLayer('Name','Qv3dl',...
-        'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Lower')
-    nsoltIntermediateRotation2dLayer('Name','Vv3',...
-        'NumberOfChannels',nChannels,'Mode','Analysis','Mus',-1)
-    nsoltAtomExtension2dLayer('Name','Qv4uu',...
-        'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Upper')
-    nsoltIntermediateRotation2dLayer('Name','Vv4',...
-        'NumberOfChannels',nChannels,'Mode','Analysis')        
-    %}    
-    ]
-synthesisNsoltLayers = [
-    imageInputLayer([szPatchTrn./decFactors sum(nChannels)],...
-        'Name','subband images','Normalization','none')
-    %{    
-    nsoltIntermediateRotation2dLayer('Name','Vv4~',...
-        'NumberOfChannels',nChannels,'Mode','Synthesis')
-    nsoltAtomExtension2dLayer('Name','Qv4uu~',...
-        'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Upper')
-    nsoltIntermediateRotation2dLayer('Name','Vv3~',...
-        'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
-    nsoltAtomExtension2dLayer('Name','Qv3dl~',...
-        'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Lower')        
-    %}    
-    nsoltIntermediateRotation2dLayer('Name','Vv2~',...
-        'NumberOfChannels',nChannels,'Mode','Synthesis')
-    nsoltAtomExtension2dLayer('Name','Qv2uu~',...
-        'NumberOfChannels',nChannels,'Direction','Down','TargetChannels','Upper')
-    nsoltIntermediateRotation2dLayer('Name','Vv1~',...
-        'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
-    nsoltAtomExtension2dLayer('Name','Qv1dl~',...
-        'NumberOfChannels',nChannels,'Direction','Up','TargetChannels','Lower')
-    %{
-    nsoltIntermediateRotation2dLayer('Name','Vh4~',...
-        'NumberOfChannels',nChannels,'Mode','Synthesis')
-    nsoltAtomExtension2dLayer('Name','Qh4lu~',...
-        'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Upper')
-    nsoltIntermediateRotation2dLayer('Name','Vh3~',...
-        'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
-    nsoltAtomExtension2dLayer('Name','Qh3rl~',...
-        'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Lower')        
-    %}    
-    nsoltIntermediateRotation2dLayer('Name','Vh2~',...
-        'NumberOfChannels',nChannels,'Mode','Synthesis')
-    nsoltAtomExtension2dLayer('Name','Qh2lu~',...
-        'NumberOfChannels',nChannels,'Direction','Right','TargetChannels','Upper')
-    nsoltIntermediateRotation2dLayer('Name','Vh1~',...
-        'NumberOfChannels',nChannels,'Mode','Synthesis','Mus',-1)
-    nsoltAtomExtension2dLayer('Name','Qh1rl~',...
-        'NumberOfChannels',nChannels,'Direction','Left','TargetChannels','Lower') 
-        
-    nsoltFinalRotation2dLayer('Name','V0~',...
-        'NumberOfChannels',nChannels,'DecimationFactor',decFactors,...
-        'NoDcLeakage',true)        
-    nsoltBlockIdct2dLayer('Name','E0~',...
-        'DecimationFactor',decFactors) 
-    ]
-% Layer graph
-analysislgraph = layerGraph(analysisNsoltLayers);
-synthesislgraph = layerGraph(synthesisNsoltLayers);
+[analysislgraph,synthesislgraph] = creatensoltlgraphs2d(...
+    'NumberOfChannels',nChannels,...
+    'DecimationFactor',decFactor,...
+    'PolyPhaseOrder',ppOrder,...
+    'NumberOfLevels',nLevels,...
+    'NumberOfVanishingMoments',noDcLeakage);
+%% 
+% 入力層の置き換え(Replace input layers)
+
+[analysislgraph,~] = replaceinputlayers(...
+    analysislgraph,synthesislgraph,szPatchTrn);
+
+%% 
+% サブバンド画像のシリアライズ (Serialization of subband images)
+
+% Analysis network    
+sbSerializationLayer = nsoltSubbandSerialization2dLayer(...
+    'Name','Sb_Srz',...
+    'OriginalDimension',szPatchTrn,...
+    'NumberOfLevels',nLevels,...
+    'DecimationFactor',decFactor,...
+    'NumberOfChannels',nChannels);
+analysislgraph = analysislgraph.addLayers(...
+    sbSerializationLayer);
+analysislgraph = analysislgraph.connectLayers(...
+    'Lv1_AcOut','Sb_Srz/Lv1_SbIn');
+analysislgraph = analysislgraph.connectLayers(...
+    'Lv2_AcOut','Sb_Srz/Lv2_SbIn');
+analysislgraph = analysislgraph.connectLayers(...
+    'Lv3_DcAcOut','Sb_Srz/Lv3_SbIn');
+
+% Synthesis network
+sbDeserializationLayer =  nsoltSubbandDeserialization2dLayer(...
+    'Name','Sb_Dsz',...
+    'OriginalDimension',szPatchTrn,...
+    'NumberOfLevels',nLevels,...
+    'DecimationFactor',decFactor,...
+    'NumberOfChannels',nChannels);
+synthesislgraph = synthesislgraph.addLayers(...
+   sbDeserializationLayer);
+synthesislgraph = synthesislgraph.connectLayers(...
+    'Sb_Dsz/Lv1_SbOut','Lv1_AcIn');
+synthesislgraph = synthesislgraph.connectLayers(...
+    'Sb_Dsz/Lv2_SbOut','Lv2_AcIn');
+synthesislgraph = synthesislgraph.connectLayers(...
+    'Sb_Dsz/Lv3_SbOut','Lv3_DcAcIn');
+synthesislgraph = synthesislgraph.addLayers(...
+    imageInputLayer(...
+    sbDeserializationLayer.InputSize,...
+    'Name','Subband images',...
+    'Normalization','none'));
+synthesislgraph = synthesislgraph.connectLayers(...
+    'Subband images','Sb_Dsz');
+%% 
+% グラフプロット (Graph plot)
+
 figure(1)
 subplot(1,2,1)
 plot(analysislgraph)
@@ -309,18 +253,22 @@ title('Analysis NSOLT')
 subplot(1,2,2)
 plot(synthesislgraph)
 title('Synthesis NSOLT')
+%%
 % Construction of deep learning network.
 analysisnet = dlnetwork(analysislgraph);
 synthesisnet = dlnetwork(synthesislgraph);
+
+% Initialize
 nLearnables = height(synthesisnet.Learnables);
 for iLearnable = 1:nLearnables
     synthesisnet.Learnables.Value(iLearnable) = ...
     cellfun(@(x) x+stdInitAng*randn(), ...
     synthesisnet.Learnables.Value(iLearnable),'UniformOutput',false);
 end
-analysisnet = copyparameters(synthesisnet,analysisnet);
-% 完全再構成の確認
-% (Confirmation of perfect reconstruction)
+import msip.*
+analysisnet = cpparamssyn2ana(synthesisnet,analysisnet);
+% 完全再構成（随伴関係）の確認
+% (Confirmation of perfect reconstruction (adjoint relation))
 
 x = rand(szPatchTrn,'single');
 dlx = dlarray(x,'SSC'); % Deep learning array (SSC: Spatial,Spatial,Channel)
@@ -330,15 +278,9 @@ display("MSE: " + num2str(mse(dlx,dly)))
 % 要素画像の初期状態
 % (Initial state of the atomic images)
 
-subbandImages = dlarray(zeros([szPatchTrn./decFactors sum(nChannels)],'single'),'SSC');
-atomicImages = zeros([szPatchTrn 1 sum(nChannels)]);
-for iAtom = 1:sum(nChannels)
-    deltaImage = subbandImages;
-    deltaImage(round(end/2),round(end/2),iAtom)  = 1;
-    atomicImages(:,:,1,iAtom) = extractdata(synthesisnet.predict(deltaImage));
-end
 figure(2)
-montage(circshift(imresize(atomicImages,8,'nearest'),[20 20 0])+.5,'BorderSize',[2 2])
+import msip.*
+atomicimshow(synthesisnet) 
 title('Atomic images of initial NSOLT')
 % 教師画像の準備 
 % (Preparation of traning image)
@@ -351,6 +293,31 @@ figure(3)
 minibatch = preview(patchds);
 responses = minibatch.ResponseImage;
 montage(responses,'Size',[2 4]);
+% 畳込み辞書学習
+% (Convolutional dictionary learning)
+% 問題設定 (Problem setting):
+% $$\{\hat{\mathbf{\theta}},\{ \hat{\mathbf{s}}_n \}\}=\arg\min_{\{\mathbf{\theta},\{\mathbf{s}_n\}\}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{v}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{s}}_n\|_2^2,\ 
+% \quad\mathrm{s.t.}\ \forall n, \|\mathbf{s}_n\|_0\leq K,$$$
+% 
+% ただし， $\mathbf{D}_{\mathbf{\theta}}$ は $\mathbf{\theta}}$を設計パラメータとする畳込み辞書とする．(where 
+% $\mathbf{D}_{\mathbf{\theta}}$ is a convolutional dictionary with the design 
+% parameter vector $\mathbf{\theta}}$.)
+% 
+% 
+% アルゴリズム (Algorithm):
+% スパース近似ステップと辞書更新ステップを繰返す．(Iterate the sparse approximation step and the dictionary 
+% update step.)
+%% 
+% * スパース近似ステップ (Sparse approximation step)
+%% 
+% $$\hat{\mathbf{s}}_n=\arg\min_{\mathbf{s}_n}\frac{1}{2} \|\mathbf{v}_n-\hat{\mathbf{D}}\mathbf{s}_n\|_2^2\ 
+% \quad \mathrm{s.t.}\ \|\mathbf{s}_n\|_0\leq K$$
+%% 
+% * 辞書更新ステップ (Dictionary update step)
+%% 
+% $$\hat{\mathbf{\theta}}=\arg\min_{\mathbf{\theta}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{v}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{s}}_n\|_2^2$$
+% 
+% $$\hat{\mathbf{D}}=\mathbf{D}_{\hat{\mathbf{\theta}}$$
 % スパース近似ステップと辞書更新ステップの繰り返し
 % (Alternative iteration of sparse approximation step and dictioary update step)
 %% 
@@ -365,16 +332,16 @@ for iIter = 1:nIters
     coefimgds = transform(patchds,@(x) iht4inputimage(x,analysisnet,synthesisnet,sparsityRatio));
     
     % Synthesis dictionary update
-    trainlgraph = synthesislgraph.addLayers(regressionLayer('Name','regression output'));
-    trainlgraph = trainlgraph.connectLayers('E0~','regression output');
+    trainlgraph = synthesislgraph.replaceLayer('Lv1_Out',regressionLayer('Name','regression output'));
     synthesisdagnet = trainNetwork(coefimgds,trainlgraph,opts);
 
     % Analysis dictionary update (Copy parameters from synthesizer to
     % analyzer)
     synthesislgraph = layerGraph(synthesisdagnet); 
-    synthesislgraph = removeLayers(synthesislgraph,'regression output');
+    synthesislgraph = synthesislgraph.replaceLayer('regression output',...
+        saivdr.dcnn.nsoltIdentityLayer('Name','Lv1_Out'));
     synthesisnet = dlnetwork(synthesislgraph);
-    analysisnet = copyparameters(synthesisnet,analysisnet);
+    analysisnet = cpparamssyn2ana(synthesisnet,analysisnet);
     
     % Check the adjoint relation (perfect reconstruction)
     x = rand(szPatchTrn,'single');
@@ -387,17 +354,14 @@ end
 %% 
 % 要素ベクトルを要素画像に変換 (Reshape the atoms into atomic images)
 
-for iAtom = 1:sum(nChannels)
-    deltaImage = subbandImages;
-    deltaImage(round(end/2),round(end/2),iAtom)  = 1;
-    atomicImages(:,:,1,iAtom) = extractdata(synthesisnet.predict(deltaImage));
-end
 figure(4)
-montage(circshift(imresize(atomicImages,8,'nearest'),[20 20 0])+.5,'BorderSize',[2 2])
+import msip.*
+atomicimshow(synthesisnet)
 title('Atomic images of trained NSOLT')
 % 設計データの保存
 % (Save the designed network)
 
+analysisnet = cpparamssyn2ana(synthesisnet,analysisnet);
 save('./data/nsoltdictionary','analysisnet','synthesisnet')
 % 繰返しハード閾値処理 
 % (Function of iterative hard thresholding)
@@ -451,23 +415,7 @@ for iter=1:nIters
     mask(indexSet) = 1;
     coefs = mask.*coefs;
     %
-    %fprintf("IHT(%d) MSE: %6.4f",iter,mse(x,y));
-end
-end
-% 分析辞書（随伴作用素）の設定
-% (Setting up the analytical dictionary (adjoint operator))
-% 
-% 合成辞書パラメータの分析辞書（随伴作用素）へのコピー (Copying synthesis dictionary parameters to the 
-% analyisis dictionary (the adjoint operator))
-
-function newanalysisnet = copyparameters(synthesisnet,oldanalysisnet)
-newanalysisnet = oldanalysisnet;
-analysisLearnables = oldanalysisnet.Learnables;
-synthesisLearnables = synthesisnet.Learnables;
-nLearnables = height(analysisLearnables);
-for iLearnable = 1:nLearnables
-    t = synthesisLearnables.Value(nLearnables-iLearnable+1);
-    newanalysisnet.Learnables.Value(iLearnable) = t; 
+    %fprintf("IHT(%d) MSE: %6.4f\n",iter,mse(x,y));
 end
 end
 %% 
