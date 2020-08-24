@@ -1,4 +1,4 @@
-function analysisnet = cpparamssyn2ana(synthesisnet,analysisnet)
+function analysisnet = cpparamssyn2ana(analysisnet,synthesisnet)
 %FCN_CPPARAMSSYN2ANA
 %
 % Imported and modified from SaivDr package
