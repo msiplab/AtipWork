@@ -1,9 +1,5 @@
-function analysisnet = cpparamssyn2ana(analysisnet,synthesisnet)
+function analysisnet = fcn_cpparamssyn2ana(analysisnet,synthesisnet)
 %FCN_CPPARAMSSYN2ANA
-%
-% Imported and modified from SaivDr package
-%
-%    https://github.com/msiplab/SaivDr
 %
 % Setting up the analysis dictionary (adjoint operator) by copying
 % synthesis dictionary parameters to the analyisis dictionary

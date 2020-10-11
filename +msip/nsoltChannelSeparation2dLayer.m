@@ -1,16 +1,12 @@
 classdef nsoltChannelSeparation2dLayer < nnet.layer.Layer
     %NSOLTCHANNELSEPARATION2DLAYER
     %
-    % Imported and modified from SaivDr package
-    %
-    %    https://github.com/msiplab/SaivDr    
-    %
     %   １コンポーネント入力(nComponents=1のみサポート):
-    %      nRows x nCols x nChsTotal x nSamples
+    %      nChsTotal x nRows x nCols x nSamples
     %
     %   ２コンポーネント出力(nComponents=2のみサポート):
-    %      nRows x nCols x 1 x nSamples
     %      nRows x nCols x (nChsTotal-1) x nSamples    
+    %      nRows x nCols x 1 x nSamples
     %
     % Requirements: MATLAB R2020a
     %
@@ -44,10 +40,10 @@ classdef nsoltChannelSeparation2dLayer < nnet.layer.Layer
             layer.Description =  "Channel separation";
             layer.Type = '';
             %layer.NumOutputs = 2;
-            layer.OutputNames = { 'dc', 'ac' };            
+            layer.OutputNames = { 'ac', 'dc' };            
         end
         
-        function [Z1,Z2] = predict(~, X)
+        function [Zac,Zdc] = predict(~, X)
             % Forward input data through the layer at prediction time and
             % output the result.
             %
@@ -59,11 +55,13 @@ classdef nsoltChannelSeparation2dLayer < nnet.layer.Layer
             %  
             
             % Layer forward function for prediction goes here.
-            Z1 = X(:,:,1,:);
-            Z2 = X(:,:,2:end,:);
+            %Z1 = X(:,:,1,:);
+            %Z2 = X(:,:,2:end,:);
+            Zac = permute(X(2:end,:,:,:),[2 3 1 4]);            
+            Zdc = permute(X(1,:,:,:),[2 3 1 4]);            
         end
         
-        function dLdX = backward(~, ~, ~, ~, dLdZ1,dLdX2,~)
+        function dLdX = backward(~, ~, ~, ~, dLdZac,dLdZdc,~)
             % (Optional) Backward propagate the derivative of the loss  
             % function through the layer.
             %
@@ -80,7 +78,8 @@ classdef nsoltChannelSeparation2dLayer < nnet.layer.Layer
             %                             learnable parameter
             
             % Layer forward function for prediction goes here.
-            dLdX = cat(3,dLdZ1,dLdX2);
+            %dLdX = cat(3,dLdZ1,dLdZ2);
+            dLdX = ipermute(cat(3,dLdZdc,dLdZac),[2 3 1 4]);
         end
     end
     

@@ -1,10 +1,6 @@
 classdef nsoltIdentityLayer < nnet.layer.Layer
     %NSOLTIDENTITYLAYER
     %
-    % Imported and modified from SaivDr package
-    %
-    %    https://github.com/msiplab/SaivDr    
-    %
     % Exported and modified from SaivDr package
     %
     %    https://github.com/msiplab/SaivDr    
