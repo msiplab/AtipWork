@@ -110,7 +110,7 @@ title(['Bicubic y: PSNR = ' num2str(psnr(u,y)) ' [dB]']);
 % 
 % $\beta=\lambda_\mathrm{max}(\mathbf{D}^T\mathbf{P}^T\mathbf{PD})=(\mathbf{PD}\mathbf{D}^T\mathbf{P}^T)=(\mathbf{P}\mathbf{P}^T)=\lambda_\mathrm{max}(\mathbf{PP}^T)=\sigma_\mathrm{max}^2(\mathbf{P})$.
 % 
-% である．NSOLTの設計データは "data" フォルダの下の"nsoltdikctionary.mat"にある．
+% である．NSOLTの設計データは "data" フォルダの下の"nsoltdictionary.mat"にある．
 % 
 % (The design data of NSOLT is saved in "nsoltdictionary.mat" under the folder 
 % "data".)
