@@ -22,18 +22,20 @@ clear
 close all
 import msip.download_img
 msip.download_img
-%% Bivariate lattice-structure oversampled filter banks 
+%% 2変量ラティス構造冗長フィルタバンク
+% (Bivariate lattice-structure oversampled filter banks) 
 % 
+% 例として，（偶対称チャネルと奇対称チャネルが等しい）偶数チャネル、偶数のポリフェーズ次数をもつタイプI非分離冗長重複変換(NSOLT)
 % 
-% As an example, let us adopt a non-separable oversampled lapped transform (NSOLT) 
-% of  type-I with the number of channels (the numbers of even and odd symmetric 
-% channels are identical to each other) and polyphase order (even):
+% (As an example, let us adopt a non-separable oversampled lapped transform 
+% (NSOLT) of  type-I with the number of channels (the numbers of even and odd 
+% symmetric channels are identical to each other) and polyphase order (even):)
 % 
 % $$\mathbf{E}(z_\mathrm{v},z_\mathbf{h})=\left(\prod_{k_\mathrm{h}=1}^{N_\mathrm{h}/2}{\mathbf{V}_{2k_\mathrm{h}}^{\{\mathrm{h}\}}}\bar{\mathbf{Q}}(z_\mathrm{h}){\mathbf{V}_{2k_\mathrm{h}-1}^{\{\mathrm{h}\}}}{\mathbf{Q}}(z_\mathrm{h})\right)%\left(\prod_{k_{\mathrm{v}}=1}^{N_\mathrm{v}/2}{\mathbf{V}_{2k_\mathrm{v}}^{\{\mathrm{v}\}}}\bar{\mathbf{Q}}(z_\mathrm{v}){\mathbf{V}_{2k_\mathrm{v}-1}^{\{\mathrm{v}\}}}{\mathbf{Q}}(z_\mathrm{v})\right)%\mathbf{V}_0\mathbf{E}_0,$$
 % 
 % $$\mathbf{R}(z_\mathrm{v},z_\mathbf{h})=\mathbf{E}^T(z_\mathrm{v}^{-1},z_\mathrm{h}^{-1}),$$
 % 
-% where
+% を採用する．ただし，(where)
 %% 
 % * $\mathbf{E}(z_\mathrm{v},z_\mathrm{h})$:  Type-I polyphase matrix of the 
 % analysis filter bank
@@ -55,6 +57,8 @@ msip.download_img
 % &  \mathbf{O} \\ \mathbf{O} &  \mathbf{I}_{P/2}\end{array}\right)\mathbf{B}_{P}$, 
 % $\mathbf{B}_{P}=\frac{1}{\sqrt{2}}\left(\begin{array}{cc} \mathbf{I}_{P/2} &  
 % \mathbf{I}_{P/2} \\ \mathbf{I}_{P/2} &  -\mathbf{I}_{P/2}\end{array}\right)$
+%% 
+% です。
 % 
 % 【References】 
 %% 
@@ -72,12 +76,18 @@ msip.download_img
 % * Furuya, K., Hara, S., Seino, K., & Muramatsu, S. (2016). Boundary operation 
 % of 2D non-separable oversampled lapped transforms. _APSIPA Transactions on Signal 
 % and Information Processing, 5_, E9. doi:10.1017/ATSIP.2016.3.
-%% Hierachical decomposition for 2-D Grayscale image
-% Let $R_M^P(\tau)$ be the redundancy of $\tau$-level tree-structured filter 
-% bank, then we have the relation 
+%% 2次元画像の階層的分析
+% (Hierachical decomposition for 2-D Grayscale image)
+% 
+% $R_M^P(\tau)$ をツリーレベル $\tau$の階層構造フィルタバンクの冗長度とすると、
+% 
+% (Let $R_M^P(\tau)$ be the redundancy of $\tau$-level tree-structured filter 
+% bank, then we have the relation )
 % 
 % $$R_M^P(\tau)=\left\{\begin{array}{ll} (P-1)\tau + 1, & M=1, \\ \frac{P-1}{M-1}-\frac{P-M}{(M-1)M^\tau}, 
 % & M\geq 2.\end{array}\right.$$
+% 
+% となる．
 
 % Decimation factor (Strides)
 decFactor = [2 2]; % [My Mx]
@@ -146,7 +156,8 @@ opts = trainingOptions('sgdm', ... % Stochastic gradient descent w/ momentum
     ...'SequencePaddingDirection','right',...
     ...'DispatchInBackground',0,...
     'ResetInputNormalization',0);...1
-%% Construction of layers
+%% 層構造の構築
+% (Construction of layers)
 
 import msip.*
 [analysislgraph,synthesislgraph] = fcn_creatensoltlgraphs2d(...
@@ -159,7 +170,8 @@ import msip.*
 [analysislgraph,synthesislgraph] = fcn_replaceinputlayers(...
     analysislgraph,synthesislgraph,szPatchTrn);
 
-% Serialization of subband images
+% サブバンド画像のシリアライズ（オプション）
+% (Serialization of subband images (options))
 
 if isSerialized
     [analysislgraph,synthesislgraph] = fcn_attachserializationlayers(...
@@ -185,7 +197,10 @@ for iLearnable = 1:nLearnables
     synthesisnet.Learnables.Value(iLearnable),'UniformOutput',false);
 end
 analysisnet = fcn_cpparamssyn2ana(analysisnet,synthesisnet);
-% Confirmation of the adjoint relation (perfect reconstruction)
+% 随伴関係（完全再構成）の確認
+% (Confirmation of the adjoint relation (perfect reconstruction))
+% 
+% NSOLTはパーセバルタイト性を満たすことに注意．(Note that NSOLT satisfy the Parseval tight property.)
 
 if isSerialized
     nOutputs = 1;
@@ -198,15 +213,18 @@ dlx = dlarray(x,'SSC'); % Deep learning array (SSC: Spatial,Spatial,Channel)
 [dls{1:nOutputs}] = analysisnet.predict(dlx);
 dly = synthesisnet.predict(dls{1:nOutputs});
 display("MSE: " + num2str(mse(dlx,dly)))
-% Initial state of the atomic images
+% 要素画像の初期状態
+% (Initial state of the atomic images)
 
 figure(4)
 atomicimshow(synthesisnet)
 title('Atomic images of initial NSOLT')
-% Preparation of traning image
+% 訓練画像の準備
+% (Preparation of traning image)
 % 
+% 画像データストアからランダムにパッチを抽出
 % 
-% Randomly extracting patches from the image data store
+% (Randomly extracting patches from the image data store)
 
 imds = imageDatastore("./data/barbara.png","ReadFcn",@(x) im2single(imread(x)));
 patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',nSubImgs);
@@ -214,18 +232,22 @@ figure(5)
 minibatch = preview(patchds);
 responses = minibatch.ResponseImage;
 montage(responses,'Size',[2 4]);
-% Convolutional dictionary learning
-% 
-% Problem setting:
+% 畳み込み辞書学習
+% (Convolutional dictionary learning)
+% 問題設定(Problem setting):
 % $$\{\hat{\mathbf{\theta}},\{ \hat{\mathbf{s}}_n \}\}=\arg\min_{\{\mathbf{\theta},\{\mathbf{s}_n\}\}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{v}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{s}}_n\|_2^2,\ 
 % \quad\mathrm{s.t.}\ \forall n, \|\mathbf{s}_n\|_0\leq K,$$$
 % 
-% where $\mathbf{D}_{\mathbf{\theta}}$ is a convolutional dictionary with the 
-% design parameter vector $\mathbf{\theta}}$.
+% ただし， $\mathbf{D}_{\mathbf{\theta}}$は設計パラメータベクトル $\mathbf{\theta}}$をもつ畳み込み辞書．
+% 
+% (where $\mathbf{D}_{\mathbf{\theta}}$ is a convolutional dictionary with the 
+% design parameter vector $\mathbf{\theta}}$.)
 % 
 % 
-% Algorithm:
-% Iterate the sparse approximation step and the dictionary update step.
+% アルゴリズム(Algorithm):
+% スパース近似ステップと辞書更新ステップを繰返す．
+% 
+% (Iterate the sparse approximation step and the dictionary update step.)
 %% 
 % * Sparse approximation step
 %% 
@@ -237,9 +259,7 @@ montage(responses,'Size',[2 4]);
 % $$\hat{\mathbf{\theta}}=\arg\min_{\mathbf{\theta}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{v}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{s}}_n\|_2^2$$
 % 
 % $$\hat{\mathbf{D}}=\mathbf{D}_{\hat{\mathbf{\theta}}$$
-% 
-% 
-% Alternate iteration of sparse approximation step and dictioary update step
+% 採用するスパース近似と辞書更新の手法(Adopted methods for the sparse approximation step and dictioary update step):
 %% 
 % * Sparse approximation：Iterative hard thresholding
 % * Dictionary update： Stochastic gradient descent w/ momentum
@@ -247,8 +267,8 @@ montage(responses,'Size',[2 4]);
 % Check if IHT works for dlarray
 %x = dlarray(randn(szPatchTrn,'single'),'SSC');
 %[y,coefs{1:nOutputs}] = iht(x,analysisnet,synthesisnet,sparsityRatio);
-%% 
-% Iterative calculation of alternative steps
+% 繰返し計算
+% (Iterative calculation of alternative steps)
 
 import msip.*
 %profile on
@@ -279,16 +299,20 @@ for iIter = 1:nIters
 end
 %profile off
 %profile viewer
-% The atomic images of trained dictionary
+% 訓練辞書の要素画像
+% (The atomic images of trained dictionary)
 
 figure(6)
 atomicimshow(synthesisnet)
 title('Atomic images of trained NSOLT')
-% Save the designed network
+% 訓練ネットワークの保存
+% (Save the designed network)
 
 analysisnet = fcn_cpparamssyn2ana(analysisnet,synthesisnet);
 save(sprintf('./data/nsoltdictionary_%s',datetime('now','Format','yyyyMMddhhmmssSSS')),'analysisnet','synthesisnet')
-% Function of iterative hard thresholding
+% 繰返しハード閾値処理関数
+% (Function of iterative hard thresholding)
+% 
 % 
 % 
 % The input images of the patch pairs are replaced with sparse coefficients 
