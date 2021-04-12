@@ -1,4 +1,4 @@
-classdef nsoltBlockIdct2dLayer < nnet.layer.Layer
+classdef nsoltBlockIdct2dLayer < nnet.layer.Layer %#codegen
     %NSOLTBLOCKIDCT2DLAYER
     %
     %   コンポーネント別に入力(nComponents):
@@ -7,9 +7,9 @@ classdef nsoltBlockIdct2dLayer < nnet.layer.Layer
     %   ベクトル配列をブロック配列にして出力:
     %      (Stride(1)xnRows) x (Stride(2)xnCols) x nComponents x nSamples
     %
-    % Requirements: MATLAB R2020a
+    % Requirements: MATLAB R2020b
     %
-    % Copyright (c) 2020, Shogo MURAMATSU
+    % Copyright (c) 2020-2021, Shogo MURAMATSU
     %
     % All rights reserved.
     %
@@ -101,20 +101,25 @@ classdef nsoltBlockIdct2dLayer < nnet.layer.Layer
                     Z = zeros(height,width,nComponents,nSamples,'like',X);
                     %
                     inputSample = zeros(nElements,nRows,nCols,'like',X);
-                    inputCol = zeros(nElements,nRows,'like',X);
-                    outputCol = zeros(height,decH,'like',X);
+                    %inputCol = zeros(nElements,nRows,'like',X);
+                    %Y = zeros(nElements,nRows,'like',X);
+                    %outputCol = zeros(height,decH,'like',X);
                     outputSample = zeros(height,width,'like',X);
                     outputComponent = zeros(height,width,1,nSamples,'like',X);
                 end
                 for iSample = 1:nSamples
                     inputSample(:,:,:) = X(:,:,:,iSample);
                     for iCol = 1:nCols
-                        inputCol(:,:) = inputSample(:,:,iCol);
-                        for iRow = 1:nRows
-                            coefs = inputCol(:,iRow);
-                            outputCol((iRow-1)*decV+1:iRow*decV,:) ...
-                                = reshape(Cvh_T*coefs,decV,decH);
-                        end
+                        %inputCol(:,:) = inputSample(:,:,iCol);
+                        Y = Cvh_T*inputSample(:,:,iCol);
+                        %for iRow = 1:nRows
+                        %    %coefs = inputCol(:,iRow);
+                        %    outputCol((iRow-1)*decV+1:iRow*decV,:) = ...
+                        %        ... reshape(Cvh_T*coefs,decV,decH);
+                        %        reshape(Y(:,iRow),decV,decH);
+                        %end
+                        outputCol = reshape(permute(reshape(Y,decV,decH,nRows),...
+                            [1 3 2]),decV*nRows,decH);
                         outputSample(:,(iCol-1)*decH+1:iCol*decH) = ...
                             outputCol;
                     end
@@ -173,28 +178,33 @@ classdef nsoltBlockIdct2dLayer < nnet.layer.Layer
             nSamples = size(dLdZ,4);
             %
             inputComponent = zeros(height,width,1,nSamples,'like',dLdZ);
-            inputSample = zeros(height,width,'like',dLdZ);
-            inputCol = zeros(height,decH,'like',dLdZ);      
+            %inputSample = zeros(height,width,'like',dLdZ);
+            %inputCol = zeros(height,decH,'like',dLdZ);      
             outputComponent = zeros(nDecs,nRows,nCols,nSamples,'like',dLdZ);
             outputSample = zeros(nDecs,nRows,nCols,'like',dLdZ);
-            outputCol = zeros(nDecs,nRows,'like',dLdZ);
+            %outputCol = zeros(nDecs,nRows,'like',dLdZ);
+            %X = zeros(nDecs,nRows,'like',dLdZ);
             for iComponent = 1:nComponents
                 inputComponent(:,:,1,:) = dLdZ(:,:,iComponent,:);
                 for iSample = 1:nSamples
-                    inputSample(:,:) = inputComponent(:,:,1,iSample);
+                    inputSample = inputComponent(:,:,1,iSample);
                     for iCol = 1:nCols
-                        inputCol(:,:) = inputSample(:,...
+                        inputCol = inputSample(:,...
                             (iCol-1)*decH+1:iCol*decH);
-                        for iRow = 1:nRows
-                            x = inputCol((iRow-1)*decV+1:iRow*decV,:);      
-                            outputCol(:,iRow) = Cvh_*x(:); 
-                        end
-                        outputSample(:,:,iCol) = outputCol;
+                        %for iRow = 1:nRows
+                        %    x = inputCol((iRow-1)*decV+1:iRow*decV,:);
+                        %    %outputCol(:,iRow) = Cvh_*x(:);
+                        %    X(:,iRow) = x(:);
+                        %end
+                        X = reshape(permute(reshape(...
+                            inputCol,decV,nRows,decH),[1 3 2]),decV*decH,nRows);
+                        %outputSample(:,:,iCol) = outputCol;
+                        outputSample(:,:,iCol) = Cvh_*X;
                     end
                     outputComponent(:,:,:,iSample) = outputSample;
                 end
                 varargout{iComponent} = outputComponent;
-            end            
+            end
             %{
             A = zeros(nDecs,nRows,nCols,nSamples,'like',dLdZ);
             for iComponent = 1:nComponents

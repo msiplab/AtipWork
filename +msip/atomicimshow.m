@@ -16,7 +16,7 @@ function atomicimshow(synthesisnet,patchsize)
 %
 % http://msiplab.eng.niigata-u.ac.jp/
 %
-import saivdr.dcnn.*
+import msip.*
 
 % Extraction of information
 targetlayer = 'Lv1_V0~';
