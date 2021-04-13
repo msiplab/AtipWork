@@ -37,13 +37,13 @@ Z = torch.rand(2,3,4) # random array of size 2x3x4
 # (Array size)
 
 print('Size of X')
-X.size()
+print(X.size())
 
 print('Size of Y')
-Y.size()
+print(Y.size())
 
 print('Size of Z')
-Z.size()
+print(Z.size())
 # 配列のタイプ
 # (Array type)
 
