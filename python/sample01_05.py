@@ -18,8 +18,7 @@
 # Verified: Python 3.7, PyTorch 1.8
 from PIL import Image
 import requests
-import torch
-import torchvision.io
+import torchvision
 from matplotlib import pyplot as plt 
 
 # 画像の読み込み
