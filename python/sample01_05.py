@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #%% Sample 1-5
 #%% 画像データの表現
 # 画像の読み込みと表示 
@@ -37,5 +38,6 @@ topilimg = torchvision.transforms.ToPILImage()
 
 plt.figure(1)
 plt.imshow(topilimg(P))
+plt.show()
 #%% 
 # © Copyright, Shogo MURAMATSU, All rights reserved.

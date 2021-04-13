@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #%% Sample 1-3
 #%% 画像データの表現
 # FOR ループ
@@ -32,6 +33,6 @@ for k in range(1,11):
 # 結果の表示
 # (Display result)
 
-print(s)
+s
 #%% 
 # © Copyright, Shogo MURAMATSU, All rights reserved.
