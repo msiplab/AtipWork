@@ -7,7 +7,7 @@
 # 
 # 村松 正吾 
 # 
-# 動作確認: 
+# 動作確認: Python 3.7, PyTorch 1.8
 #%% Digital image representation
 # FOR loop
 # 
@@ -15,7 +15,7 @@
 # 
 # Shogo MURAMATSU
 # 
-# Verified: Python 3.8, PyTorch 1.8
+# Verified: Python 3.7, PyTorch 1.8
 # 変数 $s$ の初期化 
 # (Initialize variable $s$)
 # 

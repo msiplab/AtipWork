@@ -7,7 +7,7 @@
 # 
 # 村松 正吾 
 # 
-# 動作確認: 
+# 動作確認: Python 3.7, PyTorch 1.8
 #%% Digital image representation
 # Creation of arrays
 # 
@@ -15,7 +15,7 @@
 # 
 # Shogo MURAMATSU
 # 
-# Verified: Python 3.8, PyTorch 1.8
+# Verified: Python 3.7, PyTorch 1.8
 import torch
 # ワークスペースのクリア
 # (Clear workspace)
