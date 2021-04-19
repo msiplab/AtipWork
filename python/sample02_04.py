@@ -16,12 +16,13 @@
 # Shogo MURAMATSU
 # 
 # Verified: Python 3.7, PyTorch 1.8
-from PIL import Image, ImageOps
+from PIL import Image
 import requests
 import torch
 import torchvision
 from matplotlib import pyplot as plt
 im2double = torchvision.transforms.ConvertImageDtype(torch.double)
+im2uint8 = torchvision.transforms.ConvertImageDtype(torch.uint8)
 rgb2gray = torchvision.transforms.Grayscale()
 totensor = torchvision.transforms.ToTensor()
 topilimg = torchvision.transforms.ToPILImage()
@@ -79,7 +80,7 @@ plt.show()
 # (Histgram equalization)
 
 # Power law conversion with IMADUST function
-K = totensor(ImageOps.equalize(topilimg(J)))
+K = im2double(torchvision.transforms.functional.equalize(im2uint8(J)))
 plt.figure(6)
 plt.imshow(topilimg(K),cmap='gray')
 plt.title('Result of histogram equalization')
