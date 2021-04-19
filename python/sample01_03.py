@@ -16,13 +16,13 @@
 # Shogo MURAMATSU
 # 
 # Verified: Python 3.7, PyTorch 1.8
-# 変数 $s$ の初期化 
+#%% 変数 $s$ の初期化 
 # (Initialize variable $s$)
 # 
 # $$s\leftarrow 0$$
 
 s = 0
-# 累積加算
+#%% 累積加算
 # (Accumulation)
 # 
 # $$s = \sum_{k=1}^{10}k$$
@@ -30,7 +30,7 @@ s = 0
 for k in range(1,11):
    s = s + k
 
-# 結果の表示
+#%% 結果の表示
 # (Display result)
 
 s

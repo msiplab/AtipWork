@@ -21,17 +21,17 @@ import requests
 import torchvision
 from matplotlib import pyplot as plt 
 
-# 画像の読み込み
+#%% 画像の読み込み
 # (Image read)
 url = 'http://homepages.cae.wisc.edu/~ece533/images/peppers.png'
 totensor = torchvision.transforms.ToTensor()
 P = totensor(Image.open(requests.get(url, stream=True).raw))
 
-# 画像の情報
+#%% 画像の情報
 # (Information of image)
 
 print(P.dtype)
-# 画像の表示
+#%% 画像の表示
 # (Image show)
 topilimg = torchvision.transforms.ToPILImage()
 

@@ -19,15 +19,15 @@
 import math
 import torch.fft
 
-# $j$ のヘルプ
+#%% $j$ のヘルプ
 # (Help on $j$ )
 
 help('j')
-# $\pi$ のヘルプ
+#%% $\pi$ のヘルプ
 # (Help on $\pi$)
 
 help('math.pi')
-# fftn のヘルプ
+#%% fftn のヘルプ
 # (Help on ffnt)
 
 help('torch.fft.fftn') 

@@ -16,7 +16,7 @@
 # Shogo MURAMATSU
 # 
 # Verified: Python 3.7, PyTorch 1.8
-# サンプル画像の準備
+#%% サンプル画像の準備
 # (Preparation of sample image)
 # 
 # 本サンプルで利用する画像データを収めたdata フォルダにパスをとおして，サンプル動画を準備。
@@ -31,7 +31,7 @@ import torchvision.io
 # Preparation of a sample video
 #mkCalcioAvi
 
-# 入力動画の準備
+#%% 入力動画の準備
 # (Preparation of input video)
 # 
 # VideoReaderオブジェクトの生成
@@ -42,14 +42,13 @@ framesIn,_,info = torchvision.io.read_video('./data/calcio.avi',0, pts_unit='sec
 frameRate = info['video_fps']
 nFrames = framesIn.size(0)
 
-# フレーム毎の処理
+#%% フレーム毎の処理
 # (Frame-by-frame processing)
 # 
 # フレームごとのグレースケール変換
 # 
 # Frame-by-frame grayscale conversion
-
-#%% 
+#
 rgb2gray = torchvision.transforms.Grayscale(num_output_channels=3)
 framesIn = framesIn.permute(0,3,1,2)
 framesOut = torch.empty([])

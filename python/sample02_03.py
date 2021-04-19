@@ -16,12 +16,6 @@
 # Shogo MURAMATSU
 # 
 # Verified: Python 3.7, PyTorch 1.8
-# サンプル画像の準備
-# (Preparation of sample image)
-# 
-# 本サンプルで利用する画像データを収めたdata フォルダにパスをとおす。
-# 
-# Create a path to the data folder that contains images used in this sample.
 from PIL import Image
 import requests
 import torch
@@ -33,7 +27,14 @@ rgb2gray = torchvision.transforms.Grayscale()
 totensor = torchvision.transforms.ToTensor()
 topilimg = torchvision.transforms.ToPILImage()
 locs = torch.linspace(0,1,256).numpy()
-imhist = lambda x: plt.stem(locs,torch.histc(x,bins=256,min=0.,max=1.),markerfmt='None')
+imhist = lambda x: plt.stem(locs,torch.histc(x,bins=256,min=0.,max=1.),markerfmt='None',use_line_collection=True)
+
+#%% サンプル画像の準備
+# (Preparation of sample image)
+# 
+# 本サンプルで利用する画像データを収めたdata フォルダにパスをとおす。
+# 
+# Create a path to the data folder that contains images used in this sample.
 
 # Reading original image
 #I = im2double(rgb2gray(totensor(Image.open('./data/firenzeRgb.jpg'))))
@@ -47,7 +48,8 @@ plt.show()
 plt.figure(2)
 imhist(I)
 plt.show()
-# ネガ変換
+
+#%% ネガ変換
 # (Negative conversion)
 # 
 # $$y=T(x) = 1.0-x$$
@@ -68,7 +70,7 @@ plt.show()
 plt.figure(5)
 imhist(J)
 plt.show()
-# 対比伸長
+#%% 対比伸長
 # (Contrast stretching)
 # 
 # $$y=T(x) = \frac{1}{2}(\mathrm{sign}(2x-1)|2x-1|^{10^{-\alpha}}+1)$$
@@ -90,7 +92,7 @@ plt.show()
 plt.figure(8)
 imhist(K)
 plt.show()
-# べき乗則変換
+#%% べき乗則変換
 # (Power law conversion)
 # 
 # $$y=T(x) = x^\gamma$$  

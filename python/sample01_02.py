@@ -18,7 +18,7 @@
 # Verified: Python 3.7, PyTorch 1.8
 import torch
 
-#  行列 $\mathbf{A}$の定義 
+#%%  行列 $\mathbf{A}$の定義 
 # (Definition of matrix $\mathbf{A}$)
 # 
 # $$\mathbf{A}=\left(\begin{array}{ll}1 & 2 \\ 3 & 4 \\ 5 & 6\end{array}\right)$$
@@ -28,7 +28,7 @@ A = torch.tensor([ \
     [ 3, 4 ],
     [ 5, 6 ] ])
 A
-# 行列 $\mathbf{B}$の定義
+#%% 行列 $\mathbf{B}$の定義
 # (Definition of matrix $\mathbf{B}$ )
 # 
 # $$\mathbf{B}=\left(\begin{array}{lll}1 & 2 & 3 \\ 4 & 5 & 6\end{array}\right)$$
@@ -37,7 +37,7 @@ B = torch.tensor([ \
     [ 1, 2, 3 ],
     [ 4, 5, 6 ] ])
 B
-# 行列積の計算
+#%% 行列積の計算
 # (Matrix product)
 # 
 # $$\mathbf{C}=\mathbf{A B}$$

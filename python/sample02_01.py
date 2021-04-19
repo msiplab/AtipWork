@@ -23,7 +23,7 @@ import torchvision
 import torchvision.io
 from matplotlib import pyplot as plt
 
-#  準備 
+#%%  準備 
 # (Preparation)
 # 
 # 本サンプルで利用する画像でーがを収めたdata フォルダにパスをとおす。
@@ -34,7 +34,7 @@ from matplotlib import pyplot as plt
 url = 'https://github.com/msiplab/AtipWork/raw/master/data/firenzeRgb.jpg'
 totensor = torchvision.transforms.ToTensor()
 
-# RGBからグレースケールへ
+#%% RGBからグレースケールへ
 # (RGB to Grayscale)
 # 
 # RGB色空間からグレースケールへの変換の定義
@@ -56,9 +56,9 @@ pictureGray = ( \
 ).to(dtype=torch.uint8)
 print(pictureRgb) 
 print(pictureGray)
-# uint8型画像の表示
+#%% uint8型画像の表示
 # (Image show in uint8)
-#%% 
+#
 # * RGBカラー画像(RGB color image)
 # * グレースケール画像(Grayscale image)
 topilimg = torchvision.transforms.ToPILImage()
@@ -69,7 +69,7 @@ plt.figure(2)
 print(pictureGray.size())
 plt.imshow(topilimg(pictureGray),cmap='gray')
 plt.show()
-# RGB2GRAY関数
+#%% RGB2GRAY関数
 # (RGB2GRAY funciton)
 # 
 # 入出力のデータ型を保存するグレースケール変換関数
@@ -82,9 +82,9 @@ pictureRgbDouble = im2double(pictureRgb)
 pictureGrayDouble = rgb2gray(pictureRgbDouble)
 print(pictureRgbDouble)
 print(pictureGrayDouble)
-# double型画像の表示
+#%% double型画像の表示
 # (Image show in double)
-#%% 
+#
 # * RGBカラー画像(RGB color image)
 # * グレースケール画像(Grayscale image)
 
@@ -93,9 +93,9 @@ plt.imshow(topilimg(pictureRgbDouble))
 plt.figure(4)
 plt.imshow(topilimg(pictureGrayDouble),cmap='gray')
 plt.show()
-# 画像ビューアアプリ
+#%% 画像ビューアアプリ
 # (Image viewer app)
-#%% 
+#
 # * RGBカラー画像(RGB color image)
 # * グレースケール画像(Grayscale image)
 
