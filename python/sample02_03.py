@@ -114,5 +114,25 @@ plt.show()
 plt.figure(11)
 imhist(L)
 plt.show()
-#%% 
+#%% 輝度値調整関数
+# (Image adjustment function)
+# 
+# IMADJUST は高機能な輝度値調整関数で，uint8型画像に対してもべき乗則変換を含めた細かい調整が可能
+# 
+# IMADJUST is a sophisticated intensity adjustment function that allows fine 
+# tuning of images including uint8-type ones, such as power law conversion.
+
+# Parameter setting of power law conversion
+gamma = 0.5
+
+# Power law conversion with ADUST_GAMMA function
+M = torchvision.transforms.functional.adjust_gamma(I,gamma)
+plt.figure(12)
+plt.imshow(topilimg(M),cmap='gray')
+plt.title('Power law conversion with ADJUST_GAMMA')
+plt.show()
+plt.figure(13)
+imhist(M)
+plt.show()
+#%%
 # © Copyright, Shogo MURAMATSU, All rights reserved.
