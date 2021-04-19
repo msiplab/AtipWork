@@ -125,7 +125,7 @@ plt.show()
 # Parameter setting of power law conversion
 gamma = 0.5
 
-# Power law conversion with ADUST_GAMMA function
+# Power law conversion with ADJUST_GAMMA function
 M = torchvision.transforms.functional.adjust_gamma(I,gamma)
 plt.figure(12)
 plt.imshow(topilimg(M),cmap='gray')
