@@ -38,7 +38,7 @@ import torchvision.io
 # 
 # Instantiation of VideoReader object
 
-framesIn,_,info = torchvision.io.read_video('./data/pycalcio.avi',0, pts_unit='sec')
+framesIn,_,info = torchvision.io.read_video('./data/calcio.avi',0, pts_unit='sec')
 frameRate = info['video_fps']
 nFrames = framesIn.size(0)
 
@@ -57,8 +57,7 @@ for iFrame in range(nFrames):
     # Read frame
     pictureIn = framesIn[iFrame]
     # Process frame
-    pictureOut = rgb2gray(pictureIn)
-    print(pictureOut.size())    
+    pictureOut = rgb2gray(pictureIn)  
     # Write frame
     if iFrame == 0:
         framesOut = pictureOut.unsqueeze(0)
@@ -67,6 +66,6 @@ for iFrame in range(nFrames):
 
 #
 framesOut = framesOut.permute(0,2,3,1)    
-torchvision.io.write_video('./tmp/pycalcio_gray.avi', framesOut, fps=frameRate, video_codec='libx264')
+torchvision.io.write_video('./tmp/calcio_gray.avi', framesOut, fps=frameRate, video_codec='libx264')
 #%% 
 # © Copyright, Shogo MURAMATSU, All rights reserved.
