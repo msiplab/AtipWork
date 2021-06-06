@@ -67,8 +67,8 @@ classdef nsoltSubbandSerialization2dLayer < nnet.layer.Layer %#codegen
         end
         
         function layer = setOriginalDimension(layer,orgdim)
-            import msip.Direction
-            import msip.ChannelGroup
+            import saivdr.dictionary.utility.Direction
+            import saivdr.dictionary.nsoltx.ChannelGroup
             layer.OriginalDimension = orgdim;    
             nLevels = layer.NumberOfLevels;
             height = layer.OriginalDimension(Direction.VERTICAL);
