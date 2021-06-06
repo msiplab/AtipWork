@@ -26,6 +26,9 @@ close all
 
 % Downsampling factor
 dFactor = 2;
+
+% Downsampling phase
+dPhase = 0;
 %% 
 % 平均フィルタのインパルス応答 (Impulse response of averaging filter)
 % 
@@ -81,14 +84,14 @@ freqz2(h)
 axis ij
 
 % Bivariate downsampling function
-downsample2 = @(x,n) ...
+downsample2 = @(x,n,phase) ...
     shiftdim(downsample(...
     shiftdim(downsample(x,...
-    n(1)),1),...
-    n(2)),1);
+    n(1),phase(1)),1),...
+    n(2),phase(2)),1);
 
 % Box-averaging with filtering and downsampling
-v = downsample2(imfilter(u,h,'conv'),dFactor*[1 1]);
+v = downsample2(imfilter(u,h,'conv','symmetric'),dFactor*[1 1],dPhase*[1 1]);
 
 % Box-averaging with IMRESIZE
 y = imresize(u,1/dFactor,'box');

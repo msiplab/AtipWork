@@ -26,6 +26,9 @@ close all
 
 % Upsampling factor
 uFactor = 2;
+
+% Upsampling phase
+uPhase = 0;
 %% 
 % 最近傍補間フィルタのインパルス応答 (Impulse response of nearest-neighbor filter)
 % 
@@ -139,15 +142,15 @@ axis ij
 %%
 
 % Bivariate upsampling function
-upsample2 = @(x,n) ...
+upsample2 = @(x,n,phase) ...
     shiftdim(upsample(...
     shiftdim(upsample(x,...
-    n(1)),1),...
-    n(2)),1);
+    n(1),phase(1)),1),...
+    n(2),phase(2)),1);
 
 % Interpolation with upsampling and filtering
 x = padarray(u,[1 1],'replicate','both');
-w = imfilter(upsample2(x,uFactor*[1 1]),f,'conv');
+w = imfilter(upsample2(x,uFactor*[1 1],uPhase*[1 1]),f,'conv');
 s = ceil(uFactor/2);
 v = w(s+1:s+uFactor*size(u,1),s+1:s+uFactor*size(u,2));
 
