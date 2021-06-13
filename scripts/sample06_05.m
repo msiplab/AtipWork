@@ -90,7 +90,7 @@ inputSeq = inputSeq.*cos((0:(nInputSamples-1)).'*w);
 % $$V(e^{\j\omega})=U(e^{\j M\omega})$$ 
 
 % Downsampling
-outputSeq = upsample(inputSeq,factor);
+outputSeq = upsample(inputSeq,uFactor);
 nOutputSamples = length(outputSeq);
 % 入出力スペクトルの表示
 % (Display of the input and output spectrum)
@@ -111,7 +111,7 @@ grid on
 subplot(2,1,2)
 [H,W] = freqz(outputSeq);
 plot(W/pi,20*log10(abs(H)))
-title(sprintf('Output sequence (factor = %d)',factor),'FontSize',12)
+title(sprintf('Output sequence (factor = %d)',uFactor),'FontSize',12)
 xlabel('\omega /\pi [rad]','FontSize',12)
 ylabel('|V(e^{j\omega})| [dB]','FontSize',12)
 axis([ 0 1 -70 30 ])

@@ -1,4 +1,4 @@
-function matrix = fcn_orthmtxgen(angles,mus,pdAng)
+function matrix = fcn_orthmtxgen(angles,mus) %#codegen
 %FCN_ORTHMTXGEN
 %
 % Function realization of
@@ -18,55 +18,29 @@ function matrix = fcn_orthmtxgen(angles,mus,pdAng)
 %                Niigata, 950-2181, JAPAN
 %
 % http://msiplab.eng.niigata-u.ac.jp/
-
-if nargin < 3
-    pdAng = 0;
-end
-
 nDim_ = (1+sqrt(1+8*length(angles)))/2;
-if isempty(angles)
-    matrix = zeros(nDim_);
-else
-    matrix = zeros(nDim_,'like',angles);
-end
-for idx = 1:nDim_
-    matrix(idx,idx) = 1;
-end
+matrix = eye(nDim_,'like',angles);
 if ~isempty(angles)
-    iAng = 1;
+    iAng = uint32(1);
     for iTop=1:nDim_-1
         vt = matrix(iTop,:);
         for iBtm=iTop+1:nDim_
             angle = angles(iAng);
-            if iAng == pdAng
-                angle = angle + pi/2;
+            if angle ~= 0
+                c = cos(angle);
+                s = sin(angle);
+                vb = matrix(iBtm,:);
+                u  = bsxfun(@times,s,bsxfun(@plus,vt,vb));
+                vt = bsxfun(@minus,bsxfun(@times,c+s,vt),u);
+                matrix(iBtm,:) = bsxfun(@plus,bsxfun(@times,c-s,vb),u);
             end
-            c = cos(angle); %
-            s = sin(angle); %
-            vb = matrix(iBtm,:);
-            %
-            u  = bsxfun(@plus,vt,vb);
-            u  = bsxfun(@times,s,u);
-            vt = bsxfun(@times,c+s,vt);
-            vb = bsxfun(@times,c-s,vb);
-            vt = bsxfun(@minus,vt,u);
-            if iAng == pdAng
-                matrix = zeros(size(matrix),'like',matrix);
-            end
-            matrix(iBtm,:) = bsxfun(@plus,vb,u);
             %
             iAng = iAng + 1;
         end
         matrix(iTop,:) = vt;
     end
 end
-if isscalar(mus)
-    matrix = mus*matrix;
-elseif ~isempty(mus)
-    %for idx = 1:nDim_
-    %    matrix(idx,:) = bsxfun(@times,mus(idx),matrix(idx,:));
-    %end
-    matrix = bsxfun(@times,mus(:),matrix);    
+if ~all(mus==1) 
+    matrix = bsxfun(@times,mus(:),matrix);
 end
 end
-

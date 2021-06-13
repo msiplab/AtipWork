@@ -28,11 +28,11 @@ for iLayer = 1:nLayers
         slayer = synthesislgraph.Layers({synthesislgraph.Layers.Name} == alayerName + "~");
         alayer.Angles = slayer.Angles;
         alayer.Mus = slayer.Mus;
-        if isa(alayer,'saivdr.dcnn.nsoltInitialRotation2dLayer')
+        if isa(alayer,'msip.nsoltInitialRotation2dLayer')
             alayer.NoDcLeakage = slayer.NoDcLeakage;
         end
         analysislgraph = analysislgraph.replaceLayer(alayerName,alayer);
-        disp("Copy angles from " + slayer.Name + " to " + alayerName)
+        %disp("Copy angles from " + slayer.Name + " to " + alayerName)
     end
 end
 end

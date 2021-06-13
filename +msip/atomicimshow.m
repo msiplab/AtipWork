@@ -16,7 +16,7 @@ function atomicimshow(synthesisnet,patchsize,scale)
 %
 % http://msiplab.eng.niigata-u.ac.jp/
 %
-import saivdr.dcnn.*
+import msip.*
 if nargin < 3
     scale = 1;
 end
