@@ -125,7 +125,7 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer %#codegen
             %                             inputs
             %         dLdW1, ..., dLdWk - Derivatives of the loss with respect to each
             %                             learnable parameter
-            import msip.fcn_orthmtxgen_diff
+            %import saivdr.dcnn.get_fcn_orthmtxgen_diff
             
             % Layer backward function goes here.            
             nrows = size(dLdZ,2);
@@ -163,6 +163,7 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer %#codegen
             %fcn_orthmtxgen_diff = get_fcn_orthmtxgen_diff(anglesU);
             nAngles = length(anglesU);
             dLdW = zeros(nAngles,1,'like',dLdZ);
+            dVdW_X = zeros(size(X),'like',dLdZ);
             for iAngle = uint32(1:nAngles)
                 %dUn = fcn_orthmtxgen(anglesU,musU,iAngle);
                 [dUn,dUnPst,dUnPre] = fcn_orthmtxgen_diff(anglesU,musU,iAngle,dUnPst,dUnPre);
@@ -172,7 +173,6 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer %#codegen
                 else
                     c_low = dUn.'*c_low;
                 end
-                dVdW_X = zeros(size(X),'like',dLdZ);
                 dVdW_X(ps+1:ps+pa,:,:,:) = reshape(c_low,pa,nrows,ncols,nSamples);
                 %
                 %dLdW(iAngle) = sum(dLdZ.*dVdW_X,'all');
@@ -216,7 +216,7 @@ classdef nsoltIntermediateRotation2dLayer < nnet.layer.Layer %#codegen
         end
         
         function layer = updateParameters(layer)
-            import msip.fcn_orthmtxgen
+            %import saivdr.dcnn.get_fcn_orthmtxgen
             anglesU = layer.PrivateAngles;
             musU = cast(layer.PrivateMus,'like',anglesU);
             %fcn_orthmtxgen = get_fcn_orthmtxgen(anglesU);

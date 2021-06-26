@@ -139,7 +139,7 @@ classdef nsoltFinalRotation2dLayer < nnet.layer.Layer %#codegen
             %                             inputs
             %         dLdW1, ..., dLdWk - Derivatives of the loss with respect to each
             %                             learnable parameter
-            import msip.fcn_orthmtxgen_diff
+            %import saivdr.dcnn.get_fcn_orthmtxgen_diff
             
             nrows = size(dLdZ,2);
             ncols = size(dLdZ,3);            
@@ -270,7 +270,7 @@ classdef nsoltFinalRotation2dLayer < nnet.layer.Layer %#codegen
         end
         
         function layer = updateParameters(layer)
-            import msip.fcn_orthmtxgen
+            %import saivdr.dcnn.get_fcn_orthmtxgen
             ps = layer.NumberOfChannels(1);
             %
             if layer.NoDcLeakage
