@@ -119,7 +119,7 @@ noDcLeakage = true
 % Setting of dictionary update step
 
 % Number of iterations
-nIters = 8;
+nIters = 10;
 
 % Standard deviation of initial angles
 stdInitAng = pi/6; 
@@ -131,7 +131,7 @@ szPatchTrn = [64 64]; % > [ (Ny+1)My (Nx+1)Mx ]
 miniBatchSize = 32;
 
 % Number of Epochs (1 Epoch = nSubImgs/miniBachSize iterlations)
-maxEpochs = 32; 
+maxEpochs = 16; 
 
 % Number of iterations
 maxIters = nSubImgs/miniBatchSize * maxEpochs
@@ -224,8 +224,9 @@ display("MSE: " + num2str(mse(dlx,dly)))
 % 要素画像の初期状態
 % (Initial state of the atomic images)
 
+import msip.*
 figure(4)
-atomicimshow(synthesisnet)
+atomicimshow(synthesisnet,[],2^(nLevels-1))
 title('Atomic images of initial NSOLT')
 % 訓練画像の準備
 % (Preparation of traning image)
@@ -309,8 +310,9 @@ end
 % 訓練辞書の要素画像
 % (The atomic images of trained dictionary)
 
+import msip.*
 figure(6)
-atomicimshow(synthesisnet)
+atomicimshow(synthesisnet,[],2^(nLevels-1))
 title('Atomic images of trained NSOLT')
 % 訓練ネットワークの保存
 % (Save the designed network)
@@ -319,7 +321,7 @@ import msip.*
 synthesislgraph = layerGraph(synthesisnet);
 analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
 analysisnet = dlnetwork(analysislgraph);
-save(sprintf('./data/nsoltdictionary_%s',datetime('now','Format','yyyyMMddhhmmssSSS')),'analysisnet','synthesisnet')
+save(sprintf('./data/nsoltdictionary_%s',datetime('now','Format','yyyyMMddhhmmssSSS')),'analysisnet','synthesisnet','nLevels')
 % 繰返しハード閾値処理関数
 % (Function of iterative hard thresholding)
 % 

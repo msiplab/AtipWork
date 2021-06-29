@@ -134,7 +134,7 @@ title('Synthesis NSOLT')
 % (Show the atomic images)
 
 figure(5)
-atomicimshow(synthesisnet)
+atomicimshow(synthesisnet,[],2^(nLevels-1))
 title('Atomic images of trained NSOLT')
 %%
 import msip.*
@@ -203,7 +203,7 @@ adjproc = @(x) imfilter(upsample2(x,2),h,'corr','circ');
 % * Function "extractdata" is used for extracting ordinary array data from "dlarray."  
 
 % Parameter settings
-lambda = 0.0007;
+lambda = 0.001;
 gamma = 2./(beta+1e-2);
 nIters = 20;
 isDcSkip = true;

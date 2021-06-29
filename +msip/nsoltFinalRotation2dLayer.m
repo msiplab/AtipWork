@@ -138,7 +138,8 @@ classdef nsoltFinalRotation2dLayer < nnet.layer.Layer %#codegen
             %         dLdX1, ..., dLdXn - Derivatives of the loss with respect to the
             %                             inputs
             %         dLdW1, ..., dLdWk - Derivatives of the loss with respect to each
-            %                             learnable parameter
+            %  
+
             %import saivdr.dcnn.get_fcn_orthmtxgen_diff
             
             nrows = size(dLdZ,2);
@@ -200,21 +201,21 @@ classdef nsoltFinalRotation2dLayer < nnet.layer.Layer %#codegen
             dLdX = adLd_; %ipermute(adLd_,[3 1 2 4]);
             
             % dLdWi = <dLdZ,(dVdWi)X>
-            %fcn_orthmtxgen_diff = get_fcn_orthmtxgen_diff(angles);            
+            %fcn_orthmtxgen_diff = get_fcn_orthmtxgen_diff(angles);
             dLdW = zeros(nAngles,1,'like',dLdZ);
             dldz_ = dLdZ; %permute(dLdZ,[3 1 2 4]);
             dldz_upp = reshape(dldz_(1:ceil(nDecs/2),:,:,:),ceil(nDecs/2),nrows*ncols*nSamples);
             dldz_low = reshape(dldz_(ceil(nDecs/2)+1:nDecs,:,:,:),floor(nDecs/2),nrows*ncols*nSamples);
+            a_ = X; %permute(X,[3 1 2 4]);
+            c_upp = reshape(a_(1:ps,:,:,:),ps,nrows*ncols*nSamples);
+            c_low = reshape(a_(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
             for iAngle = uint32(1:nAngles/2)
                 %dW0_T = transpose(fcn_orthmtxgen(anglesW,muW,iAngle));
                 %dU0_T = transpose(fcn_orthmtxgen(anglesU,muU,iAngle));
-                [dW0,dW0Pst,dW0Pre] = fcn_orthmtxgen_diff(anglesW,muW,iAngle,dW0Pst,dW0Pre);            
-                [dU0,dU0Pst,dU0Pre] = fcn_orthmtxgen_diff(anglesU,muU,iAngle,dU0Pst,dU0Pre);                            
+                [dW0,dW0Pst,dW0Pre] = fcn_orthmtxgen_diff(anglesW,muW,iAngle,dW0Pst,dW0Pre);
+                [dU0,dU0Pst,dU0Pre] = fcn_orthmtxgen_diff(anglesU,muU,iAngle,dU0Pst,dU0Pre);
                 dW0_T = transpose(dW0);
                 dU0_T = transpose(dU0);
-                a_ = X; %permute(X,[3 1 2 4]);
-                c_upp = reshape(a_(1:ps,:,:,:),ps,nrows*ncols*nSamples);
-                c_low = reshape(a_(ps+1:ps+pa,:,:,:),pa,nrows*ncols*nSamples);
                 d_upp = dW0_T(1:ceil(nDecs/2),:)*c_upp;
                 d_low = dU0_T(1:floor(nDecs/2),:)*c_low;
                 dLdW(iAngle) = sum(bsxfun(@times,dldz_upp,d_upp),'all');
@@ -224,7 +225,7 @@ classdef nsoltFinalRotation2dLayer < nnet.layer.Layer %#codegen
         
         function nodcleak = get.NoDcLeakage(layer)
             nodcleak = layer.PrivateNoDcLeakage;
-        end        
+        end
         
         function angles = get.Angles(layer)
             angles = layer.PrivateAngles;
