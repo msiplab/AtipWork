@@ -31,7 +31,7 @@ if exist(dstdir,'dir') == 7
             end
         end
     end
-    disp('See <a href="http://www.r0k.us/graphics/kodak/"> Kodak Lossless True Color Image Suite </a>')
+    disp('See <a href="http://www.r0k.us/graphics/kodak/">Kodak Lossless True Color Image Suite</a>')
 else
     me = MException('MsipException:NoSuchFolder', ...
         '%s folder does not exist',dstdir);
