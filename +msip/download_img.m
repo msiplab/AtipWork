@@ -15,12 +15,12 @@ dstdir = './data/';
 if exist(dstdir,'dir') == 7
     %fnames = {'lena' 'baboon' 'goldhill' 'barbara'};
     for idx = 1:24 %length(fnames)
-        fname = num2str(idx) + ".png"; % [ fnames{idx} '.png' ]
+        fname = "kodim"+num2str(idx,'%02d') + ".png"; % [ fnames{idx} '.png' ]
         if exist(fullfile(dstdir,fname),'file') ~= 2
             img = imread(...
                 ...sprintf('http://homepages.cae.wisc.edu/~ece533/images/%s',...
                 ...fname));
-                "https://github.com/MohamedBakrAli/Kodak-Lossless-True-Color-Image-Suite/raw/master/PhotoCD_PCD0992/"+fname);                
+                "http://www.r0k.us/graphics/kodak/kodak/"+fname);                
             imwrite(img,fullfile(dstdir,fname))
             if isVerbose
                 fprintf('Downloaded and saved %s in %s\n',fname,dstdir);
