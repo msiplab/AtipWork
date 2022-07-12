@@ -35,7 +35,7 @@ nlevels = 3;
 %% 画像の読込
 % (Read image)
 
-u = rgb2gray(im2double(imread('./data/lena.png')));
+u = rgb2gray(im2double(imread('./data/kodim23.png')));
 %% 分析処理
 % (Analysis process)
 % 

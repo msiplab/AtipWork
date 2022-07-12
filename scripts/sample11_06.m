@@ -41,7 +41,7 @@ v = 0.5;
 % Function settings
 f = @(s0,s1) 0.5*(v-(D(1)*s0+D(2)*s1)).^2;
 g = @(s0,s1) (abs(s0)+abs(s1));
-% Variable settins
+% Variable settings
 s0 = linspace(-1,1,21);
 s1 = linspace(-1,1,21);
 [S0,S1] = ndgrid(s0,s1);
@@ -93,7 +93,7 @@ niters = 20;
 
 % Function setting
 fg = @(s0,s1) 0.5*(v-(D(1)*s0+D(2)*s1)).^2 + lambda*(abs(s0)+abs(s1));
-% Surfc plot of cost functio f+g
+% Surfc plot of cost function f+g
 figure(2)
 J = fg(S0,S1);
 hf = surfc(s0,s1,J);
@@ -167,16 +167,16 @@ hold off
 
 % Parameter settings
 isaprxleft = true;
-lambda = 10^-0.8
+lambda = 10^-1
 gamma = 10^-0.1
-sgmuint8 = 20; 
+sgmuint8 = 10; 
 sgm = sgmuint8/255;
 nlevels = 3; 
 niters = 80;
 %% 画像の読込
 % (Read image)
 
-u = rgb2gray(im2double(imread('./data/lena.png')));
+u = rgb2gray(im2double(imread('./data/kodim23.png')));
 %% 観測画像
 % (Observation image)
 %% 
@@ -199,9 +199,9 @@ import msip.udhaarwtrec2
 % を満たすため， $\mathbf{D}$ の転置システムは完全再構成分析システムとなり得る．(and thus Its transposition 
 % system can be a PR analysis system.)
 
-[coefs,scales] = udhaarwtdec2(u,nlevels);
+[coefs,scales] = udhaarwtdec2(v,nlevels);
 r = udhaarwtrec2(coefs,scales);
-assert(norm(u-r,"fro")^2/numel(u)<1e-18,'Perfect reconstruction is violated.')
+assert(norm(v-r,"fro")^2/numel(v)<1e-18,'Perfect reconstruction is violated.')
 %% 
 % 合成辞書と転置辞書の定義 (Definition of synthesis dictionary  and its adjoint)
 
@@ -213,6 +213,7 @@ syndic = @(x) udhaarwtrec2(x,scales);  % D.'
 % 
 % 初期化 (Initialization)
 
+[coefs,scales] = udhaarwtdec2(v,nlevels);
 sp = coefs;
 %% 
 % 近接勾配降下 (Proximal gradient descent)

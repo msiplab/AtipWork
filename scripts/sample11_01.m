@@ -103,7 +103,7 @@ set(gca,'YLim',[0 600])
 % 
 % 加法性白色ガウスノイズ(AWGN)を与える例．(Example of giving additive white Gaussian noise(AWGN).)
 
-I = imread('./data/lena.png');
+I = imread('./data/kodim23.png');
 J = imnoise(I,'gaussian',muw,sgmw2);
 figure(7)
 imshow(I)

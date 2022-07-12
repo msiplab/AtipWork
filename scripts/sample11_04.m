@@ -125,7 +125,7 @@ niters = 80;
 %% 画像の読込
 % (Read image)
 
-u = rgb2gray(im2double(imread('./data/lena.png')));
+u = rgb2gray(im2double(imread('./data/kodim23.png')));
 %% 観測画像
 % (Observation image)
 %% 
@@ -148,9 +148,9 @@ import msip.udhaarwtrec2
 % を満たすため， $\mathbf{D}$ の転置システムは完全再構成分析システムとなり得る．(and thus Its transposition 
 % system can be a PR analysis system.)
 
-[coefs,scales] = udhaarwtdec2(u,nlevels);
+[coefs,scales] = udhaarwtdec2(v,nlevels);
 r = udhaarwtrec2(coefs,scales);
-assert(norm(u-r,"fro")^2/numel(u)<1e-18,'Perfect reconstruction is violated.')
+assert(norm(v-r,"fro")^2/numel(v)<1e-18,'Perfect reconstruction is violated.')
 %% 
 % 合成辞書と転置辞書の定義 (Definition of synthesis dictionary  and its adjoint)
 

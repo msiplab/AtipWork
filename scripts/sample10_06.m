@@ -84,7 +84,7 @@ M  = size(D,2);
 f  = ones(2*M,1);
 lu = zeros(2*M,1);
 % Linear programming
-z  = linprog(f,[],[],[D -D],u,lx,[]); 
+z  = linprog(f,[],[],[D -D],u,lu,[]); 
 s  = z(1:M) - z(M+1:end);
 %% 
 % 係数選択 (Coefficient selection)

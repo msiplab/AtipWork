@@ -33,8 +33,8 @@ nlevels = 3;
 %% 画像の読込
 % (Read image)
 
-img = "lena";
-u = im2double(imread(['./data/' char(img) '.png']));
+img = "kodim23";
+u = im2double(imread("./data/" + img + ".png"));
 if size(u,3) == 3
     u = rgb2gray(u);
 end
@@ -158,7 +158,7 @@ end
 isbayesshrink = false;
 if ~isbayesshrink
     isaprxleft = true;
-    lambda = 10^-0.8
+    lambda = 10^-0.6
 end
 %% 
 % ソフト閾値処理 (Soft-thresholding)
