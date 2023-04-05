@@ -80,6 +80,7 @@
 - 村松正吾，「[MATLABによる画像＆映像信号処理](http://www.cqpub.co.jp/hanbai/books/30/30941.htm)」，CQ出版社，2007年
 - 村松正吾，「[冗長変換とその画像復元応用](https://www.jstage.jst.go.jp/article/isj/53/4/53_290/_article/-char/ja/)」，日本画像学会誌，Vol. 53 (2014) No. 4 p. 290-300
 - 村松正吾，「[MATLABによる映像処理システム開発](https://www.jstage.jst.go.jp/article/itej/65/11/65_1571/_article/-char/ja/)」，映像情報メディア学会誌，65 巻 (2011) 11 号 p. 1571-1574
+- 村松正吾,「[画像復元における分析・合成システム](https://www.journal.ieice.org/summary.php?id=k106_1_2&year=2023&lang=J)」，電子情報通信学会誌2023年1月号
 
 ---
 2018年4月9日 村松正吾 作成
