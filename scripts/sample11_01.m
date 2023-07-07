@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Image denoising
 % Additive whitel Gaussian noise
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -32,10 +32,10 @@ u = 0.75*ones(128);
 u(24:128-24,24:128-24) = 0.5;
 u(48:128-48,48:128-48) = 0.25;
 
-figure(1)
+figure
 imshow(u)
 title('Original')
-figure(2)
+figure
 imhist(u)
 title('Histogram of original')
 set(gca,'YLim',[0 12000])
@@ -65,7 +65,7 @@ sgmw  = sqrt(sgmw2);
 % Gaussian distribution
 x = linspace(-4*sgmw,4*sgmw,1001);
 wpdf = normpdf(x,muw,sgmw);
-figure(3)
+figure
 h = plot(x,wpdf);
 xlabel('w')
 title('Gaussian distribution') 
@@ -75,7 +75,7 @@ grid on
 
 % Additive white Gaussian noise
 w = sqrt(sgmw2)*randn(size(u));
-figure(4)
+figure
 histogram(w(:))
 title('Histogram of Gaussian noise')
 set(gca,'XLim',[-4*sgmw 4*sgmw])
@@ -89,10 +89,10 @@ set(gca,'XLim',[-4*sgmw 4*sgmw])
 
 % Noisy observation
 v = u + w;
-figure(5)
+figure
 imshow(v)
 title('Observation')
-figure(6)
+figure
 imhist(v)
 title('Histogram of observation')
 set(gca,'YLim',[0 600])
@@ -103,15 +103,15 @@ set(gca,'YLim',[0 600])
 % 
 % 加法性白色ガウスノイズ(AWGN)を与える例．(Example of giving additive white Gaussian noise(AWGN).)
 
-I = imread('./data/kodim23.png');
+I = rgb2gray(imread('./data/kodim23.png'));
 J = imnoise(I,'gaussian',muw,sgmw2);
-figure(7)
+figure
 imshow(I)
-figure(8)
+figure
 imhist(I)
-figure(9)
+figure
 imshow(J)
-figure(10)
+figure
 imhist(J)
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

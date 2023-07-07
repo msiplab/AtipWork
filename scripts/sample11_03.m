@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Image denoising
 % Normal equation
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -46,7 +46,7 @@ s1 = linspace(-1,1,21);
 F = f(S0,S1);
 R = r(S0,S1);
 % Surfc plot of the fidelity
-figure(1)
+figure
 hf = surfc(s0,s1,F);
 hf(1).FaceAlpha = 0.125;
 hf(1).FaceColor = 'green';

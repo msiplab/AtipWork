@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Image restoration
 % Fast iterative shrinkage/thresholding algorithm (FISTA)
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -197,7 +197,7 @@ niters = 40;
 %% 画像の読込
 % (Read image)
 
-u = rgb2gray(im2double(imread('./data/lena.png')));
+u = rgb2gray(im2double(imread('./data/kodim23.png')));
 %% 観測画像
 % (Observation image)
 %% 

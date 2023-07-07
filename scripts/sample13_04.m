@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Dictionary learning
 % Convolutional dictionary learning
 % 
@@ -14,14 +14,53 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
 clear 
 close all
+
+nsoltDic = "nsoltdictionary_20230620211447804"; % Set "" if you train new dictionary.
+
+isCodegen = false; % コード生成
+msip.saivdr_setup(isCodegen)
+
 import msip.download_img
 msip.download_img
+% パラメータ設定
+%% 
+% * ブロックサイズ 
+% * 冗長度
+% * スパース度
+
+% Block size
+szBlk = [ 8 8 ];
+
+% Redundancy ratio 
+redundancyRatio = 7/3; 
+
+% Sparsity ratio 
+sparsityRatio = 3/64;
+%% 画像の読込
+% (Read image)
+%% 
+% * $\mathbf{u}\in\mathbb{R}^{N}$
+
+file_uorg = './data/kodim23.png';
+u = im2double(imread(file_uorg));
+if size(u,3) == 3
+    u = rgb2gray(u);
+end
+szOrg = size(u);
+figure
+imshow(u);
+title('Original image u')
+meansubtract = @(x) x-mean(x,"all");
+y = meansubtract(u);
+
+% # of patches
+nPatches = prod(szOrg./szBlk); 
 %% 2変量ラティス構造冗長フィルタバンク
 % (Bivariate lattice-structure oversampled filter banks) 
 % 
@@ -62,6 +101,8 @@ msip.download_img
 % 
 % 【References】 
 %% 
+% * <https://jp.mathworks.com/help/dsp/ug/overview-of-filter-banks.html Overview 
+% of Filter Banks - MATLAB & Simulink - MathWorks 日本>
 % * MATLAB SaivDr Package: <https://github.com/msiplab/SaivDr https://github.com/msiplab/SaivDr>
 % * S. Muramatsu, K. Furuya and N. Yuki, "Multidimensional Nonseparable Oversampled 
 % Lapped Transforms: Theory and Design," in IEEE Transactions on Signal Processing, 
@@ -88,146 +129,200 @@ msip.download_img
 % & M\geq 2.\end{array}\right.$$
 % 
 % となる．
+% 
+% 
+% 構成パラメータ設定
 
+%%{
 % Decimation factor (Strides)
-decFactor = [2 2]; % [My Mx]
+decFactor = [2 2]; % [μv μh] 
 
 % Number of channels ( sum(nChannels) >= prod(decFactors) )
-nChannels = [1 1] * 4% [Ps Pa] (Ps=Pa)
+nChannels = [4 4]; % [Ps Pa] (Ps=Pa)
+
 % Number of tree levels
-nLevels = 3
+nLevels = 4; 
+
+% Polyphase Order
+ppOrder = [4 4]; 
+%%}
+
+%{
+% Decimation factor (Strides)
+decFactor =  [4 4]; % [μv μh] 
+
+% Number of channels ( sum(nChannels) >= prod(decFactors) )
+nChannels = [13 13]; % [Ps Pa] (Ps=Pa)
+
+% Number of tree levels
+nLevels = 2; 
+
+% Polyphase Order
+ppOrder = [2 2];
+%}
+
+%{
+% Decimation factor (Strides)
+decFactor =  [8 8]; % [μv μh] 
+
+% Number of channels ( sum(nChannels) >= prod(decFactors) )
+nChannels = [53 53]; % [Ps Pa] (Ps=Pa)
+
+% Number of tree levels
+nLevels = 1; 
+
+% Polyphase Order
+ppOrder = [2 2];
+%}
 
 % Redundancy
 P = sum(nChannels);
 M = prod(decFactor);
-redundancy = ...
+redundancyNsolt = ...
     (prod(decFactor)==1)*((P-1)*nLevels+1) + ...
     (prod(decFactor)>1)*((P-1)/(M-1)-(P-M)/((M-1)*M^nLevels))
+assert(redundancyNsolt<redundancyRatio)
 
-% Polyphase Order
-ppOrder = [1 1] *4
+%% 
+% $$L_\mathrm{v}\times L_\mathrm{h}=\left(\mu_\mathrm{v}^{\tau}+{\nu}_\mathrm{v}\frac{\mu_\mathrm{v}(\mu_\mathrm{v}^{\tau}-1)}{\mu_\mathrm{v}-1}\right) 
+% \times\left(\mu_\mathrm{h}^{\tau}+\nu_\mathrm{h}\frac{\mu_\mathrm{h}(\mu_\mathrm{h}^{\tau}-1)}{\mu_\mathrm{h}-1}\right)$$ 
 
-% Sparsity ratio
-sparsityRatio = 1/16;
+% Filter size [ Ly Lx ]
+maxDecFactor = decFactor.^nLevels;
+szFilters = maxDecFactor + ppOrder.*decFactor.*(maxDecFactor-1)./(decFactor-1)
+
+% Patch size for training
+szPatchTrn = maxDecFactor.*ceil(szFilters./maxDecFactor) % > [ Ly Lx ]
+%szPatchTrn = 2.^nextpow2(szFilters) % > [ Ly Lx ]
+assert(all(szPatchTrn>szFilters))
 
 % Number of patchs per image
-nSubImgs = 128;
+nSubImgs = floor(nPatches*prod(szBlk./szPatchTrn))
+assert(nSubImgs > 0)
 
 % No DC-leakage
 noDcLeakage = true
-%% 
-% Setting of dictionary update step
+% 辞書の設定
 
-% Number of iterations
-nIters = 10;
+if exist("./data/"+nsoltDic+".mat","file")
+    S = load("./data/"+nsoltDic);
+    analysisnet = S.analysisnet;
+    synthesisnet = S.synthesisnet;
+    nLevels_ = extractnumlevels(analysisnet);
+    decFactor_ = extractdecfactor(analysisnet);
+    nChannels_ = extractnumchannels(analysisnet);
 
-% Standard deviation of initial angles
-stdInitAng = pi/6; 
+    assert(nLevels==nLevels_)
+    assert(all(decFactor==decFactor_))
+    assert(all(nChannels==nChannels_))
+else
+    % Number of iterations
+    nItersNsolt = 10;
 
-% Patch size for training
-szPatchTrn = [64 64]; % > [ (Ny+1)My (Nx+1)Mx ]
+    % Standard deviation of initial angles
+    stdInitAng = 1e-1; %pi/6;
 
-% Mini batch size
-miniBatchSize = 32;
+    % Mini batch size
+    miniBatchSize = 5;
 
-% Number of Epochs (1 Epoch = nSubImgs/miniBachSize iterlations)
-maxEpochs = 16; 
+    % Number of Epochs (1 Epoch = nSubImgs/miniBachSize iterlations)
+    maxEpochs = 60;
 
-% Number of iterations
-maxIters = nSubImgs/miniBatchSize * maxEpochs
+    % Number of iterations
+    maxIters = nSubImgs/miniBatchSize * maxEpochs
 
-% Training options
-opts = trainingOptions('sgdm', ... % Stochastic gradient descent w/ momentum
-    ...'Momentum', 0.9000,...
-    ...'InitialLearnRate',0.0100,...
-    ...'LearnRateScheduleSettings','none',...
-    'L2Regularization',0.0,...1.0000e-04,... % Set zero since parameters are rotaion angles.
-    ...'GradientThresholdMethod','l2norm',...
-    ...'GradientThreshold',Inf,...
-    'MaxEpochs',maxEpochs,...30,...
-    'MiniBatchSize',miniBatchSize,...128,...
-    'Verbose',1,...
-    'VerboseFrequency',32,...50,...
-    ...'ValidationData',[],...
-    ...'ValidationFrequency',50,...
-    ...'ValidationPatience',Inf,...
-    ...'Shuffle','once',...
-    ...'CheckpointPath','',...
-    ...'ExecutionEnvironment','auto',...
-    ...'WorkerLoad',[],...
-    ...'OutputFcn',[],...
-    'Plots','none',...'training-progress',...
-    ...'SequenceLength','longest',...
-    ...'SequencePaddingValue',0,...
-    ...'SequencePaddingDirection','right',...
-    ...'DispatchInBackground',0,...
-    'ResetInputNormalization',0);...1
+    % Training options
+    opts = trainingOptions('sgdm', ... % Stochastic gradient descent w/ momentum
+        ...'Momentum', 0.9000,...
+        'InitialLearnRate',1e-03,...
+        ...'LearnRateScheduleSettings','none',...
+        'L2Regularization',0.0, ... 1.0e-04,... 
+        ...'GradientThresholdMethod','l2norm',...
+        ...'GradientThreshold',Inf,...
+        'MaxEpochs',maxEpochs,...30,...
+        'MiniBatchSize',miniBatchSize,...128,...
+        'Verbose',1,...
+        ...'VerboseFrequency',50,...
+        ...'ValidationData',[],...
+        ...'ValidationFrequency',50,...
+        ...'ValidationPatience',Inf,...
+        ...'Shuffle','once',...
+        ...'CheckpointPath','',...
+        ...'ExecutionEnvironment','auto',...
+        ...'WorkerLoad',[],...
+        ...'OutputFcn',[],...
+        'Plots','none',...'training-progress',...
+        ...'SequenceLength','longest',...
+        ...'SequencePaddingValue',0,...
+        ...'SequencePaddingDirection','right',...
+        ...'DispatchInBackground',0,...
+        'ResetInputNormalization',0);...1
 %% 層構造の構築
 % (Construction of layers)
 
-import msip.*
-analysislgraph = fcn_creatensoltlgraph2d(...
-    'InputSize',szPatchTrn,...
-    'NumberOfChannels',nChannels,...
-    'DecimationFactor',decFactor,...
-    'PolyPhaseOrder',ppOrder,...
-    'NumberOfLevels',nLevels,...
-    'NumberOfVanishingMoments',noDcLeakage,...
-    'Mode','Analyzer');
-synthesislgraph = fcn_creatensoltlgraph2d(...
-    'InputSize',szPatchTrn,...
-    'NumberOfChannels',nChannels,...
-    'DecimationFactor',decFactor,...
-    'PolyPhaseOrder',ppOrder,...
-    'NumberOfLevels',nLevels,...
-    'NumberOfVanishingMoments',noDcLeakage,...
-    'Mode','Synthesizer');
+  import saivdr.dcnn.*
+    analysislgraph = fcn_creatensoltlgraph2d([],...
+        'InputSize',szPatchTrn,...
+        'NumberOfChannels',nChannels,...
+        'DecimationFactor',decFactor,...
+        'PolyPhaseOrder',ppOrder,...
+        'NumberOfLevels',nLevels,...
+        'NumberOfVanishingMoments',noDcLeakage,...
+        'Mode','Analyzer');
+    synthesislgraph = fcn_creatensoltlgraph2d([],...
+        'InputSize',szPatchTrn,...
+        'NumberOfChannels',nChannels,...
+        'DecimationFactor',decFactor,...
+        'PolyPhaseOrder',ppOrder,...
+        'NumberOfLevels',nLevels,...
+        'NumberOfVanishingMoments',noDcLeakage,...
+        'Mode','Synthesizer');
 
-figure(3)
-subplot(1,2,1)
-plot(analysislgraph)
-title('Analysis NSOLT')
-subplot(1,2,2)
-plot(synthesislgraph)
-title('Synthesis NSOLT')
+    figure
+    subplot(1,2,1)
+    plot(analysislgraph)
+    title('Analysis NSOLT')
+    subplot(1,2,2)
+    plot(synthesislgraph)
+    title('Synthesis NSOLT')
 
-% Construction of deep learning network.
-synthesisnet = dlnetwork(synthesislgraph);
+    % Construction of deep learning network.
+    synthesisnet = dlnetwork(synthesislgraph);
 
-% Initialize
-nLearnables = height(synthesisnet.Learnables);
-for iLearnable = 1:nLearnables
-    if synthesisnet.Learnables.Parameter(iLearnable)=="Angles"
-        layerName = synthesisnet.Learnables.Layer(iLearnable);
-        synthesisnet.Learnables.Value(iLearnable) = ...
-            cellfun(@(x) x+stdInitAng*randn(size(x)), ...
-            synthesisnet.Learnables.Value(iLearnable),'UniformOutput',false);
+    % Initialize
+    nLearnables = height(synthesisnet.Learnables);
+    for iLearnable = 1:nLearnables
+        if synthesisnet.Learnables.Parameter(iLearnable)=="Angles"
+            layerName = synthesisnet.Learnables.Layer(iLearnable);
+            synthesisnet.Learnables.Value(iLearnable) = ...
+                cellfun(@(x) x+stdInitAng*randn(size(x)), ...
+                synthesisnet.Learnables.Value(iLearnable),'UniformOutput',false);
+        end
     end
-end
 
-% Copy the synthesizer's parameters to the analyzer
-synthesislgraph = layerGraph(synthesisnet);
-analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
-analysisnet = dlnetwork(analysislgraph);
+    % Copy the synthesizer's parameters to the analyzer
+    synthesislgraph = layerGraph(synthesisnet);
+    analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
+    analysisnet = dlnetwork(analysislgraph);
 % 随伴関係（完全再構成）の確認
 % (Confirmation of the adjoint relation (perfect reconstruction))
 % 
 % NSOLTはパーセバルタイト性を満たすことに注意．(Note that NSOLT satisfy the Parseval tight property.)
 
-nOutputs = nLevels+1;
-x = rand(szPatchTrn,'single');
-s = cell(1,nOutputs);
-dlx = dlarray(x,'SSCB'); % Deep learning array (SSCB: Spatial,Spatial,Channel,Batch)
-[s{1:nOutputs}] = analysisnet.predict(dlx);
-dly = synthesisnet.predict(s{:});
-display("MSE: " + num2str(mse(dlx,dly)))
+    nOutputs = nLevels+1;
+    x = rand(szPatchTrn,'single');
+    s = cell(1,nOutputs);
+    dlx = dlarray(x,'SSCB'); % Deep learning array (SSCB: Spatial,Spatial,Channel,Batch)
+    [s{1:nOutputs}] = analysisnet.predict(dlx);
+    dly = synthesisnet.predict(s{:});
+    display("MSE: " + num2str(mse(dlx,dly)))
 % 要素画像の初期状態
 % (Initial state of the atomic images)
 
-import msip.*
-figure(4)
-atomicimshow(synthesisnet,[],2^(nLevels-1))
-title('Atomic images of initial NSOLT')
+    import saivdr.dcnn.*
+    figure
+    atomicimshow(synthesisnet,[],2^(nLevels-1))
+    title('Atomic images of initial NSOLT')
 % 訓練画像の準備
 % (Preparation of traning image)
 % 
@@ -235,12 +330,15 @@ title('Atomic images of initial NSOLT')
 % 
 % (Randomly extracting patches from the image data store)
 
-imds = imageDatastore("./data/barbara.png","ReadFcn",@(x) im2single(imread(x)));
-patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',nSubImgs);
-figure(5)
-minibatch = preview(patchds);
-responses = minibatch.ResponseImage;
-montage(responses,'Size',[2 4]);
+    imds = imageDatastore(file_uorg,"ReadFcn",@(x) meansubtract(rgb2gray(im2single(imread(x)))));
+    patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',nSubImgs);
+    figure
+    minibatch = preview(patchds);
+    responses = minibatch.ResponseImage;
+    responses = cellfun(@(x) x + 0.5,responses,'UniformOutput',false);
+    figure
+    montage(responses,'Size',[2 4]);
+    drawnow
 % 畳み込み辞書学習
 % (Convolutional dictionary learning)
 % 問題設定(Problem setting):
@@ -273,59 +371,71 @@ montage(responses,'Size',[2 4]);
 % * Sparse approximation：Iterative hard thresholding
 % * Dictionary update： Stochastic gradient descent w/ momentum
 
-% Check if IHT works for dlarray
-%x = dlarray(randn(szPatchTrn,'single'),'SSCB');
-%[y,coefs{1:nOutputs}] = iht(x,analysisnet,synthesisnet,sparsityRatio);
+    % Check if IHT works for dlarray
+    %x = dlarray(randn(szPatchTrn,'single'),'SSCB');
+    %[y,coefs{1:nOutputs}] = iht(x,analysisnet,synthesisnet,sparsityRatio);
 % 繰返し計算
 % (Iterative calculation of alternative steps)
 
-import msip.*
-%profile on
-for iIter = 1:nIters
+    import saivdr.dcnn.*
+    %profile on
+    for iIter = 1:nItersNsolt
 
-    % Sparse approximation (Applied to produce an object of TransformedDatastore)
-    coefimgds = transform(patchds, @(x) iht4inputimage(x,analysisnet,synthesisnet,sparsityRatio));
+        % Sparse approximation (Applied to produce an object of TransformedDatastore)
+        coefimgds = transform(patchds, @(x) iht4patchds(x,analysisnet,synthesisnet,sparsityRatio));
 
-    % Synthesis dictionary update
-    trainlgraph = synthesislgraph.replaceLayer('Lv1_Out',...
-        regressionLayer('Name','Lv1_Out'));
-    trainednet = trainNetwork(coefimgds,trainlgraph,opts);
+        % Synthesis dictionary update
+        trainlgraph = synthesislgraph.replaceLayer('Lv1_Out',...
+            regressionLayer('Name','Lv1_Out'));
+        trainednet = trainNetwork(coefimgds,trainlgraph,opts);
 
-    % Analysis dictionary update (Copy parameters from synthesizer to analyzer)
-    trainedlgraph = layerGraph(trainednet);
-    analysislgraph = fcn_cpparamssyn2ana(analysislgraph,trainedlgraph);
-    analysisnet = dlnetwork(analysislgraph);
+        % Analysis dictionary update (Copy parameters from synthesizer to analyzer)
+        trainedlgraph = layerGraph(trainednet);
+        analysislgraph = fcn_cpparamssyn2ana(analysislgraph,trainedlgraph);
+        analysisnet = dlnetwork(analysislgraph);
 
-    % Check the adjoint relation (perfect reconstruction)
-    checkadjointrelation(analysislgraph,trainedlgraph,nLevels,szPatchTrn);
+        % Check the adjoint relation (perfect reconstruction)
+        checkadjointrelation(analysislgraph,trainedlgraph,nLevels,szPatchTrn);
 
-    % Replace layer
-    synthesislgraph = trainedlgraph.replaceLayer('Lv1_Out',...
-        nsoltIdentityLayer('Name','Lv1_Out'));
-    synthesisnet = dlnetwork(synthesislgraph);
+        % Replace layer
+        synthesislgraph = trainedlgraph.replaceLayer('Lv1_Out',...
+            nsoltIdentityLayer('Name','Lv1_Out'));
+        synthesisnet = dlnetwork(synthesislgraph);
 
-end
-%profile off
-%profile viewer
-% 訓練辞書の要素画像
-% (The atomic images of trained dictionary)
-
-import msip.*
-figure(6)
-atomicimshow(synthesisnet,[],2^(nLevels-1))
-title('Atomic images of trained NSOLT')
+    end
+    %profile off
+    %profile viewer
 % 訓練ネットワークの保存
 % (Save the designed network)
 
-import msip.*
+    import saivdr.dcnn.*
+    synthesislgraph = layerGraph(synthesisnet);
+    analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
+    analysisnet = dlnetwork(analysislgraph);
+    save(sprintf('./data/nsoltdictionary_%s',datetime('now','Format','yyyyMMddHHmmssSSS')),'analysisnet','synthesisnet','nLevels')
+end
+% 訓練辞書の要素画像
+% (The atomic images of trained dictionary)
+
+analysislgraph = layerGraph(analysisnet);
 synthesislgraph = layerGraph(synthesisnet);
-analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
-analysisnet = dlnetwork(analysislgraph);
-save(sprintf('./data/nsoltdictionary_%s',datetime('now','Format','yyyyMMddhhmmssSSS')),'analysisnet','synthesisnet','nLevels')
+
+figure
+subplot(1,2,1)
+plot(analysislgraph)
+title('Analysis NSOLT')
+subplot(1,2,2)
+plot(synthesislgraph)
+title('Synthesis NSOLT')
+
+import saivdr.dcnn.*
+
+figure
+
+atomicimshow(synthesisnet,[],2^(nLevels-1))
+title('Atomic images of trained NSOLT')
 % 繰返しハード閾値処理関数
 % (Function of iterative hard thresholding)
-% 
-% 
 % 
 % The input images of the patch pairs are replaced with sparse coefficients 
 % obtained by IHT, where normalization is omitted for the Parseval tight property 
@@ -346,8 +456,10 @@ save(sprintf('./data/nsoltdictionary_%s',datetime('now','Format','yyyyMMddhhmmss
 % * T. Blumensath and M. E. Davies, "Normalized Iterative Hard Thresholding: 
 % Guaranteed Stability and Performance," in IEEE Journal of Selected Topics in 
 % Signal Processing, vol. 4, no. 2, pp. 298-309, April 2010, doi: 10.1109/JSTSP.2010.2042411.
+% 深層学習配列に対する繰返しハード閾値処理(IHT)のバッチ処理
+% (Iterative Hard Thresholding (IHT) batch processing for deep learning arrays)
 
-function newdata = iht4inputimage(oldtbl,analyzer,synthesizer,sparsityRatio)
+function newdata = iht4patchds(oldtbl,analyzer,synthesizer,sparsityRatio)
 % IHT for InputImage in randomPatchExtractionDatastore
 %
 nInputs = length(synthesizer.InputNames);
@@ -355,7 +467,7 @@ nInputs = length(synthesizer.InputNames);
 % Apply IHT process for every input patch
 restbl = removevars(oldtbl,'InputImage');
 dlv = dlarray(cat(4,oldtbl.InputImage{:}),'SSCB');
-[~,dlcoefs{1:nInputs}] = iht(dlv,analyzer,synthesizer,sparsityRatio);
+[~,dlcoefs{1:nInputs}] = iht4dlarray(dlv,analyzer,synthesizer,sparsityRatio);
 coefs = cellfun(@(x) permute(num2cell(extractdata(x),1:3),[4 1 2 3]),dlcoefs,'UniformOutput',false);
 %
 nImgs = length(oldtbl.InputImage);
@@ -368,10 +480,10 @@ end
 % Output as a cell in order to make multiple-input datastore
 newdata = [ coefarray table2cell(restbl) ];
 end
-%% 
-% 
+% 深層学習配列に対する繰返しハード閾値処理(IHT)
+% (Iterative hard thresholding (IHT) for deep learning arrays)
 
-function [dly,varargout] = iht(dlx,analyzer,synthesizer,sparsityRatio)
+function [dly,varargout] = iht4dlarray(dlx,analyzer,synthesizer,sparsityRatio)
 % IHT Iterative hard thresholding
 %
 nInputs = length(synthesizer.InputNames);
@@ -387,8 +499,8 @@ nCoefs = floor(sparsityRatio*numel(dlx(:,:,:,1)));
 for iter=1:nIters
     % Gradient descent
     dly = synthesizer.predict(dlcoefs{1:nInputs});
-    [grad{1:nInputs}] = analyzer.predict(dly-dlx);
-    dlcoefs = cellfun(@(x,y) x-gamma*y,dlcoefs,grad,'UniformOutput',false);
+    [grad{1:nInputs}] = analyzer.predict(dlx-dly);
+    dlcoefs = cellfun(@(x,y) x+gamma*y,dlcoefs,grad,'UniformOutput',false);
     % Hard thresholding
     coefvecs = cellfun(@(x) extractdata(reshape(x,[],szBatch)),dlcoefs,'UniformOutput',false);
     srtdabscoefs = sort(abs(cell2mat(coefvecs.')),1,'descend');
@@ -402,11 +514,11 @@ for iter=1:nIters
 end
 varargout = dlcoefs;
 end
-%% 
-% 
+% NSOLTネットワークの随伴関係の確認
+% (Confirmation of NSOLT network adjoint relations)
 
 function checkadjointrelation(analysislgraph,synthesislgraph,nLevels,szInput)
-import msip.*
+import saivdr.dcnn.*
 x = rand(szInput,'single');
 % Assemble analyzer
 analysislgraph4predict = analysislgraph;

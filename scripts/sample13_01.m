@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Dictionary learning
 % Karhunen–Loève transform (principle component analysis) 
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -33,8 +33,45 @@ szBlk = [ 8 8 ];
 %% 
 % * $\mathbf{u}\in\mathbb{R}^{N}$
 
-u = rgb2gray(im2double(imread('./data/lena.png')));
-meanu = mean(u(:));
+file_uorg = './data/kodim23.png';
+u = im2double(imread(file_uorg));
+if size(u,3) == 3
+    u = rgb2gray(u);
+end
+szOrg = size(u);
+figure
+imshow(u);
+title('Original image u')
+%% 
+% 
+
+
+% 画像 $\mathbf{y}$からのデータ行列 $\mathbf{Y}$ の生成 
+% (Generate data matrices from images )
+% 
+% 標本平均ブロックを引く代わりに，予め零平均化したデータで学習(Instead of subtracting the sample average block, 
+% training with pre-zero averaged data)
+
+meansubtract = @(x) x-mean(x,"all");
+y = meansubtract(u);
+
+% # of patches
+nPatches = prod(szOrg./szBlk); 
+
+npos = randsample(prod(szOrg-szBlk),nPatches);
+ybs = zeros(szBlk(1),szBlk(2),nPatches,'like',y);
+szSrchy = szOrg(1)-szBlk(1);
+for iPatch = 1:nPatches
+    ny_ = mod(npos(iPatch)-1,szSrchy)+1;
+    nx_ = floor((npos(iPatch)-1)/szSrchy)+1;
+    ybs(:,:,iPatch) = y(ny_:ny_+szBlk(1)-1,nx_:nx_+szBlk(2)-1);
+end
+figure
+montage(ybs+0.5,'Size',[8 8]);
+drawnow
+
+Y = reshape(ybs,prod(szBlk),[]);
+
 %% カルーネン-レーベ変換（主成分分析）
 % (Karhunen–Loève transform (principle component analysis))
 % 問題設定 (Problem setting):
@@ -60,12 +97,6 @@ meanu = mean(u(:));
 % 
 % 
 % 
-% 画像 $\mathbf{u}$からのデータ行列 $\mathbf{Y}$ の生成 (Generation of data matrix  $\mathbf{Y}$  
-% of image $\mathbf{u}$)
-
-Y = im2col(u,szBlk,'distinct');
-Y = Y - mean(Y,2);
-%% 
 % 標本分散共分散行列 $\widehat{\mathbf{\Sigma}}_{y}$の計算 (Calculation of sample covariance 
 % matrix $\widehat{\mathbf{\Sigma}}_{y}$)
 
@@ -74,29 +105,26 @@ SigmaY = cov(Y.');
 % 標本分散共分散行列 $\widehat{\mathbf{\Sigma}}_{y}$の固有値分解 (Eigendecomposition of sample 
 % covariance matrix  $\widehat{\mathbf{\Sigma}}_{y}$)
 
-[Phi,Lambda] = eig(SigmaY);
+[Phi_pca,Lambda] = eig(SigmaY);
 %% 
 % 固有値 $\lambda$ の大きさの降順に列ベクトルをソート (Sorting column vectors in the descending 
 % order of the eigenvalues $\lambda$)
 
 [~,idx] = sort(diag(Lambda),'descend');
-Phi = Phi(:,idx);
+Phi_pca = Phi_pca(:,idx);
 %% 
 % 固有ベクトルを基底画像に変換 (Reshape the eigenvectures into basis images)
 
 nBases = prod(szBlk);
-basisImages = zeros(szBlk(1),szBlk(2),nBases);
+basisImagesPca = zeros(szBlk(1),szBlk(2),nBases);
 for iBasis = 1:nBases
-    basisImages(:,:,iBasis) = reshape(Phi(:,iBasis),szBlk(1),szBlk(2));
+    basisImagesPca(:,:,iBasis) = reshape(Phi_pca(:,iBasis),szBlk(1),szBlk(2));
 end
-% 画像表示
-% (Image show)
+% 基底画像の表示
+% (Show basis images)
 
-figure(1)
-imshow(u);
-title('Original image u')
-figure(2)
-montage(imresize(basisImages,8,'nearest')+.5,'BorderSize',[2 2])
-title('Basis images of KLT (PCA)')
+figure
+montage(imresize(basisImagesPca,8,'nearest')+.5,'BorderSize',[2 2])
+title('Basis images of KLT(PCA)')
 %% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+% © Copyright, 2018-2023, Shogo MURAMATSU, All rights reserved.

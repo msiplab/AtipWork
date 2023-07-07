@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Image restoration
 % Wiener filter
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -32,7 +32,7 @@ sgmw = sgmuint8/255;
 %% 画像の読込
 % (Read image)
 
-u = rgb2gray(im2double(imread('./data/lena.png')));
+u = rgb2gray(im2double(imread('./data/kodim23.png')));
 sgmu = std(u(:));
 meanu = mean(u(:));
 %% 観測画像
@@ -83,6 +83,7 @@ V = fftn(v,nPoints);
 R = conj(P)./(abs(P).^2+nsr); 
 % IDFT of filtered spectrum
 y0 = ifftn(R.*V);
+y0 = y0(1:size(u,1),1:size(u,2));
 % 逆フィルタ
 % (Inverse filter)
 % 
@@ -93,6 +94,7 @@ y0 = ifftn(R.*V);
 
 % IDFT of filtered spectrum
 y1 = ifftn(V./P);
+y1 = y1(1:size(u,1),1:size(u,2));
 % 画像表示
 % (Image show)
 

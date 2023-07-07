@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Dictionary learning
 % K-SVD
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -31,24 +31,55 @@ msip.download_img
 % * 繰返し回数 (Number of iterations)
 
 % Block size
-szBlk = [8 8];
-nDims = prod(szBlk);
+szBlk = [ 8 8 ];
 
-% Redundancy ratio
-redundancyRatio = 1.5;
+% Redundancy ratio 
+redundancyRatio = 7/3; 
 
-% Sparsity ratio
-sparsityRatio = 0.1;
+% Sparsity ratio 
+sparsityRatio = 3/64;
 
 % Number of iterations
-nIters = 30;
+nItersKsvd = 1e3;
 %% 画像の読込
 % (Read image)
 %% 
 % * $\mathbf{u}\in\mathbb{R}^{N}$
 
-% Read image
-u = rgb2gray(im2double(imread('./data/lena.png')));
+file_uorg = './data/kodim23.png';
+u = im2double(imread(file_uorg));
+if size(u,3) == 3
+    u = rgb2gray(u);
+end
+szOrg = size(u)
+figure
+imshow(u);
+title('Original image u')
+% 画像 $\mathbf{y}$からのデータ行列 $\mathbf{Y}$ の生成 
+% (Generate data matrices from images )
+% 
+% 標本平均ブロックを引く代わりに，予め零平均化したデータで学習(Instead of subtracting the sample average block, 
+% training with pre-zero averaged data)
+
+meansubtract = @(x) x-mean(x,"all");
+y = meansubtract(u);
+
+% # of patches
+nPatches = prod(szOrg./szBlk); 
+
+npos = randsample(prod(szOrg-szBlk),nPatches);
+ybs = zeros(szBlk(1),szBlk(2),nPatches,'like',y);
+szSrchy = szOrg(1)-szBlk(1);
+for iPatch = 1:nPatches
+    ny_ = mod(npos(iPatch)-1,szSrchy)+1;
+    nx_ = floor((npos(iPatch)-1)/szSrchy)+1;
+    ybs(:,:,iPatch) = y(ny_:ny_+szBlk(1)-1,nx_:nx_+szBlk(2)-1);
+end
+figure
+montage(ybs+0.5,'Size',[8 8]);
+drawnow
+
+Y = reshape(ybs,prod(szBlk),[]);
 % K-特異値分解
 % (K-Singular Value Decomposition)
 % 問題設定 (Problem setting):
@@ -69,47 +100,35 @@ u = rgb2gray(im2double(imread('./data/lena.png')));
 % 
 % 
 % 
-% 画像 $\mathbf{u}$からのデータ行列 $\mathbf{Y}$ の生成 (Generation of data matrix  $\mathbf{Y}$  
-% of image $\mathbf{u}$)
-
-Y = im2col(u,szBlk,'distinct');
-nSamples = size(Y,2);
-%% 
-% 要素画像の数 (Number of atomic images)
-
-nAtoms = ceil(redundancyRatio*nDims);
-%% 
 % 係数の数 (Number of coefficients)
+% 
+% 要素画像の数 
 
-nCoefs = floor(sparsityRatio*nDims);
+nDims = prod(szBlk);
+nAtoms = ceil(redundancyRatio*nDims);
+nCoefsKsvd = max(floor(sparsityRatio*nDims),1);
 %% 
 % 辞書 $\mathbf{\Phi}$の初期化 (Initializatio of dictionary $\mathbf{\Phi}$)
 %% 
 % * 二変量離散コサイン変換(Bivariate DCT)
 % * ランダム (random)
 
-Phi = randn(nDims,nAtoms);
-Phi = Phi/norm(Phi,'fro');
+Phi_ksvd = randn(nDims,nAtoms);
+Phi_ksvd = Phi_ksvd/norm(Phi_ksvd,'fro');
 for iAtom = 1:nDims
     delta = zeros(szBlk);
     delta(iAtom) = 1;
-    Phi(:,iAtom) = reshape(idct2(delta),nDims,1);
+    Phi_ksvd(:,iAtom) = reshape(idct2(delta),nDims,1);
 end
 %% 
 % 要素ベクトルを要素画像に変換 (Reshape the atoms into atomic images)
 
-atomicImages = zeros(szBlk(1),szBlk(2),nAtoms);
+atomicImagesKsvd = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
-    atomicImages(:,:,iAtom) = reshape(Phi(:,iAtom),szBlk(1),szBlk(2));
+    atomicImagesKsvd(:,:,iAtom) = reshape(Phi_ksvd(:,iAtom),szBlk(1),szBlk(2));
 end
-% 画像表示
-% (Image show)
-
-figure(1)
-imshow(u);
-title('Original image u')
-figure(2)
-montage(imresize(atomicImages,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
+figure
+montage(imresize(atomicImagesKsvd,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of initial dictionary (DCT & random)')
 % スパース近似ステップと辞書更新ステップの繰り返し
 % 
@@ -132,18 +151,16 @@ title('Atomic images of initial dictionary (DCT & random)')
 % # $k\leq N$ ならば 2. へ $k>N$ ならば終了
 %% 
 % ただし， $\sigma_1$ を最大特異値とする．
-% 
-% 
-% 
 % 交互ステップの繰返し計算 (Iterative calculation of alternative steps)
 
-cost = zeros(1,nIters);
-for iIter = 1:nIters
+cost = zeros(1,nItersKsvd);
+nSamples = size(Y,2);
+for iIter = 1:nItersKsvd
     X = zeros(nAtoms,nSamples);
     % Sparse approximation
     for iSample = 1:nSamples
-        y = Y(:,iSample);
-        x = omp(y,Phi,nCoefs);
+        y_ = Y(:,iSample);
+        x = omp(y_,Phi_ksvd,nCoefsKsvd);
         X(:,iSample) = x;
     end
     % Dictionary update
@@ -152,23 +169,23 @@ for iIter = 1:nIters
         xk = X(iAtom,:);
         suppk = find(xk);
         %
-        Ekred = Y(:,suppk)-Phi(:,idxset)*X(idxset,suppk);
+        Ekred = Y(:,suppk)-Phi_ksvd(:,idxset)*X(idxset,suppk);
         %
         if ~isempty(suppk)
             [U,S,V] = svd(Ekred,'econ');
             ak = U(:,1);
             xkred = S(1,1)*V(:,1)';
             %
-            Phi(:,iAtom) = ak;
+            Phi_ksvd(:,iAtom) = ak;
             X(iAtom,suppk) = xkred;
         end
     end
-    cost(iIter) = (norm(Y-Phi*X,'fro')^2)/(2*nSamples);
+    cost(iIter) = (norm(Y-Phi_ksvd*X,'fro')^2)/(2*nSamples);
 end
 %% 
 % コスト評価のグラフ (Graph of cost variation)
 
-figure(3)
+figure
 plot(cost)
 xlabel('Number of iteration')
 ylabel('Cost')
@@ -176,50 +193,51 @@ grid on
 %% 
 % 要素ベクトルを要素画像に変換 (Reshape the atoms into atomic images)
 
-atomicImages = zeros(szBlk(1),szBlk(2),nAtoms);
+atomicImagesKsvd = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
-    atomicImages(:,:,iAtom) = reshape(Phi(:,iAtom),szBlk(1),szBlk(2));
+    atomicImagesKsvd(:,:,iAtom) = reshape(Phi_ksvd(:,iAtom),szBlk(1),szBlk(2));
 end
-figure(4)
-montage(imresize(atomicImages,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
+figure
+montage(imresize(atomicImagesKsvd,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of K-SVD')
+% 
 % 直交マッチング追跡関数 
 % (Function of orthogonal matching pursuite)
 
 function x = omp(y,Phi,nCoefs)
-    % Initializaton
-    nDims = size(Phi,1);
-    nAtoms = size(Phi,2);
-    e = ones(nAtoms,1);
-    a = zeros(nAtoms,1);
-    g = zeros(nAtoms,1);
-    x = zeros(nAtoms,1);
-    v = zeros(nDims,1);
-    r = y - v;
-    supp = [];
-    k = 0;
-    while k < nCoefs
-        % Matching process
-        rr = r.'*r;
-        for m = setdiff(1:nAtoms,supp)
-            d = Phi(:,m);
-            g(m) = d.'*r; % γm=<dm,r>
-            a(m) = g(m)/(d.'*d); % Normalize αm=γm/||dm||^2
-            e(m) = rr - g(m)*a(m); % <r-dm/||dm||^2,r>
-        end
-        % Minimum value search (pursuit)
-        [~,mmin]= min(e);
-        % Update the support
-        supp = union(supp,mmin);
-        subPhi = Phi(:,supp);
-        x(supp) = pinv(subPhi) * y;
-        % Synthesis process
-        v = Phi*x;
-        % Residual
-        r = y - v;
-        % Update
-        k = k + 1;
+% Initializaton
+nDims = size(Phi,1);
+nAtoms = size(Phi,2);
+e = ones(nAtoms,1);
+a = zeros(nAtoms,1);
+g = zeros(nAtoms,1);
+x = zeros(nAtoms,1);
+v = zeros(nDims,1);
+r = y - v;
+supp = [];
+k = 0;
+while k < nCoefs
+    % Matching process
+    rr = r.'*r;
+    for m = setdiff(1:nAtoms,supp)
+        d = Phi(:,m);
+        g(m) = d.'*r; % γm=<dm,r>
+        a(m) = g(m)/(d.'*d); % Normalize αm=γm/||dm||^2
+        e(m) = rr - g(m)*a(m); % <r-dm/||dm||^2,r>
     end
+    % Minimum value search (pursuit)
+    [~,mmin]= min(e);
+    % Update the support
+    supp = union(supp,mmin);
+    subPhi = Phi(:,supp);
+    x(supp) = pinv(subPhi) * y;
+    % Synthesis process
+    v = Phi*x;
+    % Residual
+    r = y - v;
+    % Update
+    k = k + 1;
+end
 end
 %% 
 % © Copyright, Shogo MURAMATSU, All rights reserved.

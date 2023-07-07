@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Image denoising
 % Transform of noise
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -35,7 +35,10 @@ nlevels = 3;
 %% 画像の読込
 % (Read image)
 
-u = rgb2gray(im2double(imread('./data/kodim23.png')));
+u = im2double(imread('./data/kodim23.png'));
+if size(u,3) == 3
+    u = rgb2gray(u);
+end
 %% 分析処理
 % (Analysis process)
 % 
@@ -108,16 +111,16 @@ vc = aligncoefs(coefs,scales);
 % 画像表示
 % (Image show)
 
-figure(1)
+figure
 imshow(u);
 title('Original image u')
-figure(2)
+figure
 imshow(abs(uc))
 title('Transform Coefs. of u')
-figure(3) 
+figure
 imshow(v)
 title(sprintf('Noisy image v：PSNR = %5.2f [dB]',psnr(u,v)))
-figure(4)
+figure
 imshow(abs(vc))
 title('Transform Coefs. of v')
 % 関数定義

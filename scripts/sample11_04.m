@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Image denoising
 % Gradient descent
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -50,7 +50,7 @@ f = @(x0,x1) 0.5*(v-(D(1)*x0+D(2)*x1)).^2 + lambda*0.5*(x0.^2+x1.^2);
 s0 = linspace(-1,1,21);
 s1 = linspace(-1,1,21);
 % Surfc plot of cost function f()
-figure(1)
+figure
 [S0,S1] = ndgrid(s0,s1);
 J = f(S0,S1);
 hf = surfc(s0,s1,J);
@@ -118,14 +118,17 @@ hold off
 isaprxleft = true;
 lambda = 10^1
 gamma = 10^-1
-sgmuint8 = 20; 
+sgmuint8 = 30; 
 sgm = sgmuint8/255;
 nlevels = 3; 
 niters = 80;
 %% 画像の読込
 % (Read image)
 
-u = rgb2gray(im2double(imread('./data/kodim23.png')));
+u = im2double(imread('./data/kodim23.png'));
+if size(u,3) == 3
+    u = rgb2gray(u);
+end
 %% 観測画像
 % (Observation image)
 %% 
@@ -194,13 +197,13 @@ r = syndic(sc);
 % 画像表示
 % (Image show)
 
-figure(1)
+figure
 imshow(u);
 title('Original image u')
-figure(2)
+figure
 imshow(v)
 title(sprintf('Noisy image v：PSNR = %5.2f [dB]',psnr(u,v)))
-figure(3)
+figure
 imshow(r)
 title(sprintf('Denoised image r：PSNR = %5.2f [dB]',psnr(u,r)))
 %% 

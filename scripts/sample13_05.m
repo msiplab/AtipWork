@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Dictionary learning
 % Image restoration with learned dictionary
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -26,9 +26,12 @@ msip.download_img
 % (Original image)
 
 % Original image
-%u = im2single(rgb2gray(imread('./data/baboon.png')));
-u = im2single(imread('./data/barbara.png'));
-figure(1)
+file_uorg = './data/kodim23.png';
+u = im2single(imread(file_uorg));
+if size(u,3) == 3
+    u = rgb2gray(u);
+end
+figure
 imshow(u)
 title('Original u')
 % 観測画像
@@ -57,7 +60,7 @@ beta = max(abs(H(:)).^2); % λmax(PP.')
 % Observation
 sigmaw = 5/255;
 v = imnoise(linproc(u),'gaussian',0,sigmaw^2);
-figure(2)
+figure
 imshow(v)
 title('Observation v');
 %% 双三次補間
@@ -69,7 +72,7 @@ title('Observation v');
 
 % Bicubic
 y = imresize(v,2,'bicubic');
-figure(3)
+figure
 imshow(y)
 title(['Bicubic y: PSNR = ' num2str(psnr(u,y)) ' [dB]']);
 %% 単一画像超解像
@@ -119,11 +122,11 @@ title(['Bicubic y: PSNR = ' num2str(psnr(u,y)) ' [dB]']);
 % (Loading NSOLT dictionary)
 
 import msip.*
-load ./data/nsoltdictionary.mat
+load ./data/nsoltdictionary_20230705164652136.mat
 analysislgraph = layerGraph(analysisnet);
 synthesislgraph = layerGraph(synthesisnet);
 
-figure(4)
+figure
 subplot(1,2,1)
 plot(analysislgraph)
 title('Analysis NSOLT')
@@ -133,7 +136,7 @@ title('Synthesis NSOLT')
 % 要素画像の表示
 % (Show the atomic images)
 
-figure(5)
+figure
 atomicimshow(synthesisnet,[],2^(nLevels-1))
 title('Atomic images of trained NSOLT')
 %%
@@ -205,7 +208,7 @@ adjproc = @(x) imfilter(upsample2(x,2),h,'corr','circ');
 % Parameter settings
 lambda = 0.001;
 gamma = 2./(beta+1e-2);
-nIters = 20;
+nIters = 100;
 isDcSkip = true;
 %%
 % Initalization
@@ -234,7 +237,7 @@ r = synthesisnet4predict.predict(coefs{1:nLevels+1});
 % 結果の表示
 % (Display the result)
 
-figure(6)
+figure
 imshow(r)
 title(['Restoration r: PSNR = ' num2str(psnr(u,r)) ' [dB]'])
 %%

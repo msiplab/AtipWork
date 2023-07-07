@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Image denoising
 % Prior distribution
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -92,7 +92,7 @@ s = extractcoefs(coefs,scales);
 
 nchs = length(s);
 for ich = 1:nchs
-    figure(ich)
+    figure
     subplot(1,2,1)
     if ich == 1
         imshow(s{ich}*pow2(-nlevels))
@@ -102,6 +102,7 @@ for ich = 1:nchs
     subplot(1,2,2)
     histogram(s{ich}(:))
     axis square
+    drawnow
 end
 % ラプラス分布
 % (Laplace distribution)
@@ -116,10 +117,9 @@ end
 mu = 0;
 sgm2 = 0.001;
 b = sqrt(sgm2/2);
-ifig = nchs + 1;
 % Laplacian distribution
 spdf = @(x) 1/(2*b)*exp(-abs(x-mu)/b);
-figure(ifig)
+figure
 h = fplot(spdf);
 xlabel('s')
 ylabel(['L(s|\mu=0,b=' num2str(b) ')'])
@@ -189,16 +189,13 @@ end
 % 画像表示
 % (Image show)
 
-ifig = ifig + 1;
-figure(ifig)
-imshow(u);
+figure
+imshow(u)
 title('Original image u')
-ifig = ifig + 1;
-figure(ifig) 
+figure
 imshow(v)
 title(sprintf('Noisy image v：PSNR = %5.2f [dB]',psnr(u,v)))
-ifig = ifig + 1;
-figure(ifig) 
+figure
 imshow(r)
 title(sprintf('Denoised image r：PSNR = %5.2f [dB]',psnr(u,r)))
 % ウェーブレット画像ノイズ除去関数

@@ -6,7 +6,7 @@
 % 
 % 村松 正吾 
 % 
-% 動作確認: MATLAB R2020a
+% 動作確認: MATLAB R2023a
 %% Image denoising
 % Proximal gradient
 % 
@@ -14,7 +14,7 @@
 % 
 % Shogo MURAMATSU
 % 
-% Verified: MATLAB R2020a
+% Verified: MATLAB R2023a
 % 準備
 % (Preparation)
 
@@ -48,7 +48,7 @@ s1 = linspace(-1,1,21);
 F = f(S0,S1);
 G = g(S0,S1);
 % Surfc plot of the fidelity
-figure(1)
+figure
 hf = surfc(s0,s1,F);
 hf(1).FaceAlpha = 0.125;
 hf(1).FaceColor = 'green';
@@ -94,7 +94,7 @@ niters = 20;
 % Function setting
 fg = @(s0,s1) 0.5*(v-(D(1)*s0+D(2)*s1)).^2 + lambda*(abs(s0)+abs(s1));
 % Surfc plot of cost function f+g
-figure(2)
+figure
 J = fg(S0,S1);
 hf = surfc(s0,s1,J);
 hf(1).FaceAlpha = 0.25;
@@ -176,7 +176,10 @@ niters = 80;
 %% 画像の読込
 % (Read image)
 
-u = rgb2gray(im2double(imread('./data/kodim23.png')));
+u = im2double(imread('./data/kodim23.png'));
+if size(u,3) == 3
+    u = rgb2gray(u);
+end
 %% 観測画像
 % (Observation image)
 %% 
@@ -236,13 +239,13 @@ r = syndic(sc);
 % 画像表示
 % (Image show)
 
-figure(1)
+figure
 imshow(u);
 title('Original image u')
-figure(2)
+figure
 imshow(v)
 title(sprintf('Noisy image v：PSNR = %5.2f [dB]',psnr(u,v)))
-figure(3)
+figure
 imshow(r)
 title(sprintf('Denoised image r：PSNR = %5.2f [dB]',psnr(u,r)))
 % ウェーブレット画像ノイズ除去関数
