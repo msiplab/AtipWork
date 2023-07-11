@@ -6,11 +6,11 @@
 今回提供するMファイル郡は以下の環境で動作の確認を行いました。
 
 - OS
-  - Windows 10
+  - Windows 11
   - Linux 
 
 - MATLAB
-  - R2020a
+  - R2023a
 
 - ツールボックス
   - Signal Processing Toolbox
