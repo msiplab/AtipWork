@@ -20,7 +20,7 @@ if exist(dstdir,'dir') == 7
             img = imread(...
                 ...sprintf('http://homepages.cae.wisc.edu/~ece533/images/%s',...
                 ...fname));
-                "http://www.r0k.us/graphics/kodak/kodak/"+fname);                
+                "https://www.r0k.us/graphics/kodak/kodak/"+fname);                
             imwrite(img,fullfile(dstdir,fname))
             if isVerbose
                 fprintf('Downloaded and saved %s in %s\n',fname,dstdir);
