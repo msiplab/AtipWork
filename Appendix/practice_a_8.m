@@ -47,7 +47,7 @@ while ( err > eps )
     v = D*ypre;
     e = D.'*(v-x);
     y = softshrink(ypre-e,lambda);
-    err = norm(y(:)-ypre(:))^2/norm(y(:));
+    err = norm(y(:)-ypre(:))^2/norm(y(:))^2;
 end
 
 %% ”ñüŒ`‹ß—
