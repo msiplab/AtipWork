@@ -72,7 +72,7 @@ v = imnoise(measureproc(u),'gaussian',0,sgmw^2);
 % $$\mathbf{P}^{T} \mathbf{P}\stackrel{\mathrm{DFT}}{\longleftrightarrow} \overline{P[\mathbf{k}]}P[\mathbf{k}]=|P[\mathbf{k}]|^{2}$$
 
 % Determine the DFT points
-nPoints = 2.^nextpow2(size(u))
+nPoints = size(u); % 2.^nextpow2(size(u))
 % Ratio of variances between noise w and signal u (ideal estimation)
 nsr = sgmw^2/sgmu^2;
 % DFT(OTF) of PSF, where the phase response is adjusted to zero  
