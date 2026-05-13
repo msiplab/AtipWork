@@ -3,7 +3,7 @@ function rec = ezwaverec2(valueC,valueS,F)
 %
 % Requirements: MATLAB R2011b
 %
-% Copyright (c) 2020, Shogo MURAMATSU
+% Copyright (c) 2020-2026, Shogo MURAMATSU
 %
 % All rights reserved.
 %

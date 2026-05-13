@@ -3,7 +3,7 @@ function [valueC,valueS] = ezwavedec2(src,nlevels,H)
 %
 % Requirements: MATLAB R2011b
 %
-% Copyright (c) 2020, Shogo MURAMATSU
+% Copyright (c) 2020-2026, Shogo MURAMATSU
 %
 % All rights reserved.
 %
@@ -34,8 +34,8 @@ for ilv = 1:nlevels
     c01 = downsample2x2(imfilter(c00,h1,'conv','circ'));
     c10 = downsample2x2(imfilter(c00,h2,'conv','circ'));
     c11 = downsample2x2(imfilter(c00,h3,'conv','circ'));
-    outcell{3*(nlevels-ilv)+2} = c10(:).';
-    outcell{3*(nlevels-ilv)+3} = c01(:).';
+    outcell{3*(nlevels-ilv)+2} = c01(:).';
+    outcell{3*(nlevels-ilv)+3} = c10(:).';
     outcell{3*(nlevels-ilv)+4} = c11(:).';
     c00 = downsample2x2(imfilter(c00,h0,'conv','circ'));
     valueS(end-ilv,:) = size(c00);
