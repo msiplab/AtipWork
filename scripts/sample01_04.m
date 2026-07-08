@@ -1,39 +1,32 @@
-%% Sample 1-4
-%% 画像データの表現
-% 配列の生成
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Digital image representation
-% Creation of arrays
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a 
-% ワークスペースのクリア
-% (Clear workspace)
-
+%[text] # Sample 1-4
+%[text] ## 画像データの表現
+%[text] 配列の生成
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Digital image representation
+%[text] Creation of arrays
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a 
+%%
+%[text] ### ワークスペースのクリア
+%[text]  (Clear workspace)
 clear
-% 全ての要素が零の配列の生成
-% (Create array of all zeros)
-
+%%
+%[text] ### 全ての要素が零の配列の生成
+%[text] (Create array of all zeros)
 X = zeros(2,3) % zeros array of size 2x3
-% 全ての要素が１の配列の生成
-% (Create array of all ones)
-
+%[text] ### 全ての要素が１の配列の生成
+%[text]  (Create array of all ones)
 Y = ones(3,4) % ones array of size 3x4
-% ランダム配列の生成
-% (Create array of random numbers)
-
+%%
+%[text] ### ランダム配列の生成
+%[text]  (Create array of random numbers)
 Z = rand(2,3,4) % random array of size 2x3x4
-% 配列のサイズ
-% (Array size)
-
+%%
+%[text] ### 配列のサイズ
+%[text]  (Array size)
 disp('Size of X')
 size(X)
 
@@ -63,9 +56,15 @@ class(I)
 S = zeros(2,3,'single');
 disp('Type of S')
 class(S)
-% ワークスペース内の変数のリスト
-% (List variables in workspace)
-
+%%
+%[text] ### ワークスペース内の変数のリスト
+%[text]  (List variables in workspace)
 whos
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

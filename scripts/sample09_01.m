@@ -1,35 +1,27 @@
-%% Sample 9-1
-%% 離散ウェーブレット変換
-% ブロック変換のフィルタバンク実装
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Discrete wavelet transform
-% Filter bank implementation of block transform
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 9-1
+%[text] ## 離散ウェーブレット変換
+%[text] ブロック変換のフィルタバンク実装
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Discrete wavelet transform
+%[text] Filter bank implementation of block transform
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-%% 入力信号の生成
-% (Generation of input)
-
+%%
+%[text] ## 入力信号の生成
+%[text] (Generation of input)
 % Input signal
 u = [ 0 3 1 3 1 5 3 0 ]; % Set to even length
-% 並列フィルタバンク実装
-% (Parallel filter bank implementation)
-% 
-% 分析フィルタバンクをデシメータで、合成フィルタバンクをインタポレータで実装 (Analysis filter banks are implemented 
-% with decimetors and synthesis filter banks are implemented with interpolators.)
-
+%%
+%[text] ### 並列フィルタバンク実装
+%[text] (Parallel filter bank implementation)
+%[text] 分析フィルタバンクをデシメータで、合成フィルタバンクをインタポレータで実装 (Analysis filter banks are implemented with decimetors and synthesis filter banks are implemented with interpolators.)
 % # of channels
 nChs = 2;
 
@@ -49,9 +41,9 @@ s1 = downsample(conv(h1,u),nChs);
 v0 = conv(f0,upsample(s0,nChs));
 v1 = conv(f1,upsample(s1,nChs));
 v = v0 + v1;
-%% 信号表示
-% (Signal display)
-
+%%
+%[text] ## 信号表示
+%[text] (Signal display)
 figure(1)
 % Input
 subplot(3,2,[1,2])
@@ -84,9 +76,9 @@ title('Outut v[n]')
 xlabel('n')
 ax = gca;
 ax.XLim =[ 0 length(v)];
-% インパルス応答（基底ベクトル）
-% (Impluse responses of synthesis filters; basis vectors)
-
+%%
+%[text] ### インパルス応答（基底ベクトル）
+%[text] (Impluse responses of synthesis filters; basis vectors)
 figure(2)
 % Low-pass filter
 subplot(1,2,1)
@@ -99,9 +91,9 @@ subplot(1,2,2)
 impz(f1)
 ax = gca;
 ax.YLim =[ min([f0(:);f1(:)]) max([f0(:);f1(:)]) ];
-% 周波数応答
-% (Frequency responses)
-
+%%
+%[text] ### 周波数応答
+%[text] (Frequency responses)
 figure(3)
 fftPoints = 512;
 F = zeros(fftPoints,nChs);
@@ -114,15 +106,12 @@ axis([0 1 0 ceil(sqrt(nChs))]) %-70 10])
 xlabel('Normalized Frequency (x\pi rad/sample)')
 ylabel('Magnitude') % (dB)')
 grid on
-% ポリフェーズ行列実装
-% (Polyphase matrix implemenation)
-% 
-% フィルタバンクをポリフェースフィルタに分解して、ポリフェーズ行列として実装
-% 
-% $$\mathbf{E}(z)=\left(\begin{array}{cc}  h_0[0] &h_0[1]\\ h_1[0]& h_1[1]\end{array}\right)$$
-% 
-% $$\mathbf{R}(z)=\left(\begin{array}{cc}  f_0[1] &f_1[1]\\ f_0[0]& f_1[0]\end{array}\right)$$
-
+%%
+%[text] ### ポリフェーズ行列実装
+%[text] (Polyphase matrix implemenation)
+%[text] フィルタバンクをポリフェースフィルタに分解して、ポリフェーズ行列として実装
+%[text]  $\\mathbf{E}(z)=\\left(\\begin{array}{cc}  h\_0\[0\] &h\_0\[1\]\\\\ h\_1\[0\]& h\_1\[1\]\\end{array}\\right)$
+%[text]  $\\mathbf{R}(z)=\\left(\\begin{array}{cc}  f\_0\[1\] &f\_1\[1\]\\\\ f\_0\[0\]& f\_1\[0\]\\end{array}\\right)$
 % Type-I polyphase filters of analyzer
 e00 = h0(1);
 e01 = h0(2);
@@ -135,9 +124,7 @@ r10 = f0(1);
 r01 = f1(2);
 r11 = f1(1);
 
-%% 
-% 分析合成処理 (Analysis and synthesis process)
-
+%[text] 分析合成処理 (Analysis and synthesis process)
 % Input Signal
 u = [zeros(1,nChs-1) u 0]; % Adjust delay for downsampling
 disp(u)
@@ -164,5 +151,11 @@ disp(y)
 % Parallel/Serial conversion
 v = upsample(y(1,:),nChs,1) + upsample(y(2,:),nChs,0);
 disp(v)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

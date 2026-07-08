@@ -1,76 +1,56 @@
-%% Sample 12-1
-%% 画像復元
-% ウィーナーフィルタ
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Image restoration
-% Wiener filter
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 12-1
+%[text] ## 画像復元
+%[text] ウィーナーフィルタ
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Image restoration
+%[text] Wiener filter
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 clear 
 close all
 import msip.download_img
 msip.download_img
-% パラメータ設定
-% (Parameter settings)
-%% 
-% * sgm: ノイズ標準偏差 $\sigma_w$ (Standard deviation of noise)
-
-sgmuint8 = 10; 
+%%
+%[text] ### パラメータ設定
+%[text] (Parameter settings)
+%[text] - sgm: ノイズ標準偏差 $\\sigma\_w$ (Standard deviation of noise) \
+sgmuint8 = 10;  %[control:slider:31f6]{"position":[12,14]}
 sgmw = sgmuint8/255;
-%% 画像の読込
-% (Read image)
-
+%%
+%[text] ## 画像の読込
+%[text] (Read image)
 u = rgb2gray(im2double(imread('./data/kodim23.png')));
 sgmu = std(u(:));
 meanu = mean(u(:));
-%% 観測画像
-% (Observation image)
-% 
-% カメラの動きによって生じるボケ画像を生成．(Generate a blurred image that might result from camera 
-% motion. )
-%% 
-% * $\mathbf{v}=\mathbf{Pu}+\mathbf{w}$
-% * $\mathbf{w}\sim\mathrm{Norm}\left(\mathbf{w}|\mathbf{\mu}_w=\mathbf{0},\sigma_w^2\mathbf{I}\right)$
-
+%%
+%[text] ## 観測画像
+%[text] (Observation image)
+%[text] カメラの動きによって生じるボケ画像を生成．(Generate a blurred image that might result from camera motion. )
+%[text] - $\\mathbf{v}=\\mathbf{Pu}+\\mathbf{w}$
+%[text] - $\\mathbf{w}\\sim\\mathrm{Norm}\\left(\\mathbf{w}|\\mathbf{\\mu}\_w=\\mathbf{0},\\sigma\_w^2\\mathbf{I}\\right)$ \
 % Definition of measurment process
 psf = fspecial('motion',31,21);
 measureproc = @(x) imfilter(x,psf,'conv','circular');
 % Simulation of AWGN
 v = imnoise(measureproc(u),'gaussian',0,sgmw^2);
-% ウィーナーフィルタ
-% (Wiener filter)
-% 
-% 画像 $\mathbf{u}$に対する仮定 (Assumptions on the original image $\mathbf{u}$)
-%% 
-% * $\mathbf{u}\sim\mathrm{Norm}\left(\mathbf{u}|\mathbf{\mu}_u=\mathbf{0},\sigma_u^2\mathbf{I}\right)$
-% 問題設定 (Problem settings):
-% $$\widehat{\mathbf{u}}=\arg \min _{\mathbf{u}} \frac{1}{2\sigma_{w}^{2}}\|\mathbf{v}-\mathbf{P} 
-% \mathbf{u}\|_{2}^{2}+\frac{1}{2\sigma_{u}^{2}}\left\| \mathbf{u}\right\|_{2}^{2}$$
-% 解 (Solution):
-% $$\widehat{\mathbf{u}}=\left(\mathbf{P}^{T} \mathbf{P}+  \frac{\sigma_{w}^{2}}{ 
-% \sigma_{u}^{2}}\mathbf{I}\right)^{-1} \mathbf{P}^{T} \mathbf{v}\stackrel{\mathrm{DFT}}{\longleftrightarrow} 
-% \widehat{\mathrm{U}}[\mathbf{k}]=\frac{\overline{P[\mathbf{k}]}}{|P[\mathbf{k}]|^{2}+\sigma_{w}^{2}/\sigma_{u}^{2}} 
-% \mathrm{V}[\mathbf{k}]$$
-% 
-% ただし，循環畳み込み行列 $\mathbf{P}$ に対して，(where, for the circular convolution matrix 
-% $\mathbf{P}$,)
-% 
-% $$\mathbf{P}^{T} \stackrel{\mathrm{DFT}}{\longleftrightarrow}\overline{P[\mathbf{k}]}$$
-% 
-% $$\mathbf{P}^{T} \mathbf{P}\stackrel{\mathrm{DFT}}{\longleftrightarrow} \overline{P[\mathbf{k}]}P[\mathbf{k}]=|P[\mathbf{k}]|^{2}$$
-
+%%
+%[text] ### ウィーナーフィルタ
+%[text] (Wiener filter)
+%[text] 画像 $\\mathbf{u}$に対する仮定 (Assumptions on the original image $\\mathbf{u}$)
+%[text] - $\\mathbf{u}\\sim\\mathrm{Norm}\\left(\\mathbf{u}|\\mathbf{\\mu}\_u=\\mathbf{0},\\sigma\_u^2\\mathbf{I}\\right)$ \
+%[text] #### 問題設定 (Problem settings):
+%[text]  $\\widehat{\\mathbf{u}}=\\arg \\min \_{\\mathbf{u}} \\frac{1}{2\\sigma\_{w}^{2}}\\|\\mathbf{v}-\\mathbf{P} \\mathbf{u}\\|\_{2}^{2}+\\frac{1}{2\\sigma\_{u}^{2}}\\left\\| \\mathbf{u}\\right\\|\_{2}^{2}$
+%[text] #### 解 (Solution):
+%[text]  $\\widehat{\\mathbf{u}}=\\left(\\mathbf{P}^{T} \\mathbf{P}+  \\frac{\\sigma\_{w}^{2}}{ \\sigma\_{u}^{2}}\\mathbf{I}\\right)^{-1} \\mathbf{P}^{T} \\mathbf{v}\\stackrel{\\mathrm{DFT}}{\\longleftrightarrow} \\widehat{\\mathrm{U}}\[\\mathbf{k}\]=\\frac{\\overline{P\[\\mathbf{k}\]}}{|P\[\\mathbf{k}\]|^{2}+\\sigma\_{w}^{2}/\\sigma\_{u}^{2}} \\mathrm{V}\[\\mathbf{k}\]$
+%[text] ただし，循環畳み込み行列 $\\mathbf{P}$ に対して，(where, for the circular convolution matrix $\\mathbf{P}$,)
+%[text]  $\\mathbf{P}^{T} \\stackrel{\\mathrm{DFT}}{\\longleftrightarrow}\\overline{P\[\\mathbf{k}\]}$
+%[text]  $\\mathbf{P}^{T} \\mathbf{P}\\stackrel{\\mathrm{DFT}}{\\longleftrightarrow} \\overline{P\[\\mathbf{k}\]}P\[\\mathbf{k}\]=|P\[\\mathbf{k}\]|^{2}$
 % Determine the DFT points
 nPoints = size(u); % 2.^nextpow2(size(u))
 % Ratio of variances between noise w and signal u (ideal estimation)
@@ -84,20 +64,16 @@ R = conj(P)./(abs(P).^2+nsr);
 % IDFT of filtered spectrum
 y0 = ifftn(R.*V);
 y0 = y0(1:size(u,1),1:size(u,2));
-% 逆フィルタ
-% (Inverse filter)
-% 
-% $$\check{\mathbf{u}}=\left(\mathbf{P}^{T} \mathbf{P}\right)^{-1} \mathbf{P}^{T} 
-% \mathbf{v}= \mathbf{P}^{-1} \mathbf{v}\stackrel{\mathrm{DFT}}{\longleftrightarrow} 
-% \check{\mathrm{U}}[\mathbf{k}]=\frac{\overline{P[\mathbf{k}]}}{|P[\mathbf{k}]|^{2}} 
-% \mathrm{V}[\mathbf{k}]=\frac{1}{P[\mathbf{k}]} \mathrm{V}[\mathbf{k}]$$
-
+%%
+%[text] ### 逆フィルタ
+%[text] (Inverse filter)
+%[text]  $\\check{\\mathbf{u}}=\\left(\\mathbf{P}^{T} \\mathbf{P}\\right)^{-1} \\mathbf{P}^{T} \\mathbf{v}\n= \\mathbf{P}^{-1} \\mathbf{v}\\stackrel{\\mathrm{DFT}}{\\longleftrightarrow} \\check{\\mathrm{U}}\[\\mathbf{k}\]=\\frac{\\overline{P\[\\mathbf{k}\]}}{|P\[\\mathbf{k}\]|^{2}} \\mathrm{V}\[\\mathbf{k}\]=\\frac{1}{P\[\\mathbf{k}\]} \\mathrm{V}\[\\mathbf{k}\]$
 % IDFT of filtered spectrum
 y1 = ifftn(V./P);
 y1 = y1(1:size(u,1),1:size(u,2));
-% 画像表示
-% (Image show)
-
+%%
+%[text] ### 画像表示
+%[text] (Image show)
 figure(1)
 imshow(u);
 title('Original image u')
@@ -110,14 +86,22 @@ title(sprintf('Restored image y0 w/ Wiener filter：PSNR = %5.2f [dB]',psnr(u,y0
 figure(4)
 imshow(y1)
 title(sprintf('Restored image y1 w/ inverse filter：PSNR = %5.2f [dB]',psnr(u,y1)))
-% ウィーナーフィルタ関数
-% (Wiener filter function)
-%% 
-% * DECONVWNR
-
+%%
+%[text] ### ウィーナーフィルタ関数
+%[text] (Wiener filter function)
+%[text] - DECONVWNR \
 y2 = deconvwnr(v,psf,nsr);
 figure(5)
 imshow(y2)
 title(sprintf('Restored image y2 w/ DECONVWNR：PSNR = %5.2f [dB]',psnr(u,y2)))
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:31f6]
+%   data: {"defaultValue":10,"label":"スライダー","max":50,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":10}
+%---

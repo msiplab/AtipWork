@@ -1,35 +1,27 @@
-%% Sample 10-1
-%% 冗長変換
-% 非間引きハールDWT
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Redundant transforms
-% Undecimated Haar DWT
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 10-1
+%[text] ## 冗長変換
+%[text] 非間引きハールDWT
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Redundant transforms
+%[text] Undecimated Haar DWT
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-%% 入力信号の生成
-% (Generation of input)
-
+%%
+%[text] ## 入力信号の生成
+%[text] (Generation of input)
 % Input signal
 u = rand(16,1); % Set to even length
-% 並列フィルタバンク実装
-% (Parallel filter bank implementation)
-% 
-% 分析フィルタバンクをデシメータで、合成フィルタバンクをインタポレータで実装 (Analysis filter banks are implemented 
-% with decimetors and synthesis filter banks are implemented with interpolators.)
-
+%%
+%[text] ### 並列フィルタバンク実装
+%[text] (Parallel filter bank implementation)
+%[text] 分析フィルタバンクをデシメータで、合成フィルタバンクをインタポレータで実装 (Analysis filter banks are implemented with decimetors and synthesis filter banks are implemented with interpolators.)
 % # of channels
 nChs = 2;
 
@@ -49,9 +41,9 @@ s1 = conv(h1,u);
 v0 = conv(f0,s0);
 v1 = conv(f1,s1);
 v = v0 + v1;
-%% 信号表示
-% (Signal display)
-
+%%
+%[text] ## 信号表示
+%[text] (Signal display)
 figure(1)
 % Input
 subplot(3,2,1)
@@ -90,9 +82,9 @@ ax.XLim =[ 0 length(v)];
 % MSE 評価
 mymse = @(x,y) mean((x(:)-y(:)).^2);
 disp(['MSE = ', num2str(mymse(u, v(2:end-1)))]);
-% インパルス応答（基底ベクトル）
-% (Impluse responses of synthesis filters; basis vectors)
-
+%%
+%[text] ### インパルス応答（基底ベクトル）
+%[text] (Impluse responses of synthesis filters; basis vectors)
 figure(2)
 % Low-pass filter
 subplot(1,2,1)
@@ -105,9 +97,9 @@ subplot(1,2,2)
 impz(f1)
 ax = gca;
 ax.YLim =[ min([f0(:);f1(:)]) max([f0(:);f1(:)]) ];
-% 周波数応答
-% (Frequency responses)
-
+%%
+%[text] ### 周波数応答
+%[text] (Frequency responses)
 figure(3)
 fftPoints = 512;
 F = zeros(fftPoints,nChs);
@@ -120,27 +112,18 @@ axis([0 1 0 1]) %-70 10])
 xlabel('Normalized Frequency (x\pi rad/sample)')
 ylabel('Magnitude') % (dB)')
 grid on
-% 恒等変換
-% (Noble identity)
-% 
-% 以下の性質が成り立つ。（The following properties hold.)
-%% 
-% * $\rightarrow [H(z^M)] \rightarrow [\downarrow M] \rightarrow \ \Longleftrightarrow\ 
-% \rightarrow [\downarrow M] \rightarrow  [H(z)] \rightarrow$ 
-% * $ \rightarrow [\uparrow M] \rightarrow  [F(z^M)] \rightarrow \ \Longleftrightarrow 
-% \ \rightarrow [F(z)] \rightarrow [\uparrow M] \rightarrow$ 
-%% 
-% なお， $H(z^M)$ および $F(z^M)$ は，$H(z)$ および $F(z)$ のインパルス応答 $\{h[n]\}_n$ と  $\{f[n]\}_n$をそれぞれ補間率 
-% $M$ で零値挿入したインパルス応答をもつ。(where $H(z^M)$ and $F(z^M)$ have the impulse responses 
-% of upsampled ones of$H(z)$ and $F(z)$ with factor $M$, respectively.)
-%% 
-% * $H(z^M)=\sum_{m=-\infty}^{\infty}h[m]z^{-Mm}=\sum_{n=-\infty}^{\infty}h_{\uparrow 
-% M}[n]z^{-n}$
-% * $F(z^M)=\sum_{m=-\infty}^{\infty}f[m]z^{-Mm}=\sum_{n=-\infty}^{\infty}f_{\uparrow 
-% M}[n]z^{-n}$
-% 非間引き Haar DWTの実装
-% (Implementation of undesimated Haar DWT)
-
+%%
+%[text] ### 恒等変換
+%[text] (Noble identity)
+%[text] 以下の性質が成り立つ。（The following properties hold.)
+%[text] - $\\rightarrow \[H(z^M)\] \\rightarrow \[\\downarrow M\] \\rightarrow \\ \\Longleftrightarrow\\ \\rightarrow \[\\downarrow M\] \\rightarrow  \[H(z)\] \\rightarrow$ 
+%[text] - $ \\rightarrow \[\\uparrow M\] \\rightarrow  \[F(z^M)\] \\rightarrow \\ \\Longleftrightarrow \\ \\rightarrow \[F(z)\] \\rightarrow \[\\uparrow M\] \\rightarrow$  \
+%[text] なお， $H(z^M)$ および $F(z^M)$ は，$H(z)$ および $F(z)$ のインパルス応答 $\\{h\[n\]\\}\_n$ と  $\\{f\[n\]\\}\_n$をそれぞれ補間率 $M$ で零値挿入したインパルス応答をもつ。(where $H(z^M)$ and $F(z^M)$ have the impulse responses of upsampled ones of$H(z)$ and $F(z)$ with factor $M$, respectively.)
+%[text] - $H(z^M)=\\sum\_{m=-\\infty}^{\\infty}h\[m\]z^{-Mm}=\\sum\_{n=-\\infty}^{\\infty}h\_{\\uparrow M}\[n\]z^{-n}$
+%[text] - $F(z^M)=\\sum\_{m=-\\infty}^{\\infty}f\[m\]z^{-Mm}=\\sum\_{n=-\\infty}^{\\infty}f\_{\\uparrow M}\[n\]z^{-n}$ \
+%%
+%[text] ### 非間引き Haar DWTの実装
+%[text] (Implementation of undesimated Haar DWT)
 % Period for circular convolution
 period = 32;
 
@@ -174,9 +157,9 @@ v31 = cconv(f1_2,s31,period); % H3
 v21 = cconv(f1_1,s21,period); % H2
 v11 = cconv(f1_0,s11,period); % H1
 v = v30 + v31 + circshift(v21,4) + circshift(v11,6); % Delay in each channel is taken into account
-%% 信号表示
-% (Signal display)
-
+%%
+%[text] ## 信号表示
+%[text] (Signal display)
 figure(4)
 % Input
 subplot(3,4,1)
@@ -223,9 +206,9 @@ ax = gca;
 ax.XLim =[ 0 period ];
 % MSE 評価
 disp(['MSE = ', num2str(mymse([u(:); zeros(length(v)-length(u),1)],circshift(v,-7)))])
-% インパルス応答（局所基底ベクトル）
-% (Impluse responses of synthesis filters; local basis vectors)
-
+%%
+%[text] ### インパルス応答（局所基底ベクトル）
+%[text] (Impluse responses of synthesis filters; local basis vectors)
 % 3-level hierachical synthesis process
 figure(5)
 f = cell(4,1);
@@ -241,9 +224,9 @@ for idx = 1:length(f)
     ax = gca;
     ax.XLim =[0 7];
 end
-% 周波数応答
-% (Frequency responses)
-
+%%
+%[text] ### 周波数応答
+%[text] (Frequency responses)
 figure(6)
 fftPoints = 512;
 F = zeros(fftPoints,4);
@@ -261,5 +244,11 @@ ylabel('Magnitude') % (dB)')
 title('Frequency responses of synthesis filters')
 legend({'F_0','F_1','F_2','F_3'})
 grid on
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

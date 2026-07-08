@@ -1,42 +1,33 @@
-%% Sample 3-3
-%% 平滑化／先鋭化処理
-% 勾配フィルタ 
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Image smoothing/sharpening
-% Gradient filter
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% サンプル画像の準備
-% (Preparation of sample image)
-
+%[text] # Sample 3-3
+%[text] ## 平滑化／先鋭化処理
+%[text] 勾配フィルタ 
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Image smoothing/sharpening
+%[text] Gradient filter
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### サンプル画像の準備
+%[text] (Preparation of sample image)
 close
 % Reading original image
 I = im2double(imread('cameraman.tif'));
 figure(1)
 imshow(I)
 title('Original')
-% フィルタカーネルの選択
-% (Selecting the filter kernel)
-%% 
-% * Sobel
-% * Prewitt
-
-ftype = 'Sobel';
-% 勾配フィルタ
-% (Gradient filter)
-% 
-% $$\nabla x=\left(\begin{array}{c}\frac{\partial x}{\partial p_\mathrm{v}}\\\frac{\partial 
-% x}{\partial p_\mathrm{h}}\end{array}\right)$$
-
+%%
+%[text] ### フィルタカーネルの選択
+%[text] (Selecting the filter kernel)
+%[text] - Sobel
+%[text] - Prewitt \
+ftype = 'Sobel'; %[control:dropdown:66f6]{"position":[9,16]}
+%%
+%[text] ### 勾配フィルタ
+%[text] (Gradient filter)
+%[text]{"align":"center"} $\\nabla x=\\left(\\begin{array}{c}\\frac{\\partial x}{\\partial p\_\\mathrm{v}}\\\\\n\\frac{\\partial x}{\\partial p\_\\mathrm{h}}\n\\end{array}\\right)$
 % Gradient flter
 [Gh,Gv] = imgradientxy(I,ftype);
 
@@ -49,12 +40,10 @@ title([ftype ' horizontal filter'])
 subplot(1,2,2)
 imshow(Gv+.5)
 title([ftype ' vertical filter'])
-% 勾配の可視化
-% (Visualization of gradient)
-% 
-% $$\nabla x=\left(\begin{array}{c}\frac{\partial x}{\partial p_\mathrm{v}}\\\frac{\partial 
-% x}{\partial p_\mathrm{h}}\end{array}\right)$$
-
+%%
+%[text] ### 勾配の可視化
+%[text] (Visualization of gradient)
+%[text]{"align":"center"} $\\nabla x=\\left(\\begin{array}{c}\\frac{\\partial x}{\\partial p\_\\mathrm{v}}\\\\\n\\frac{\\partial x}{\\partial p\_\\mathrm{h}}\n\\end{array}\\right)$
 % Gradient
 figure(3)
 quiver(Gh,Gv)
@@ -62,15 +51,11 @@ title('Gradient')
 axis equal
 axis off
 axis ij
-% 勾配の大きさと方向
-% (Magnitude and direction of gradient)
-% 
-% $$\left|\nabla x\right|=\sqrt{\left(\frac{\partial x}{\partial p_\mathrm{v}}\right)^2+\left(\frac{\partial 
-% x}{\partial p_\mathrm{h}}\right)^2}$$
-% 
-% $$\angle\nabla x=\tan^{-1}\frac{\left(\frac{\partial x}{\partial p_\mathrm{v}}\right)}{\left(\frac{\partial 
-% x}{\partial p_\mathrm{h}}\right)}$$
-
+%%
+%[text] ### 勾配の大きさと方向
+%[text] (Magnitude and direction of gradient)
+%[text]{"align":"center"} $\\left|\\nabla x\\right|=\\sqrt{\\left(\\frac{\\partial x}{\\partial p\_\\mathrm{v}}\\right)^2+\\left(\\frac{\\partial x}{\\partial p\_\\mathrm{h}}\\right)^2}$
+%[text]{"align":"center"} $\\angle\\nabla x=\\tan^{-1}\\frac{\\left(\\frac{\\partial x}{\\partial p\_\\mathrm{v}}\\right)}{\\left(\\frac{\\partial x}{\\partial p\_\\mathrm{h}}\\right)}$
 % Magnitude and direction of the gradient image
 [Gm,Gd] = imgradient(Gh,Gv);
 
@@ -86,9 +71,9 @@ title('Direction of gradient')
 axis equal
 axis off
 axis ij
-% エッジ検出
-% (Edge detection)
-
+%%
+%[text] ### エッジ検出
+%[text] (Edge detection)
 % Edge detection
 E = edge(I,ftype);
 
@@ -96,5 +81,14 @@ E = edge(I,ftype);
 figure(6)
 imshow(E)
 title(['Edge detection with ' ftype])
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:dropdown:66f6]
+%   data: {"defaultValue":"'Sobel'","itemLabels":["Sobel","Prewitt"],"items":["'Sobel'","'Prewitt'"],"label":"ドロップ ダウン","run":"SectionToEnd"}
+%---

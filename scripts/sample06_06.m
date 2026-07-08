@@ -1,43 +1,32 @@
-%% Sample 6-6
-%% 標本化
-% 二変量アップサンプリング
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Sampling
-% Bivariate upsampling
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 6-6
+%[text] ## 標本化
+%[text] 二変量アップサンプリング
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Sampling
+%[text] Bivariate upsampling
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-% 可分離間補間行列の設定
-% (Setting a separable upsampling factor)
-%% 
-% * $\mathbf{M}$: 補間行列 (upsampling factor)
-%% 
-% 可分離の場合 (In the separable case)
-% 
-% $$\mathbf{M}=\left(\begin{array}{cc} M_1 & 0 \\ 0 & M_2 \end{array}\right)\in 
-% \mathbb{Z}^{2\times 2}$$
-
+%%
+%[text] ### 可分離間補間行列の設定
+%[text] (Setting a separable upsampling factor)
+%[text] - $\\mathbf{M}$: 補間行列 (upsampling factor) \
+%[text]  可分離の場合 (In the separable case)
+%[text]  $\\mathbf{M}=\\left(\\begin{array}{cc} M\_1 & 0 \\\\ 0 & M\_2 \\end{array}\\right)\\in \\mathbb{Z}^{2\\times 2}$
 % Vertical upsampling ratio
-verticalUFactor = 2; 
+verticalUFactor = 2;  %[control:slider:42f3]{"position":[19,20]}
 % Horizontal upsampling factor
-horizontalUFactor = 3; 
-% 入力配列の設定
-% (Setting an input array)
-%% 
-% * $\{u[\mathbf{n}]\}_\mathbf{n}$: 入力配列 (input array)
-
+horizontalUFactor = 3;  %[control:slider:7d86]{"position":[21,22]}
+%%
+%[text] ### 入力配列の設定
+%[text] (Setting an input array)
+%[text] - $\\{u\[\\mathbf{n}\]\\}\_\\mathbf{n}$: 入力配列 (input array) \
 % Standard deviation 
 sigma = 2;
 % Array size
@@ -45,9 +34,9 @@ sizeU = 31;
 
 % Generate an array with bivariate Gaussian function
 arrayU = fspecial('gaussian',sizeU,sigma);
-% 入力配列のスペクトル
-% (Spectrum of the input array)
-
+%%
+%[text] ### 入力配列のスペクトル
+%[text] (Spectrum of the input array)
 % Spectrum of u[n]
 figure(1)
 freqz2(arrayU)
@@ -55,16 +44,12 @@ xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('Before upsampling')
 axis ij
-% 出力配列の計算
-% (Computation of the output array)
-%% 
-% * $\{v[\mathbf{m}]\}_\mathbf{m}$: 出力数列 (output sequence)
-%% 
-% $$v[\mathbf{m}] = \left\{\begin{array}{ll}  u[\mathbf{M}^{-1}\mathbf{m}] & 
-% \mathbf{m}\in\mathcal{L}(\mathbf{M}) \\ 0 &\mathrm{otherwise} \\ \end{array}\right.$$
-% 
-% $$\mathcal{L}(\mathbf{M})\colon = \{\mathbf{Mk} | \mathbf{k}\in\mathbb{Z}^2\}$$
-
+%%
+%[text] ### 出力配列の計算
+%[text] (Computation of the output array)
+%[text] - $\\{v\[\\mathbf{m}\]\\}\_\\mathbf{m}$: 出力数列 (output sequence) \
+%[text]  $v\[\\mathbf{m}\] = \\left\\{\\begin{array}{ll}  u\[\\mathbf{M}^{-1}\\mathbf{m}\] & \\mathbf{m}\\in\\mathcal{L}(\\mathbf{M}) \\\\ 0 &\\mathrm{otherwise} \\\\ \\end{array}\\right.$
+%[text]  $\\mathcal{L}(\\mathbf{M})\\colon = \\{\\mathbf{Mk} | \\mathbf{k}\\in\\mathbb{Z}^2\\}$
 % Definition of bivariate separable upsampling
 upsample2 = @(x,n) ...
     shiftdim(upsample(...
@@ -74,30 +59,26 @@ upsample2 = @(x,n) ...
 
 % Bivariate separable upampling
 arrayV = upsample2(arrayU, [verticalUFactor horizontalUFactor]);
-% 出力配列のスペクトル
-% (Spectrum of the output array)
-
+%%
+%[text] ### 出力配列のスペクトル
+%[text] (Spectrum of the output array)
 figure(2)
 freqz2(arrayV)
 xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('After upsampling')
 axis ij
-% 非可分補間行列の設定
-% (Setting a non-separable upsampling factor)
-%% 
-% * $\mathbf{M}$: 補間行列 (upsampling factor)
-%% 
-% 一般的な場合 (In the general case)
-% 
-% $$\mathbf{M}=\left(\begin{array}{cc} \mathbf{m}_{1} & \mathbf{m}_{2} \end{array}\right)\in 
-% \mathbb{Z}^{2\times 2}$$
-
+%%
+%[text] ### 非可分補間行列の設定
+%[text] (Setting a non-separable upsampling factor)
+%[text] - $\\mathbf{M}$: 補間行列 (upsampling factor) \
+%[text]  一般的な場合 (In the general case)
+%[text]  $\\mathbf{M}=\\left(\\begin{array}{cc} \\mathbf{m}\_{1} & \\mathbf{m}\_{2} \\end{array}\\right)\\in \\mathbb{Z}^{2\\times 2}$
 % Upsampling factor
 upMtx = [ 1 1 ; -1 1 ];
-% 入力配列の設定
-% (Setting an input array)
-
+%%
+%[text] ### 入力配列の設定
+%[text] (Setting an input array)
 % Covariance matrix
 covMtx  = [2 0 ; 0 1/2];
 % Array size
@@ -113,9 +94,9 @@ xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('Before upsampling')
 axis ij
-% 出力配列の計算
-% (Computation of the output array)
-
+%%
+%[text] ### 出力配列の計算
+%[text] (Computation of the output array)
 % Bivariate non-separable upsampling
 arrayV = myupsample2(arrayU,upMtx);
 
@@ -126,11 +107,10 @@ xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('After upsampling')
 axis ij
-% プライベート関数の定義
-% (Definitions of private functions)
-% 
-% 二変量ガウス配列の生成関数　(Generation function of bivariate Gaussian arrays)
-
+%%
+%[text] ### プライベート関数の定義
+%[text] (Definitions of private functions)
+%[text] 二変量ガウス配列の生成関数　(Generation function of bivariate Gaussian arrays)
 function x = mygaussian2(sizeX, covMtx)
 % MYGAUSSIAN2
 %
@@ -163,9 +143,7 @@ end
 x = x / sum(sum(x));
 
 end % of mygaussian2
-%% 
-% 二変量非可分アップサンプリング関数 (bivariate non-separable upsampling function)
-
+%[text] 二変量非可分アップサンプリング関数 (bivariate non-separable upsampling function)
 function [outputArray, X, Y] = myupsample2(inputArray,upMtx)
 % MYUPSAMPLE2
 %
@@ -221,5 +199,16 @@ Y = minPoint(1):maxPoint(1);
 X = minPoint(2):maxPoint(2);
 
 end % of myupsample2
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:42f3]
+%   data: {"defaultValue":2,"label":"verticalUFactor","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:7d86]
+%   data: {"defaultValue":3,"label":"horizontalUFactor","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---

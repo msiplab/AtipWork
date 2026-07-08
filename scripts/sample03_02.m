@@ -1,41 +1,31 @@
-%% Sample 3-2
-%% 平滑化／先鋭化処理
-% 移動平均とラプラシアン 
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Image smoothing/sharpening
-% Moving averages and Laplacian
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% サンプル画像の準備
-% (Preparation of sample image)
-
+%[text] # Sample 3-2
+%[text] ## 平滑化／先鋭化処理
+%[text] 移動平均とラプラシアン 
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Image smoothing/sharpening
+%[text] Moving averages and Laplacian
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### サンプル画像の準備
+%[text] (Preparation of sample image)
 close
 % Reading original image
 I = im2double(imread('cameraman.tif'));
 figure(1)
 imshow(I)
 title('Original')
-% 移動平均フィルタ
-% (Moving average filter)
-% 
-% 以下に$3\times 3$サイズの平均値カーネルを示す。
-% 
-% (The averaging kernel of size $3\times 3$is shown below.)
-% 
-% $$\mathbf{f}=\frac{1}{9}\left(\begin{array}{ccc}1 & 1 & 1 \\1 & 1 & 1 \\1 
-% & 1 & 1\end{array}\right)$$
-
+%%
+%[text] ### 移動平均フィルタ
+%[text] (Moving average filter)
+%[text] 以下に$3\\times 3$サイズの平均値カーネルを示す。
+%[text] (The averaging kernel of size $3\\times 3$is shown below.)
+%[text]{"align":"center"} $\\mathbf{f}=\\frac{1}{9}\\left(\\begin{array}{ccc}\n1 & 1 & 1 \\\\\n1 & 1 & 1 \\\\\n1 & 1 & 1\n\\end{array}\\right)$
 % Kernel size setting
-hsize = 3;
+hsize = 3; %[control:slider:0ce7]{"position":[9,10]}
 
 % Generating the filter kernel
 f = fspecial('average',hsize)
@@ -46,25 +36,18 @@ J = imfilter(I,f);
 figure(2)
 imshow(J)
 title(['Moving averaging filer of size ' num2str(hsize) '\times' num2str(hsize)])
-% ガウシアンフィルタ
-% (Gaussian filter)
-% 
-% $3\times 3$ サイズのガウシアンフィルタの定義を以下に示す。
-% 
-% (The definition of a Gaussian filter of size $3\times 3$ is given below.)
-% 
-% $$\mathbf{f}=\frac{1}{\sum_{j=-1}^{1}\sum_{i=-1}^{1}g(i,j)}\left(\begin{array}{ccc}g(-1,-1) 
-% & g(-1,0) & g(-1,1) \\g(0,-1) & g(0,0) & g(0,1) \\g(1,-1) & g(1,0) & g(1,1)\end{array}\right),$$
-% 
-% ただし，$\sigma$ を標準偏差として
-% 
-% (where let $\sigma$ be a standard deviation and )
-% 
-% $$g(p_1,p_2)=\exp\left(-\frac{p_1^2+p_2^2}{2\sigma^2}\right).$$
-
+%%
+%[text] ### ガウシアンフィルタ
+%[text] (Gaussian filter)
+%[text] $3\\times 3$ サイズのガウシアンフィルタの定義を以下に示す。
+%[text] (The definition of a Gaussian filter of size $3\\times 3$ is given below.)
+%[text]{"align":"center"} $\\mathbf{f}=\\frac{1}{\\sum\_{j=-1}^{1}\\sum\_{i=-1}^{1}g(i,j)}\\left(\\begin{array}{ccc}\ng(-1,-1) & g(-1,0) & g(-1,1) \\\\\ng(0,-1) & g(0,0) & g(0,1) \\\\\ng(1,-1) & g(1,0) & g(1,1)\n\\end{array}\\right),$
+%[text] ただし，$\\sigma$ を標準偏差として
+%[text] (where let $\\sigma$ be a standard deviation and )
+%[text]{"align":"center"} $g(p\_1,p\_2)=\\exp\\left(-\\frac{p\_1^2+p\_2^2}{2\\sigma^2}\\right).$
 % Setting of kernel size and standard deviation
-hsize = 3;
-sigma = 0.5;
+hsize = 3; %[control:slider:9a8c]{"position":[9,10]}
+sigma = 0.5; %[control:slider:2967]{"position":[9,12]}
 
 % Generating the filter kernel
 f = fspecial('gaussian',hsize,sigma)
@@ -95,17 +78,14 @@ hsize = 2*ceil(2*sigma)+1;
 figure(5)
 imshow(K)
 title(['Gaussian filer (IMGAUSSFILT) of size ' num2str(hsize) '\times' num2str(hsize) ', where \sigma = ' num2str(sigma)])
-% ラプラシアンフィルタ
-% (Laplacian filter)
-% 
-% 以下に4近傍ラプラシアンカーネルを示す。
-% 
-% (The four neighborhood Laplacian kernel is  shown below.)
-% 
-% $$\mathbf{f}=\left(\begin{array}{ccc}0 & 1 & 0 \\1 & -4 & 1 \\0 & 1 & 0\end{array}\right)$$
-
+%%
+%[text] ### ラプラシアンフィルタ
+%[text] (Laplacian filter)
+%[text] 以下に4近傍ラプラシアンカーネルを示す。
+%[text] (The four neighborhood Laplacian kernel is  shown below.)
+%[text]{"align":"center"} $\\mathbf{f}=\\left(\\begin{array}{ccc}\n0 & 1 & 0 \\\\\n1 & -4 & 1 \\\\\n0 & 1 & 0\n\\end{array}\\right)$
 % Shape parameter setting
-alpha = 0;
+alpha = 0; %[control:slider:3978]{"position":[9,10]}
 
 % Generating the filter kernel
 f = fspecial('laplacian',alpha)
@@ -116,17 +96,14 @@ J = imfilter(I,f);
 figure(6)
 imshow(J+.5)
 title(['Laplacian filter, where \alpha = ' num2str(alpha)])
-% アンシャープマスクフィルタ
-% (Unsharp mask filter)
-% 
-% 以下に4近傍ラプラシアンカーネルを示す。
-% 
-% (The four neighborhood Laplacian kernel is  shown below.)
-% 
-% $$\mathbf{f}=\left(\begin{array}{ccc}0 & -1 & 0 \\-1 & 5 & -1 \\0 & -1 & 0\end{array}\right)$$
-
+%%
+%[text] ### アンシャープマスクフィルタ
+%[text] (Unsharp mask filter)
+%[text] 以下に4近傍ラプラシアンカーネルを示す。
+%[text] (The four neighborhood Laplacian kernel is  shown below.)
+%[text]{"align":"center"} $\\mathbf{f}=\\left(\\begin{array}{ccc}\n0 & -1 & 0 \\\\\n-1 & 5 & -1 \\\\\n0 & -1 & 0\n\\end{array}\\right)$
 % Shape parameter setting
-alpha = 0;
+alpha = 0; %[control:slider:5fe8]{"position":[9,10]}
 
 % Generating the filter kernel
 f = fspecial('unsharp',alpha)
@@ -137,15 +114,12 @@ J = imfilter(I,f);
 figure(7)
 imshow(J)
 title(['Unsharp mask filter, where \alpha = ' num2str(alpha)])
-% ソーベルフィルタ
-% (Sobel filter)
-% 
-% ソーベル水平フィルタカーネル
-% 
-% (Sobel horizontal filter kernel)
-% 
-% $$\mathbf{f}=\left(\begin{array}{ccc}-1 & 0 & 1 \\-2 & 0 & 2 \\-1 & 0 & 1\end{array}\right)$$
-
+%%
+%[text] ### ソーベルフィルタ
+%[text] (Sobel filter)
+%[text] ソーベル水平フィルタカーネル
+%[text] (Sobel horizontal filter kernel)
+%[text]{"align":"center"} $\\mathbf{f}=\\left(\\begin{array}{ccc}\n-1 & 0 & 1 \\\\\n-2 & 0 & 2 \\\\\n-1 & 0 & 1\n\\end{array}\\right)$
 % Generating the filter kernel
 f = fspecial('sobel');
 f = rot90(f,-1)
@@ -156,13 +130,9 @@ H = imfilter(I,f);
 figure(8)
 imshow(H+.5)
 title('Sobel horizontal filter')
-%% 
-% ソーベル水平フィルタカーネル
-% 
-% (Sobel vertical filter kernel)
-% 
-% $$\mathbf{f}=\left(\begin{array}{ccc}-1 & -2 & -1 \\0 & 0 & 0 \\1 & 2 & 1\end{array}\right)$$
-
+%[text] ソーベル水平フィルタカーネル
+%[text] (Sobel vertical filter kernel)
+%[text]{"align":"center"} $\\mathbf{f}=\\left(\\begin{array}{ccc}\n\n-1 & -2 & -1 \\\\\n0 & 0 & 0 \\\\\n1 & 2 & 1\n\\end{array}\\right)$
 % Generating the filter kernel
 f = fspecial('sobel');
 f = flipud(f)
@@ -173,5 +143,26 @@ V = imfilter(I,f);
 figure(9)
 imshow(V+.5)
 title('Sobel vertical filter')
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:0ce7]
+%   data: {"defaultValue":3,"label":"hsize","max":16,"min":1,"run":"Section","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:9a8c]
+%   data: {"defaultValue":3,"label":"hsize","max":16,"min":1,"run":"Section","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:2967]
+%   data: {"defaultValue":0.5,"label":"sigma","max":16,"min":0.1,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:3978]
+%   data: {"defaultValue":0,"label":"alpha","max":1,"min":0,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:5fe8]
+%   data: {"defaultValue":0,"label":"alpha","max":1,"min":0,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---

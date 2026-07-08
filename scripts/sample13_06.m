@@ -1,35 +1,28 @@
-%% Sample 13-6
-%% 辞書学習
-% 比較実験
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Dictionary learning
-% Comparable experiments 
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-
+%[text] # Sample 13-6
+%[text] ## 辞書学習
+%[text] 比較実験
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Dictionary learning
+%[text] Comparable experiments 
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
 clear 
 close all
 
 nsoltDic = "nsoltdictionary_20230621232700260"; % Set "" if you train new dictionary.
 
-isCodegen = false; % コード生成
+isCodegen = false; % コード生成 %[control:checkbox:038e]{"position":[13,18]}
 msip.saivdr_setup(isCodegen)
-% パラメータ設定
-%% 
-% * ブロックサイズ 
-% * 冗長度
-% * スパース度
-
+%%
+%[text] ### パラメータ設定
+%[text] - ブロックサイズ 
+%[text] - 冗長度
+%[text] - スパース度 \
 % Block size
 szBlk = [ 8 8 ];
 
@@ -38,10 +31,9 @@ redundancyRatio = 7/3;
 
 % Sparsity ratio 
 sparsityRatio = 3/64;
-%% 画像の読込
-%% 
-% * $\mathbf{y}\in\mathbb{R}^{N}$
-
+%%
+%[text] ## 画像の読込
+%[text] - $\\mathbf{y}\\in\\mathbb{R}^{N}$ \
 % 原画像の準備
 file_yorg = "./data/yorg.png";
 if ~exist(file_yorg,'file')
@@ -54,30 +46,22 @@ end
 % 原画像の読み込み
 yorg = im2double(imread(file_yorg));
 szOrg = size(yorg);
-%% 
-% 画像表示
-
+%[text] 画像表示
 figure
 imshow(yorg);
 title('Original image y')
-%% 
-% 零平均化
-
+%[text] 零平均化
 %ymean = mean(y,"all");
 %y = yorg - ymean;
 meansubtract = @(x) x-mean(x,"all");
 y = meansubtract(yorg);
-%% 離散コサイン変換（DCT）
-% $$[\mathbf{C}_M]_{k,n}=\sqrt{\frac{2}{M}} \alpha_k\cos\frac{k(n+1∕2)\pi}{M},\ 
-% k,n=0,1,\cdots,M-1$$
-% 
-% $$\alpha_k=\left\{\begin{array}{ll} \frac{1}{\sqrt{2}} & k=0 \\1 & k=1,2,\cdots,M-1\end{array}\right.$$
-% 基底画像
-% $$\mathbf{B}_{k,\ell}=\mathbf{C}_M^{-1}\mathbf{E}_{k,\ell}\mathbf{C}_M^{-T},\ 
-% k,\ell=0,1,\cdots,M-1$$
-% 
-% $$\mathbf{E}_{k,\ell}= \mathbf{e}_k\mathbf{e}_\ell^T$$
-
+%%
+%[text] ## 離散コサイン変換（DCT）
+%[text]  $\[\\mathbf{C}\_M\]\_{k,n}=\\sqrt{\\frac{2}{M}} \\alpha\_k\\cos\\frac{k(n+1∕2)\\pi}{M},\\ k,n=0,1,\\cdots,M-1$
+%[text]  $\\alpha\_k=\\left\\{\\begin{array}{ll} \\frac{1}{\\sqrt{2}} & k=0 \\\\1 & k=1,2,\\cdots,M-1\\end{array}\\right.$
+%[text] #### 基底画像
+%[text]  $\\mathbf{B}\_{k,\\ell}=\\mathbf{C}\_M^{-1}\\mathbf{E}\_{k,\\ell}\\mathbf{C}\_M^{-T},\\ k,\\ell=0,1,\\cdots,M-1$
+%[text]  $\\mathbf{E}\_{k,\\ell}= \\mathbf{e}\_k\\mathbf{e}\_\\ell^T$
 basisImagesDct = zeros(szBlk(1),szBlk(2),prod(szBlk));
 iBasis = 1;
 for iRow=1:szBlk(1)
@@ -88,56 +72,37 @@ for iRow=1:szBlk(1)
         iBasis = iBasis + 1;
     end
 end
-% 基底画像の表示
-
+%[text] #### 基底画像の表示
 figure
 montage(imresize(basisImagesDct,8,'nearest')+.5,'BorderSize',[2 2])
 title('Basis images of DCT')
-% ブロックDCTによる合成処理とその随伴処理の定義
-
+%[text] #### ブロックDCTによる合成処理とその随伴処理の定義
 syn_blkdct = @(x) blockproc(x,szBlk,@(block_struct) idct2(block_struct.data));
 adj_blkdct = @(y) blockproc(y,szBlk,@(block_struct) dct2(block_struct.data));
-%% 
-% 随伴関係の確認
-
+%[text] 随伴関係の確認
 x = adj_blkdct(y);
 v = randn(size(x));
 u = syn_blkdct(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-9)
-%% 主成分分析（PCA）
-% 
-% 問題設定:
-% |直交性と次元削減|
-% 
-% $$\mathbf{\Phi}^\textsf{T} \mathbf{\Phi}=\mathbf{I}_{M}, \forall b, \forall 
-% p,\Vert{\mathbf{x}_b}\Vert_0\le p<M$$
-% 
-% |を制約条件とした最小自乗問題|
-% 
-% $$\{\hat{\mathbf{\Phi}},\{ \hat{\mathbf{x}}_b \}_b\}=\arg\min_{\{\mathbf{\Phi},\{\mathbf{x}_b\}_b\}}\frac{1}{2S}\sum_{b=1}^{S}\|\mathbf{y}_b-\mathbf{\Phi}{\mathbf{x}}_b\|_2^2$$
-% 
-% |を解く．上式は等価的に|
-% 
-% $$\hat{\mathbf{\Phi}}=\arg \max _{\mathbf{\Phi}} \mathrm{tr}\left(\mathbf{\Phi}_{:, 
-% 0:p-1}^\textsf{T}\hat{\mathbf{\Sigma}}_{y} \mathbf{\Phi}_{:,0:p-1}\right)\ \mathrm{ 
-% s.t. }\ \mathbf{\Phi}^\textsf{T} \mathbf{\Phi}=\mathbf{I}_{M}$$
-% 
-% |と表現できる．|ただし， $\widehat{\mathbf{\Sigma}}_{y}$は 観測ベクトル $\{\mathbf{y}_b\}_b$ 
-% （零平均を仮定）の標本分散共分散行列である．
-% 
-% 
-% 解:
-% 固有値分解
-% 
-% $$\widehat{\mathbf{\Phi}}^\textsf{T}\widehat{\mathbf{\Sigma}_y}\widehat{\mathbf{\Phi}}=\mathbf{\Lambda}$$
-% 
-% ただし， $\mathbf{\Lambda}=\mathrm{diag}(\lambda_1,\lambda_2,\cdots,\lambda_M)$． 
-% $\lambda_1\geq\lambda_2\geq\cdots\lambda_M$ は $\widehat{\mathbf{\Sigma}}_{y}$の固有値．
-% 
-% 
-% 画像 $\mathbf{y}$からのデータ行列 $\mathbf{Y}$ の生成 
-% 標本平均ブロックを引く代わりに，予め零平均化したデータで学習
-
+%%
+%[text] ## 主成分分析（PCA）
+%[text] 
+%[text] #### 問題設定:
+%[text] `直交性と次元削減`
+%[text]  $\\mathbf{\\Phi}^\\textsf{T} \\mathbf{\\Phi}=\\mathbf{I}\_{M}, \\forall b, \\forall p,\\Vert{\\mathbf{x}\_b}\\Vert\_0\\le p\<M$
+%[text] `を制約条件とした最小自乗問題`
+%[text]  $\\{\\hat{\\mathbf{\\Phi}},\\{ \\hat{\\mathbf{x}}\_b \\}\_b\\}=\\arg\\min\_{\\{\\mathbf{\\Phi},\\{\\mathbf{x}\_b\\}\_b\\}}\\frac{1}{2S}\\sum\_{b=1}^{S}\\|\\mathbf{y}\_b-\\mathbf{\\Phi}{\\mathbf{x}}\_b\\|\_2^2$
+%[text] `を解く．上式は等価的に`
+%[text]  $\\hat{\\mathbf{\\Phi}}=\\arg \\max \_{\\mathbf{\\Phi}} \\mathrm{tr}\\left(\\mathbf{\\Phi}\_{:, 0:p-1}^\\textsf{T}\\hat{\\mathbf{\\Sigma}}\_{y} \\mathbf{\\Phi}\_{:,0:p-1}\\right)\\ \\mathrm{ s.t. }\\ \\mathbf{\\Phi}^\\textsf{T} \\mathbf{\\Phi}=\\mathbf{I}\_{M}$
+%[text] `と表現できる．`ただし， $\\widehat{\\mathbf{\\Sigma}}\_{y}$は 観測ベクトル $\\{\\mathbf{y}\_b\\}\_b$ （零平均を仮定）の標本分散共分散行列である．
+%[text] 
+%[text] #### 解:
+%[text] 固有値分解
+%[text]  $\\widehat{\\mathbf{\\Phi}}^\\textsf{T}\\widehat{\\mathbf{\\Sigma}\_y}\\widehat{\\mathbf{\\Phi}}=\\mathbf{\\Lambda}\n$
+%[text] ただし， $\\mathbf{\\Lambda}=\\mathrm{diag}(\\lambda\_1,\\lambda\_2,\\cdots,\\lambda\_M)$． $\\lambda\_1\\geq\\lambda\_2\\geq\\cdots\\lambda\_M$ は $\\widehat{\\mathbf{\\Sigma}}\_{y}$の固有値．
+%[text] 
+%[text] #### 画像 $\\mathbf{y}$からのデータ行列 $\\mathbf{Y}$ の生成 
+%[text] 標本平均ブロックを引く代わりに，予め零平均化したデータで学習
 nPatches = 20*prod(szOrg./szBlk); % PCA/RICA/K-SVD 学習用のパッチをランダム抽出
 npos = randsample(prod(szOrg-szBlk),nPatches);
 ybs = zeros(szBlk(1),szBlk(2),nPatches,'like',y);
@@ -153,76 +118,51 @@ drawnow
 
 Y = reshape(ybs,prod(szBlk),[]);
 
-%% 
-% 標本分散共分散行列 $\widehat{\mathbf{\Sigma}}_{y}$の計算 
-
+%[text] 標本分散共分散行列 $\\widehat{\\mathbf{\\Sigma}}\_{y}$の計算 
 SigmaY = cov(Y.');
-%% 
-% 標本分散共分散行列 $\widehat{\mathbf{\Sigma}}_{y}$の固有値分解 
-
+%[text] 標本分散共分散行列 $\\widehat{\\mathbf{\\Sigma}}\_{y}$の固有値分解 
 [Phi_pca,Lambda] = eig(SigmaY);
-%% 
-% 固有値 $\lambda$ の大きさの降順に列ベクトルをソート (Sorting column vectors in the descending 
-% order of the eigenvalues $\lambda$)
-
+%[text] 固有値 $\\lambda$ の大きさの降順に列ベクトルをソート (Sorting column vectors in the descending order of the eigenvalues $\\lambda$)
 [~,idx] = sort(diag(Lambda),'descend');
 Phi_pca = Phi_pca(:,idx);
-%% 
-% 固有ベクトルを基底画像に変換
-
+%[text] 固有ベクトルを基底画像に変換
 nBases = prod(szBlk);
 basisImagesPca = zeros(szBlk(1),szBlk(2),nBases);
 for iBasis = 1:nBases
     basisImagesPca(:,:,iBasis) = reshape(Phi_pca(:,iBasis),szBlk(1),szBlk(2));
 end
-% 基底画像の表示（辞書）
-
+%[text] #### 基底画像の表示（辞書）
 figure
 montage(imresize(basisImagesPca,8,'nearest')+.5,'BorderSize',[2 2])
 title('Basis images of PCA(KLT)')
-% ブロックPCAによる合成処理とその随伴処理の定義
-
+%[text] #### ブロックPCAによる合成処理とその随伴処理の定義
 syn_blkpca = @(x) col2im(Phi_pca*x,szBlk,szOrg,"distinct");
 adj_blkpca = @(y) Phi_pca.'*im2col(y,szBlk,"distinct");
-%% 
-% 随伴関係の確認
-
+%[text] 随伴関係の確認
 x = adj_blkpca(y);
 v = randn(size(x));
 u = syn_blkpca(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-9)
-%% 再構成独立成分分析（RICA）
-% 
-% 問題設定:
-% $$\widehat{\mathbf{\Phi}}=\arg \min _{\mathbf{\Phi}} \frac{1}{2S}\sum_{b=1}^S\|\mathbf{y}_b-\mathbf{\Phi}\mathbf{\Phi}^\textsf{T}\mathbf{y}_b\|_2^2+\frac{\alpha}{S}\sum_{b=1}^{S}\rho(\mathbf{\Phi}^\textsf{T}\mathbf{y}_b)$$
-% 
-% $$=\arg \min _{\mathbf{\Phi}} \frac{(2\alpha)^{-1}}{S}\sum_{b=1}^S\|\mathbf{y}_b-\mathbf{\Phi}\mathbf{\Phi}^\textsf{T}\mathbf{y}_b\|_2^2+\frac{1}{S}\sum_{b=1}^{S}\rho(\mathbf{\Phi}^\textsf{T}\mathbf{y}_b)$$
-% 
-% ただし，  $\{\mathbf{y}_n\}_n\subset\mathbb{R}^{M}$,  $\mathbf{\Phi}=(\mathbf{\phi}_1,\mathbf{\phi}_2,\cdots,\mathbf{\phi}_P)\in\mathbb{R}^{M\times 
-% P}$, $M\geq P$ である．
-% 
-% 
-% 参考文献:
-% Le, Quoc V., Alexandre Karpenko, Jiquan Ngiam, and Andrew Y. Ng. “ICA with 
-% Reconstruction Cost for Efficient Overcomplete Feature Learning.” Advances in 
-% Neural Information Processing Systems. Vol. 24, 2011, pp. 1017–1025. https://papers.nips.cc/paper/4467-ica-with-reconstruction-cost-for-efficient-overcomplete-feature-learning.pdf. 
-% 
-% 
-% 
-% パラメータ設定
-%% 
-% * 繰返し回数 (Number of iterations)
-% * 正則化パラメータ (Regularization parameter)
-
+%%
+%[text] ## 再構成独立成分分析（RICA）
+%[text] 
+%[text] #### 問題設定:
+%[text]  $\\widehat{\\mathbf{\\Phi}}=\\arg \\min \_{\\mathbf{\\Phi}} \\frac{1}{2S}\\sum\_{b=1}^S\\|\\mathbf{y}\_b-\\mathbf{\\Phi}\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y}\_b\\|\_2^2+\\frac{\\alpha}{S}\\sum\_{b=1}^{S}\\rho(\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y}\_b)\n$
+%[text]  $=\\arg \\min \_{\\mathbf{\\Phi}} \\frac{(2\\alpha)^{-1}}{S}\\sum\_{b=1}^S\\|\\mathbf{y}\_b-\\mathbf{\\Phi}\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y}\_b\\|\_2^2+\\frac{1}{S}\\sum\_{b=1}^{S}\\rho(\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y}\_b)$
+%[text] ただし，  $\\{\\mathbf{y}\_n\\}\_n\\subset\\mathbb{R}^{M}$,  $\\mathbf{\\Phi}=(\\mathbf{\\phi}\_1,\\mathbf{\\phi}\_2,\\cdots,\\mathbf{\\phi}\_P)\\in\\mathbb{R}^{M\\times P}$, $M\\geq P$ である．
+%[text] 
+%[text] #### 参考文献:
+%[text] Le, Quoc V., Alexandre Karpenko, Jiquan Ngiam, and Andrew Y. Ng. “ICA with Reconstruction Cost for Efficient Overcomplete Feature Learning.” Advances in Neural Information Processing Systems. Vol. 24, 2011, pp. 1017–1025. https://papers.nips.cc/paper/4467-ica-with-reconstruction-cost-for-efficient-overcomplete-feature-learning.pdf. 
+%[text] 
+%[text] パラメータ設定
+%[text] - 繰返し回数 (Number of iterations)
+%[text] - 正則化パラメータ (Regularization parameter) \
 % Number of iterations
 nItersRica = 1e5; 
 % Regularization parameter
 alpha = 2e-3;
-%% 
-% コントラスト関数の例
-% 
-% $$\rho(\mathbf{\Phi}^\textsf{T}\mathbf{y})\colon = \frac{1}{2}\sum_{p=1}^{P}\log\circ\cosh(2\mathbf{\phi}_p^\textsf{T}\mathbf{y})$$
-
+%[text] コントラスト関数の例
+%[text]  $\\rho(\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y})\\colon = \\frac{1}{2}\\sum\_{p=1}^{P}\\log\\circ\\cosh(2\\mathbf{\\phi}\_p^\\textsf{T}\\mathbf{y})$
 figure
 fplot(@(x) abs(x),[-5 5],':','LineWidth',2,'DisplayName','|\cdot|')
 hold on
@@ -232,17 +172,12 @@ legend
 grid on
 axis equal
 hold off
-%% 
-% 要素画像の数 
-
+%[text] 要素画像の数 
 nDims = prod(szBlk);
 nAtoms = ceil(redundancyRatio*nDims);
-%% 
-% 辞書 $\mathbf{\Phi}$の初期化
-%% 
-% * 二次元離散コサイン変換
-% * ランダム
-
+%[text] 辞書 $\\mathbf{\\Phi}$の初期化
+%[text] - 二次元離散コサイン変換
+%[text] - ランダム \
 Phi_rica = randn(nDims,nAtoms);
 Phi_rica = Phi_rica/norm(Phi_rica,'fro');
 for iAtom = 1:nDims
@@ -250,9 +185,7 @@ for iAtom = 1:nDims
     delta(iAtom) = 1;
     Phi_rica(:,iAtom) = reshape(idct2(delta),nDims,1);
 end
-%% 
-% 要素ベクトルを要素画像に変換 
-
+%[text] 要素ベクトルを要素画像に変換 
 atomicImagesRica = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesRica(:,:,iAtom) = reshape(Phi_rica(:,iAtom),szBlk(1),szBlk(2));
@@ -260,81 +193,58 @@ end
 figure
 montage(imresize(atomicImagesRica,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of initial dictionary (DCT & random)')
-% 再構成 ICA オブジェクトの作成
-% PCAに合わせて予め零平均化したデータで学習
-
+%[text] #### 再構成 ICA オブジェクトの作成
+%[text] PCAに合わせて予め零平均化したデータで学習
 model = rica(Y.',nAtoms,...
     'IterationLimit',nItersRica,...
     'ContrastFcn','logcosh',...
     'InitialTransformWeight',Phi_rica,...
     'Lambda',1/(2*alpha));
-%% 
-% コスト評価のグラフ 
-
+%[text] コスト評価のグラフ 
 info = model.FitInfo;
 figure
 plot(info.Iteration,info.Objective)
 xlabel('Number of iteration')
 ylabel('Cost')
 grid on
-%% 
-% 要素ベクトルを要素画像に変換
-
+%[text] 要素ベクトルを要素画像に変換
 Phi_rica = model.TransformWeights;
 atomicImagesRica = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesRica(:,:,iAtom) = reshape(Phi_rica(:,iAtom),szBlk(1),szBlk(2));
 end
-% 要素画像の表示（辞書）
-
+%[text] #### 要素画像の表示（辞書）
 figure
 montage(imresize(atomicImagesRica,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of RICA')
-% ブロックRICAによる合成処理とその随伴処理の定義
-
+%[text] #### ブロックRICAによる合成処理とその随伴処理の定義
 syn_blkrica = @(x) col2im(Phi_rica*x,szBlk,szOrg,"distinct");
 adj_blkrica = @(y) Phi_rica.'*im2col(y,szBlk,"distinct");
-%% 
-% 随伴関係の確認
-
+%[text] 随伴関係の確認
 x = adj_blkrica(y);
 v = randn(size(x));
 u = syn_blkrica(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-9)
-%% K-特異値分解
-% パラメータ設定
-%% 
-% * 繰返し回数 (Number of iterations)
-
+%%
+%[text] ## K-特異値分解
+%[text] パラメータ設定
+%[text] - 繰返し回数 (Number of iterations) \
 % Number of iterations
 nItersKsvd = 5e3;
-% 問題設定 (Problem setting):
-% $$\{\hat{\mathbf{\Phi}},\{ \hat{\mathbf{x}}_b \}\}=\arg\min_{\{\mathbf{\Phi},\{\mathbf{x}_b\}\}}\frac{1}{2S}\sum_{b=1}^{S}\|\mathbf{y}_b-\mathbf{\Phi}\hat{\mathbf{x}}_b\|_2^2,\ 
-% \quad\mathrm{s.t.}\ \forall b, \|\mathbf{x}_b\|_0\leq K$$$
-% アルゴリズム :
-% スパース近似ステップと辞書更新ステップを繰返す．
-%% 
-% * スパース近似ステップ 
-%% 
-% $$\hat{\mathbf{x}}_b=\arg\min_{\mathbf{x}} \frac{1}{2}\|\mathbf{y}_b-\hat{\mathbf{\Phi}}\mathbf{x}\|_2^2\ 
-% \quad \mathrm{s.t.}\ \|\mathbf{x}\|_0\leq K$$
-%% 
-% * 辞書更新ステップ 
-%% 
-% $$\hat{\mathbf{\Phi}}=\arg\min_{\mathbf{\Phi}}\frac{1}{2S}\sum_{b=1}^{S}\|\mathbf{y}_b-\mathbf{\Phi}\hat{\mathbf{x}}_b\|_2^2=\arg\min_{\mathbf{\Phi}}\frac{1}{2S}\left\|\left(\mathbf{Y}-\sum_{p\neq 
-% k}\mathbf{\phi}_p\hat{\mathbf{X}}_{p,\colon}\right)-\mathbf{\phi}_k\hat{\mathbf{X}}_{k,\colon}\right\|_F^2$$
-% 
-% 
-% 
-% 係数の数 
-
+%[text] #### 問題設定 (Problem setting):
+%[text]  $\\{\\hat{\\mathbf{\\Phi}},\\{ \\hat{\\mathbf{x}}\_b \\}\\}=\\arg\\min\_{\\{\\mathbf{\\Phi},\\{\\mathbf{x}\_b\\}\\}}\\frac{1}{2S}\\sum\_{b=1}^{S}\\|\\mathbf{y}\_b-\\mathbf{\\Phi}\\hat{\\mathbf{x}}\_b\\|\_2^2,\\ \\quad\\mathrm{s.t.}\\ \\forall b, \\|\\mathbf{x}\_b\\|\_0\\leq K&dollar&;$
+%[text] #### アルゴリズム :
+%[text] スパース近似ステップと辞書更新ステップを繰返す．
+%[text] - スパース近似ステップ  \
+%[text]  $\\hat{\\mathbf{x}}\_b=\\arg\\min\_{\\mathbf{x}} \\frac{1}{2}\\|\\mathbf{y}\_b-\\hat{\\mathbf{\\Phi}}\\mathbf{x}\\|\_2^2\\ \\quad \\mathrm{s.t.}\\ \\|\\mathbf{x}\\|\_0\\leq K$
+%[text] - 辞書更新ステップ  \
+%[text]  $\\hat{\\mathbf{\\Phi}}=\\arg\\min\_{\\mathbf{\\Phi}}\\frac{1}{2S}\\sum\_{b=1}^{S}\\|\\mathbf{y}\_b-\\mathbf{\\Phi}\\hat{\\mathbf{x}}\_b\\|\_2^2=\\arg\\min\_{\\mathbf{\\Phi}}\\frac{1}{2S}\\left\\|\\left(\\mathbf{Y}-\\sum\_{p\\neq k}\\mathbf{\\phi}\_p\\hat{\\mathbf{X}}\_{p,\\colon}\\right)-\\mathbf{\\phi}\_k\\hat{\\mathbf{X}}\_{k,\\colon}\\right\\|\_F^2$
+%[text] 
+%[text] 係数の数 
 nCoefsKsvd = max(floor(sparsityRatio*nDims),1);
-%% 
-% 辞書 $\mathbf{\Phi}$の初期化 
-%% 
-% * 二変量離散コサイン変換
-% * ランダム 
-
+%[text] 辞書 $\\mathbf{\\Phi}$の初期化 
+%[text] - 二変量離散コサイン変換
+%[text] - ランダム  \
 Phi_ksvd = randn(nDims,nAtoms);
 Phi_ksvd = Phi_ksvd/norm(Phi_ksvd,'fro');
 for iAtom = 1:nDims
@@ -342,9 +252,7 @@ for iAtom = 1:nDims
     delta(iAtom) = 1;
     Phi_ksvd(:,iAtom) = reshape(idct2(delta),nDims,1);
 end
-%% 
-% 要素ベクトルを要素画像に変換
-
+%[text] 要素ベクトルを要素画像に変換
 atomicImagesKsvd = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesKsvd(:,:,iAtom) = reshape(Phi_ksvd(:,iAtom),szBlk(1),szBlk(2));
@@ -352,29 +260,22 @@ end
 figure
 montage(imresize(atomicImagesKsvd,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of initial dictionary (DCT & random)')
-% スパース近似ステップと辞書更新ステップの繰り返し
-%% 
-% * スパース近似： 直交マッチング追跡 (OMP)
-% * 辞書更新： 特異値分解(SVD)と1-ランク近似 
-%% 
-% 辞書更新の内容
-%% 
-% # $k\leftarrow 1$
-% # 誤差行列 $\mathbf{E}_k$ を定義：$\mathbf{E}_k\colon = \mathbf{Y}-\sum_{p\neq k}\mathbf{\phi}_p\hat{\mathbf{X}}_{p,\colon}$
-% # データ行 $\hat{\mathbf{X}}_{k,\colon}$の非零値を抽出する行列 $\mathbf{\Omega}_k$を定義： $\hat{\mathbf{X}}_{k,\colon}^R=\hat{\mathbf{X}}_{k,\colon}\mathbf{\Omega}_k 
-% \Leftrightarrow \hat{\mathbf{X}}_{k,\colon}^R\mathbf{\Omega}_k^T=\hat{\mathbf{X}}_{k,\colon}$
-% # 誤差行列 $\mathbf{E}_k$ を行列 $\mathbf{\Omega}_k$で縮退： $\mathbf{E}_k^R \colon=\mathbf{E}_k\mathbf{\Omega}_k$
-% # 縮退した誤差行列$\mathbf{E}_k^R$を特異値分解：$\mathbf{E}_k^R =\mathbf{U}\mathbf{S}\mathbf{V}^T=\left(\mathbf{u}_1,\mathbf{u}_2,\cdots,\mathbf{u}_r\right)\mathrm{diag}(\sigma_1,\sigma_2,\cdots,\sigma_r)\left(\mathbf{v}_1,\mathbf{v}_2,\cdots,\mathbf{v}_r\right)^T$
-% # 要素ベクトル $\mathbf{\phi}_k$ を更新： $\mathbf{k}\leftarrow \mathbf{u}_1$
-% # データ行$\hat{\mathbf{X}}_{k,\colon}$を更新： $\hat{\mathbf{X}}_{k,\colon}\leftarrow 
-% \sigma_1\mathbf{v}_{1}^T$
-% # $k\leftarrow k+1$
-% # $k\leq N$ ならば 2. へ $k>N$ ならば終了
-%% 
-% ただし， $\sigma_1$ を最大特異値とする．
-% 交互ステップの繰返し計算
-% PCAに合わせて予め零平均化したデータで学習
-
+%[text] #### スパース近似ステップと辞書更新ステップの繰り返し
+%[text] - スパース近似： 直交マッチング追跡 (OMP)
+%[text] - 辞書更新： 特異値分解(SVD)と1-ランク近似  \
+%[text] 辞書更新の内容
+%[text] 1. $k\\leftarrow 1$
+%[text] 2. 誤差行列 $\\mathbf{E}\_k$ を定義：$\\mathbf{E}\_k\\colon = \\mathbf{Y}-\\sum\_{p\\neq k}\\mathbf{\\phi}\_p\\hat{\\mathbf{X}}\_{p,\\colon}$
+%[text] 3. データ行 $\\hat{\\mathbf{X}}\_{k,\\colon}$の非零値を抽出する行列 $\\mathbf{\\Omega}\_k$を定義： $\\hat{\\mathbf{X}}\_{k,\\colon}^R=\\hat{\\mathbf{X}}\_{k,\\colon}\\mathbf{\\Omega}\_k \\Leftrightarrow \\hat{\\mathbf{X}}\_{k,\\colon}^R\\mathbf{\\Omega}\_k^T=\\hat{\\mathbf{X}}\_{k,\\colon}$
+%[text] 4. 誤差行列 $\\mathbf{E}\_k$ を行列 $\\mathbf{\\Omega}\_k$で縮退： $\\mathbf{E}\_k^R \\colon=\\mathbf{E}\_k\\mathbf{\\Omega}\_k$
+%[text] 5. 縮退した誤差行列$\\mathbf{E}\_k^R$を特異値分解：$\\mathbf{E}\_k^R =\\mathbf{U}\\mathbf{S}\\mathbf{V}^T\n=\\left(\\mathbf{u}\_1,\\mathbf{u}\_2,\\cdots,\\mathbf{u}\_r\\right)\\mathrm{diag}(\\sigma\_1,\\sigma\_2,\\cdots,\\sigma\_r)\\left(\\mathbf{v}\_1,\\mathbf{v}\_2,\\cdots,\\mathbf{v}\_r\\right)^T$
+%[text] 6. 要素ベクトル $\\mathbf{\\phi}\_k$ を更新： $\\mathbf{k}\\leftarrow \\mathbf{u}\_1$
+%[text] 7. データ行$\\hat{\\mathbf{X}}\_{k,\\colon}$を更新： $\\hat{\\mathbf{X}}\_{k,\\colon}\\leftarrow \\sigma\_1\\mathbf{v}\_{1}^T$
+%[text] 8. $k\\leftarrow k+1$
+%[text] 9. $k\\leq N$ ならば 2. へ $k\>N$ ならば終了 \
+%[text] ただし， $\\sigma\_1$ を最大特異値とする．
+%[text] #### 交互ステップの繰返し計算
+%[text] PCAに合わせて予め零平均化したデータで学習
 cost = zeros(1,nItersKsvd);
 nSamples = size(Y,2);
 for iIter = 1:nItersKsvd
@@ -404,17 +305,13 @@ for iIter = 1:nItersKsvd
     end
     cost(iIter) = (norm(Y-Phi_ksvd*X,'fro')^2)/(2*nSamples);
 end
-%% 
-% コスト評価のグラフ 
-
+%[text] コスト評価のグラフ 
 figure
 plot(cost)
 xlabel('Number of iteration')
 ylabel('Cost')
 grid on
-%% 
-% 要素ベクトルを要素画像に変換 
-
+%[text] 要素ベクトルを要素画像に変換 
 atomicImagesKsvd = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesKsvd(:,:,iAtom) = reshape(Phi_ksvd(:,iAtom),szBlk(1),szBlk(2));
@@ -422,71 +319,39 @@ end
 figure
 montage(imresize(atomicImagesKsvd,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of K-SVD')
-% ブロックK-特異値分解による合成処理とその随伴処理の定義
-
+%[text] #### ブロックK-特異値分解による合成処理とその随伴処理の定義
 syn_blkksvd = @(x) col2im(Phi_ksvd*x,szBlk,szOrg,"distinct");
 adj_blkksvd = @(y) Phi_ksvd.'*im2col(y,szBlk,"distinct");
-%% 
-% 随伴関係の確認
-
+%[text] 随伴関係の確認
 x = adj_blkksvd(y);
 v = randn(size(x));
 u = syn_blkksvd(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-9)
-%% 2変量ラティス構造冗長フィルタバンク
-% 例として，（偶対称チャネルと奇対称チャネルが等しい）偶数チャネル、偶数のポリフェーズ次数をもつタイプI非分離冗長重複変換(NSOLT)
-% 
-% $$\mathbf{E}(z_\mathrm{v},z_\mathbf{h})=\left(\prod_{n_\mathrm{h}=1}^{\nu_\mathrm{h}/2}{\mathbf{V}_{2n_\mathrm{h}}^{\{\mathrm{h}\}}}\bar{\mathbf{Q}}(z_\mathrm{h}){\mathbf{V}_{2k_\mathrm{h}-1}^{\{\mathrm{h}\}}}{\mathbf{Q}}(z_\mathrm{h})\right)%\left(\prod_{n_{\mathrm{v}}=1}^{\nu_\mathrm{v}/2}{\mathbf{V}_{2n_\mathrm{v}}^{\{\mathrm{v}\}}}\bar{\mathbf{Q}}(z_\mathrm{v}){\mathbf{V}_{2n_\mathrm{v}-1}^{\{\mathrm{v}\}}}{\mathbf{Q}}(z_\mathrm{v})\right)%\mathbf{V}_0\mathbf{E}_0,$$
-% 
-% $$\mathbf{R}(z_\mathrm{v},z_\mathbf{h})=\mathbf{E}^\textsf{T}(z_\mathrm{v}^{-1},z_\mathrm{h}^{-1}),$$
-% 
-% を採用する．ただし，
-%% 
-% * $\mathbf{E}(z_\mathrm{v},z_\mathrm{h})$:  分析フィルタバンクのType-I ポリフェーズ行列
-% * $\mathbf{R}(z_\mathrm{v},z_\mathrm{h})$: 合成フィルタバンクのType-II ポリフェーズ行列
-% * $z_d\in\mathbb{C}, d\in\{\mathrm{v},\mathrm{h}\}$: Z-変換の変数
-% * $\nu_d\in \mathbb{N}, d\in\{\mathrm{v},\mathrm{h}\}$:方向 $d$ のポリフェーズ次数(重複ブロック数)
-% * $\mathbf{V}_0=\left(\begin{array}{cc}\mathbf{W}_{0} & \mathbf{O} \\\mathbf{O} 
-% & \mathbf{U}_0\end{array}\right)%\left(\begin{array}{c}\mathbf{I}_{M/2} \\ \mathbf{O} 
-% \\\mathbf{I}_{M/2} \\\mathbf{O}\end{array}\right)\in\mathbb{R}^{P\times M}$,$\mathbf{V}_n^{\{d\}}=\left(\begin{array}{cc}\mathbf{I}_{P/2} 
-% & \mathbf{O} \\\mathbf{O} & \mathbf{U}_n^{\{d\}}\end{array}\right)\in\mathbb{R}^{P\times 
-% P}, d\in\{\mathrm{v},\mathrm{h}\}$, $\mathbf{W}_0, \mathbf{U}_0,\mathbf{U}_n^{\{d\}}\in\mathbb{R}^{P/2\times 
-% P/2}$は直交行列
-% * $\mathbf{Q}(z)=\mathbf{B}_{P}\left(\begin{array}{cc} \mathbf{I}_{P/2} &  
-% \mathbf{O} \\ \mathbf{O} &  z^{-1}\mathbf{I}_{P/2}\end{array}\right)\mathbf{B}_{P}$, 
-% $\bar{\mathbf{Q}}(z)=\mathbf{B}_{P}\left(\begin{array}{cc} z\mathbf{I}_{P/2} 
-% &  \mathbf{O} \\ \mathbf{O} &  \mathbf{I}_{P/2}\end{array}\right)\mathbf{B}_{P}$, 
-% $\mathbf{B}_{P}=\frac{1}{\sqrt{2}}\left(\begin{array}{cc} \mathbf{I}_{P/2} &  
-% \mathbf{I}_{P/2} \\ \mathbf{I}_{P/2} &  -\mathbf{I}_{P/2}\end{array}\right)$
-%% 
-% 【References】 
-%% 
-% * <https://jp.mathworks.com/help/dsp/ug/overview-of-filter-banks.html Overview 
-% of Filter Banks - MATLAB & Simulink - MathWorks 日本>
-% * MATLAB SaivDr Package: <https://github.com/msiplab/SaivDr https://github.com/msiplab/SaivDr>
-% * S. Muramatsu, K. Furuya and N. Yuki, "Multidimensional Nonseparable Oversampled 
-% Lapped Transforms: Theory and Design," in IEEE Transactions on Signal Processing, 
-% vol. 65, no. 5, pp. 1251-1264, 1 March1, 2017, doi: 10.1109/TSP.2016.2633240.
-% * S. Muramatsu, T. Kobayashi, M. Hiki and H. Kikuchi, "Boundary Operation 
-% of 2-D Nonseparable Linear-Phase Paraunitary Filter Banks," in IEEE Transactions 
-% on Image Processing, vol. 21, no. 4, pp. 2314-2318, April 2012, doi: 10.1109/TIP.2011.2181527.
-% * S. Muramatsu, M. Ishii and Z. Chen, "Efficient parameter optimization for 
-% example-based design of nonseparable oversampled lapped transform," 2016 IEEE 
-% International Conference on Image Processing (ICIP), Phoenix, AZ, 2016, pp. 
-% 3618-3622, doi: 10.1109/ICIP.2016.7533034.
-% * Furuya, K., Hara, S., Seino, K., & Muramatsu, S. (2016). Boundary operation 
-% of 2D non-separable oversampled lapped transforms. _APSIPA Transactions on Signal 
-% and Information Processing, 5_, E9. doi:10.1017/ATSIP.2016.3.
-% 2次元画像の階層的分析
-% $R_M^P(\tau)$ をツリーレベル $\tau$の階層構造フィルタバンクの冗長度とすると、
-% 
-% $$R_M^P(\tau)=\left\{\begin{array}{ll} (P-1)\tau + 1, & M=1, \\ \frac{P-1}{M-1}-\frac{P-M}{(M-1)M^\tau}, 
-% & M\geq 2.\end{array}\right.$$
-% 
-% となる．
-% 
-% 構成パラメータ設定
-
+%%
+%[text] ## 2変量ラティス構造冗長フィルタバンク
+%[text] 例として，（偶対称チャネルと奇対称チャネルが等しい）偶数チャネル、偶数のポリフェーズ次数をもつタイプI非分離冗長重複変換(NSOLT)
+%[text]  $\\mathbf{E}(z\_\\mathrm{v},z\_\\mathbf{h})\n=\n\\left(\\prod\_{n\_\\mathrm{h}=1}^{\\nu\_\\mathrm{h}/2}\n{\\mathbf{V}\_{2n\_\\mathrm{h}}^{\\{\\mathrm{h}\\}}}\\bar{\\mathbf{Q}}(z\_\\mathrm{h}){\\mathbf{V}\_{2k\_\\mathrm{h}-1}^{\\{\\mathrm{h}\\}}}{\\mathbf{Q}}(z\_\\mathrm{h})\\right)\n%\n\\left(\\prod\_{n\_{\\mathrm{v}}=1}^{\\nu\_\\mathrm{v}/2}{\\mathbf{V}\_{2n\_\\mathrm{v}}^{\\{\\mathrm{v}\\}}}\\bar{\\mathbf{Q}}(z\_\\mathrm{v}){\\mathbf{V}\_{2n\_\\mathrm{v}-1}^{\\{\\mathrm{v}\\}}}{\\mathbf{Q}}(z\_\\mathrm{v})\\right)\n%\n\\mathbf{V}\_0\\mathbf{E}\_0,$
+%[text]  $\\mathbf{R}(z\_\\mathrm{v},z\_\\mathbf{h})\n=\\mathbf{E}^\\textsf{T}(z\_\\mathrm{v}^{-1},z\_\\mathrm{h}^{-1}),$
+%[text] を採用する．ただし，
+%[text] - $\\mathbf{E}(z\_\\mathrm{v},z\_\\mathrm{h})$:  分析フィルタバンクのType-I ポリフェーズ行列
+%[text] - $\\mathbf{R}(z\_\\mathrm{v},z\_\\mathrm{h})$: 合成フィルタバンクのType-II ポリフェーズ行列
+%[text] - $z\_d\\in\\mathbb{C}, d\\in\\{\\mathrm{v},\\mathrm{h}\\}$: Z-変換の変数
+%[text] - $\\nu\_d\\in \\mathbb{N}, d\\in\\{\\mathrm{v},\\mathrm{h}\\}$:方向 $d$ のポリフェーズ次数(重複ブロック数)
+%[text] - $\\mathbf{V}\_0=\\left(\\begin{array}{cc}\\mathbf{W}\_{0} & \\mathbf{O} \\\\\\mathbf{O} & \\mathbf{U}\_0\\end{array}\\right)\n%\n\\left(\\begin{array}{c}\\mathbf{I}\_{M/2} \\\\ \n\\mathbf{O} \\\\\n\\mathbf{I}\_{M/2} \\\\\n\\mathbf{O}\n\\end{array}\\right)\\in\\mathbb{R}^{P\\times M}$,$\\mathbf{V}\_n^{\\{d\\}}=\\left(\\begin{array}{cc}\\mathbf{I}\_{P/2} & \\mathbf{O} \\\\\\mathbf{O} & \\mathbf{U}\_n^{\\{d\\}}\\end{array}\\right)\\in\\mathbb{R}^{P\\times P}, d\\in\\{\\mathrm{v},\\mathrm{h}\\}$, $\\mathbf{W}\_0, \\mathbf{U}\_0,\\mathbf{U}\_n^{\\{d\\}}\\in\\mathbb{R}^{P/2\\times P/2}$は直交行列
+%[text] - $\\mathbf{Q}(z)=\\mathbf{B}\_{P}\\left(\\begin{array}{cc} \\mathbf{I}\_{P/2} &  \\mathbf{O} \\\\ \\mathbf{O} &  z^{-1}\\mathbf{I}\_{P/2}\\end{array}\\right)\\mathbf{B}\_{P}$, $\\bar{\\mathbf{Q}}(z)=\\mathbf{B}\_{P}\\left(\\begin{array}{cc} z\\mathbf{I}\_{P/2} &  \\mathbf{O} \\\\ \\mathbf{O} &  \\mathbf{I}\_{P/2}\\end{array}\\right)\\mathbf{B}\_{P}$, $\\mathbf{B}\_{P}=\\frac{1}{\\sqrt{2}}\\left(\\begin{array}{cc} \\mathbf{I}\_{P/2} &  \\mathbf{I}\_{P/2} \\\\ \\mathbf{I}\_{P/2} &  -\\mathbf{I}\_{P/2}\\end{array}\\right)$ \
+%[text] 【References】 
+%[text] - [Overview of Filter Banks - MATLAB & Simulink - MathWorks 日本](https://jp.mathworks.com/help/dsp/ug/overview-of-filter-banks.html)
+%[text] - MATLAB SaivDr Package: [https://github.com/msiplab/SaivDr](https://github.com/msiplab/SaivDr)
+%[text] - S. Muramatsu, K. Furuya and N. Yuki, "Multidimensional Nonseparable Oversampled Lapped Transforms: Theory and Design," in IEEE Transactions on Signal Processing, vol. 65, no. 5, pp. 1251-1264, 1 March1, 2017, doi: 10.1109/TSP.2016.2633240.
+%[text] - S. Muramatsu, T. Kobayashi, M. Hiki and H. Kikuchi, "Boundary Operation of 2-D Nonseparable Linear-Phase Paraunitary Filter Banks," in IEEE Transactions on Image Processing, vol. 21, no. 4, pp. 2314-2318, April 2012, doi: 10.1109/TIP.2011.2181527.
+%[text] - S. Muramatsu, M. Ishii and Z. Chen, "Efficient parameter optimization for example-based design of nonseparable oversampled lapped transform," 2016 IEEE International Conference on Image Processing (ICIP), Phoenix, AZ, 2016, pp. 3618-3622, doi: 10.1109/ICIP.2016.7533034.
+%[text] - Furuya, K., Hara, S., Seino, K., & Muramatsu, S. (2016). Boundary operation of 2D non-separable oversampled lapped transforms. *APSIPA Transactions on Signal and Information Processing, 5*, E9. doi:10.1017/ATSIP.2016.3. \
+%[text] ### 2次元画像の階層的分析
+%[text] $R\_M^P(\\tau)$ をツリーレベル $\\tau$の階層構造フィルタバンクの冗長度とすると、
+%[text]  $R\_M^P(\\tau)=\\left\\{\\begin{array}{ll} (P-1)\\tau + 1, & M=1, \\\\ \\frac{P-1}{M-1}-\\frac{P-M}{(M-1)M^\\tau}, & M\\geq 2.\\end{array}\\right.$
+%[text] となる．
+%[text] #### 
+%[text] #### 構成パラメータ設定
 %%{
 % Decimation factor (Strides)
 decFactor = [2 2]; % [μv μh] 
@@ -537,10 +402,7 @@ redundancyNsolt = ...
     (prod(decFactor)>1)*((P-1)/(M-1)-(P-M)/((M-1)*M^nLevels))
 assert(redundancyNsolt<redundancyRatio)
 
-%% 
-% $$L_\mathrm{v}\times L_\mathrm{h}=\left(\mu_\mathrm{v}^{\tau}+{\nu}_\mathrm{v}\frac{\mu_\mathrm{v}(\mu_\mathrm{v}^{\tau}-1)}{\mu_\mathrm{v}-1}\right) 
-% \times\left(\mu_\mathrm{h}^{\tau}+\nu_\mathrm{h}\frac{\mu_\mathrm{h}(\mu_\mathrm{h}^{\tau}-1)}{\mu_\mathrm{h}-1}\right)$$ 
-
+%[text] $L\_\\mathrm{v}\\times L\_\\mathrm{h}=\\left(\\mu\_\\mathrm{v}^{\\tau}+{\\nu}\_\\mathrm{v}\\frac{\\mu\_\\mathrm{v}(\\mu\_\\mathrm{v}^{\\tau}-1)}{\\mu\_\\mathrm{v}-1}\\right) \\times\\left(\\mu\_\\mathrm{h}^{\\tau}+\\nu\_\\mathrm{h}\\frac{\\mu\_\\mathrm{h}(\\mu\_\\mathrm{h}^{\\tau}-1)}{\\mu\_\\mathrm{h}-1}\\right)$ 
 % Filter size [ Ly Lx ]
 maxDecFactor = decFactor.^nLevels;
 szFilters = maxDecFactor + ppOrder.*decFactor.*(maxDecFactor-1)./(decFactor-1)
@@ -555,9 +417,9 @@ nSubImgs = floor(nPatches*prod(szBlk./szPatchTrn))
 assert(nSubImgs > 0)
 
 % No DC-leakage
-noDcLeakage = true
-% 辞書の設定
-
+noDcLeakage = true %[control:checkbox:335c]{"position":[15,19]}
+%%
+%[text] #### 辞書の設定
 if exist("./data/"+nsoltDic+".mat","file")
     S = load("./data/"+nsoltDic);
     analysisnet = S.analysisnet;
@@ -611,8 +473,7 @@ else
         ...'SequencePaddingDirection','right',...
         ...'DispatchInBackground',0,...
         'ResetInputNormalization',0);...1
-% 層構造の構築
-
+%[text] #### 層構造の構築
     import saivdr.dcnn.*
     analysislgraph = fcn_creatensoltlgraph2d([],...
         'InputSize',szPatchTrn,...
@@ -657,9 +518,8 @@ else
     synthesislgraph = layerGraph(synthesisnet);
     analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
     analysisnet = dlnetwork(analysislgraph);
-% 随伴関係（完全再構成）の確認
-% NSOLTはパーセバルタイト性を満たす．
-
+%[text] #### 随伴関係（完全再構成）の確認
+%[text] NSOLTはパーセバルタイト性を満たす．
     nOutputs = nLevels+1;
     x = rand(szPatchTrn,'single');
     s = cell(1,nOutputs);
@@ -667,17 +527,14 @@ else
     [s{1:nOutputs}] = analysisnet.predict(dlx);
     dly = synthesisnet.predict(s{:});
     display("MSE: " + num2str(mse(dlx,dly)))
-% 要素画像の初期状態
-
+%[text] #### 要素画像の初期状態
     import saivdr.dcnn.*
     figure
     atomicimshow(synthesisnet,[],2^(nLevels-1))
     title('Atomic images of initial NSOLT')
-% 訓練画像の準備
-% 画像データストアからランダムにパッチを抽出
-% 
-% PCAに合わせて予め零平均化したデータで学習
-
+%[text] ### 訓練画像の準備
+%[text] 画像データストアからランダムにパッチを抽出
+%[text] PCAに合わせて予め零平均化したデータで学習
     imds = imageDatastore(file_yorg,"ReadFcn",@(x) meansubtract(im2single(imread(x))));
     patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',nSubImgs);
     figure
@@ -687,37 +544,25 @@ else
     figure
     montage(responses,'Size',[2 4]);
     drawnow
-% 畳み込み辞書学習
-% 問題設定:
-% $$\{\hat{\mathbf{\theta}},\{ \hat{\mathbf{x}}_n \}\}=\arg\min_{\{\mathbf{\theta},\{\mathbf{x}_n\}\}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{y}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{x}}_n\|_2^2,\ 
-% \quad\mathrm{s.t.}\ \forall n, \|\mathbf{x}_n\|_0\leq K,$$$
-% 
-% ただし， $\mathbf{D}_{\mathbf{\theta}}$は設計パラメータベクトル $\mathbf{\theta}}$をもつ畳み込み辞書．
-% 
-% 
-% アルゴリズム:
-% スパース近似ステップと辞書更新ステップを繰返す．
-%% 
-% * スパース近似ステップ
-%% 
-% $$\hat{\mathbf{x}}_n=\arg\min_{\mathbf{x}_n}\frac{1}{2} \|\mathbf{y}_n-\hat{\mathbf{D}}\mathbf{x}_n\|_2^2\ 
-% \quad \mathrm{s.t.}\ \|\mathbf{x}_n\|_0\leq K$$
-%% 
-% * 辞書更新ステップ
-%% 
-% $$\hat{\mathbf{\theta}}=\arg\min_{\mathbf{\theta}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{y}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{x}}_n\|_2^2$$
-% 
-% $$\hat{\mathbf{D}}=\mathbf{D}_{\hat{\mathbf{\theta}}$$
-% 採用するスパース近似と辞書更新の手法:
-%% 
-% * スパース近似：（正規化なし）繰返しハード閾値処理(IHT)
-% * 辞書更新： モーメンタム付き確率的勾配降下法(SGD)
-
+%[text] ### 畳み込み辞書学習
+%[text] #### 問題設定:
+%[text]  $\\{\\hat{\\mathbf{\\theta}},\\{ \\hat{\\mathbf{x}}\_n \\}\\}=\\arg\\min\_{\\{\\mathbf{\\theta},\\{\\mathbf{x}\_n\\}\\}}\\frac{1}{2S}\\sum\_{n=1}^{S}\\|\\mathbf{y}\_n-\\mathbf{D}\_{\\mathbf{\\theta}}\\hat{\\mathbf{x}}\_n\\|\_2^2,\\ \\quad\\mathrm{s.t.}\\ \\forall n, \\|\\mathbf{x}\_n\\|\_0\\leq K,&dollar&;$
+%[text] ただし， $\\mathbf{D}\_{\\mathbf{\\theta}}$は設計パラメータベクトル $\\mathbf{\\theta}}$をもつ畳み込み辞書．
+%[text] 
+%[text] #### アルゴリズム:
+%[text] スパース近似ステップと辞書更新ステップを繰返す．
+%[text] - スパース近似ステップ \
+%[text]  $\\hat{\\mathbf{x}}\_n=\\arg\\min\_{\\mathbf{x}\_n}\\frac{1}{2} \\|\\mathbf{y}\_n-\\hat{\\mathbf{D}}\\mathbf{x}\_n\\|\_2^2\\ \\quad \\mathrm{s.t.}\\ \\|\\mathbf{x}\_n\\|\_0\\leq K$
+%[text] - 辞書更新ステップ \
+%[text]  $\\hat{\\mathbf{\\theta}}=\\arg\\min\_{\\mathbf{\\theta}}\\frac{1}{2S}\\sum\_{n=1}^{S}\\|\\mathbf{y}\_n-\\mathbf{D}\_{\\mathbf{\\theta}}\\hat{\\mathbf{x}}\_n\\|\_2^2$
+%[text]  $\\hat{\\mathbf{D}}=\\mathbf{D}\_{\\hat{\\mathbf{\\theta}}$
+%[text] #### 採用するスパース近似と辞書更新の手法:
+%[text] - スパース近似：（正規化なし）繰返しハード閾値処理(IHT)
+%[text] - 辞書更新： モーメンタム付き確率的勾配降下法(SGD) \
     % Check if IHT works for dlarray
     %x = dlarray(randn(szPatchTrn,'single'),'SSCB');
     %[y,coefs{1:nOutputs}] = iht(x,analysisnet,synthesisnet,sparsityRatio);
-% 辞書学習の繰返し計算
-
+%[text] #### 辞書学習の繰返し計算
     import saivdr.dcnn.*
     %profile on
     for iIter = 1:nItersNsolt
@@ -746,8 +591,7 @@ else
     end
     %profile off
     %profile viewer
-% 訓練ネットワークの保存
-
+%[text] #### 訓練ネットワークの保存
     import saivdr.dcnn.*
     synthesislgraph = layerGraph(synthesisnet);
     analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
@@ -765,16 +609,14 @@ title('Analysis NSOLT')
 subplot(1,2,2)
 plot(synthesislgraph)
 title('Synthesis NSOLT')
-% 要素画像の表示
-
+%[text] #### 要素画像の表示
 import saivdr.dcnn.*
 
 figure
 
 atomicimshow(synthesisnet,[],2^(nLevels-1))
 title('Atomic images of trained NSOLT')
-% 推論用NSOLTネットワークの構築
-
+%[text] ### 推論用NSOLTネットワークの構築
 
 % Assemble analyzer
 analysislgraph4predict = analysislgraph;
@@ -813,15 +655,13 @@ for iLayer = 1:height(synthesislgraph4predict.Layers)
     end
 end
 synthesisnet4predict = assembleNetwork(synthesislgraph4predict);  
-% 随伴関係（完全再構成）の確認
-% NSOLTはパーセバルタイト性を満たす．
-
+%[text] #### 随伴関係（完全再構成）の確認
+%[text] NSOLTはパーセバルタイト性を満たす．
 u = rand(szOrg,'single');
 [s{1:nLevels+1}] = analysisnet4predict.predict(u);
 v = synthesisnet4predict.predict(s{1:nLevels+1});
 assert(mse(u,v)<1e-9)
-% NSOLTによる合成処理とその随伴処理の定義
-
+%[text] #### NSOLTによる合成処理とその随伴処理の定義
 nsoltconfig.nLevels = nLevels;
 szCoefs = zeros(nLevels+1,3);
 for iLevel = 1:nLevels+1
@@ -833,15 +673,14 @@ end
 nsoltconfig.szCoefs = szCoefs;
 syn_nsolt = @(x) synthesisnsolt(x,synthesisnet4predict,nsoltconfig);
 adj_nsolt = @(y) analysisnsolt(y,analysisnet4predict,nsoltconfig);
-% 随伴関係の確認
-
+%[text] #### 随伴関係の確認
 x = adj_nsolt(y);
 v = randn(size(x));
 u = syn_nsolt(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-3)
-%% 繰返しハード閾値処理(IHT)によるスパース近似の比較
-% 辞書の準備
-
+%%
+%[text] ## 繰返しハード閾値処理(IHT)によるスパース近似の比較
+%[text] #### 辞書の準備
 blkdctwon  = { syn_blkdct,  adj_blkdct,  "Block DCTwoN", false };
 blkdct  = { syn_blkdct,  adj_blkdct,  "Block DCT", true };
 blkpcawon  = { syn_blkpca,  adj_blkpca,  "Block PCAwoN", false };
@@ -852,15 +691,10 @@ nsoltwon   = { syn_nsolt,   adj_nsolt,   "NSOLTwoN", false };
 nsolt = { syn_nsolt,   adj_nsolt,   "NSOLT", true };
 dicset  = { blkdctwon, blkdct, blkpcawon, blkpca, blkrica, blkksvd, nsoltwon, nsolt };
 nDics   = length(dicset);
-% IHT
-% $$\mathbf{x}^{(t+1)}\leftarrow \mathcal{H}_{BK}\left(\mathbf{x}^{(t)}+\mu^{(t)}\hat{\mathbf{D}}^\textsf{T}\left(\mathbf{y}-\hat{\mathbf{D}}\mathbf{x}^{(t)}\right)\right)$$
-% 
-% $$t\leftarrow t+1$$
-%% 
-% * T. Blumensath and M. E. Davies, "Normalized Iterative Hard Thresholding: 
-% Guaranteed Stability and Performance," in IEEE Journal of Selected Topics in 
-% Signal Processing, vol. 4, no. 2, pp. 298-309, April 2010, doi: 10.1109/JSTSP.2010.2042411.
-
+%[text] #### IHT
+%[text]  $\\mathbf{x}^{(t+1)}\\leftarrow \\mathcal{H}\_{BK}\\left(\\mathbf{x}^{(t)}+\\mu^{(t)}\\hat{\\mathbf{D}}^\\textsf{T}\\left(\\mathbf{y}-\\hat{\\mathbf{D}}\\mathbf{x}^{(t)}\\right)\\right)$
+%[text]  $t\\leftarrow t+1$
+%[text] -  T. Blumensath and M. E. Davies, "Normalized Iterative Hard Thresholding: Guaranteed Stability and Performance," in IEEE Journal of Selected Topics in Signal Processing, vol. 4, no. 2, pp. 298-309, April 2010, doi: 10.1109/JSTSP.2010.2042411. \
 nItersIht = 2000;
 
 % 平均値を引いた画像を用意（近似後に平均値を加算）
@@ -936,8 +770,8 @@ for iDic = 1:nDics
     end
     yaprxs{iDic} = yaprx_ + ymean;
 end
-%% 近似結果の表示
-
+%%
+%[text] ## 近似結果の表示
 dicnames = [blkdctwon{3},blkdct{3},blkpcawon{3},blkpca{3},blkrica{3},blkksvd{3},nsoltwon{3},nsolt{3}];
 psnrtbl = array2table(psnrs,'VariableNames',dicnames);
 psnrtbl = horzcat(table((1:nItersIht).','VariableNames',"Iterations"),psnrtbl);
@@ -974,9 +808,9 @@ for idx = 1:nDics
     imshow(yaprxs{idx})
     title(dicname+" "+num2str(psnrs(end,idx))+" dB")
 end
-%% 【関数定義】
-% NSOLT合成処理関数
-
+%%
+%[text] ## 【関数定義】
+%[text] #### NSOLT合成処理関数
 function y = synthesisnsolt(x,synthesisnet4predict,config)
 nLevels = config.nLevels;
 szCoefs = config.szCoefs;
@@ -992,8 +826,7 @@ end
 y = synthesisnet4predict.predict(s{1:nLevels+1});
 end
 
-% NSOLT分析処理関数
-
+%[text] #### NSOLT分析処理関数
 function x = analysisnsolt(y,analysisnet4predict,config)
 nLevels = config.nLevels;
 szCoefs = config.szCoefs;
@@ -1009,15 +842,13 @@ for iLevel = 1:nLevels+1
     sidx = eidx + 1;
 end
 end
-% ハード閾値処理
-
+%[text] #### ハード閾値処理
 function y = hardthresh(x,K)
 v = sort(abs(x(:)),'descend');
 thk = v(K);
 y = (abs(x)>thk).*x;
 end
-% 深層学習配列に対する繰返しハード閾値処理(IHT)のバッチ処理
-
+%[text] #### 深層学習配列に対する繰返しハード閾値処理(IHT)のバッチ処理
 function newdata = iht4patchds(oldtbl,analyzer,synthesizer,sparsityRatio)
 % IHT for InputImage in randomPatchExtractionDatastore
 %
@@ -1039,8 +870,7 @@ end
 % Output as a cell in order to make multiple-input datastore
 newdata = [ coefarray table2cell(restbl) ];
 end
-% 深層学習配列に対する繰返しハード閾値処理(IHT)
-
+%[text] #### 深層学習配列に対する繰返しハード閾値処理(IHT)
 function [dly,varargout] = iht4dlarray(dlx,analyzer,synthesizer,sparsityRatio)
 % IHT Iterative hard thresholding
 %
@@ -1072,8 +902,7 @@ for iter=1:nIters
 end
 varargout = dlcoefs;
 end
-% NSOLTネットワークの随伴関係の確認
-
+%[text] #### NSOLTネットワークの随伴関係の確認
 function checkadjointrelation(analysislgraph,synthesislgraph,nLevels,szInput)
 import saivdr.dcnn.*
 x = rand(szInput,'single');
@@ -1103,8 +932,7 @@ y = synthesisnet4predict.predict(s{:});
 % Evaluation
 display("MSE: " + num2str(mse(x,y)))
 end
-% 直交マッチング追跡関数の定義
-
+%[text] #### 直交マッチング追跡関数の定義
 function x = omp(y,Phi,nCoefs)
 % Initializaton
 nDims = size(Phi,1);
@@ -1140,8 +968,7 @@ while k < nCoefs
     k = k + 1;
 end
 end
-% NSOLTネットワークからのツリーレベル情報の抽出
-
+%[text] #### NSOLTネットワークからのツリーレベル情報の抽出
 function nLevels = extractnumlevels(nsoltnet)
 import saivdr.dcnn.*
 
@@ -1156,8 +983,7 @@ for iLayer = 1:nLayers
     end
 end
 end
-% NSOLTネットワークからのストライド情報の抽出
-
+%[text] #### NSOLTネットワークからのストライド情報の抽出
 function decFactor = extractdecfactor(nsoltnet)
 import saivdr.dcnn.*
 
@@ -1171,8 +997,7 @@ for iLayer = 1:nLayers
     end
 end
 end
-% NSOLTネットワークからのチャネル数情報の抽出
-
+%[text] #### NSOLTネットワークからのチャネル数情報の抽出
 function nChannels = extractnumchannels(nsoltnet)
 import saivdr.dcnn.*
 
@@ -1186,5 +1011,16 @@ for iLayer = 1:nLayers
     end
 end
 end
-%% 
-% © Copyright, 2023, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, 2023, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:checkbox:038e]
+%   data: {"defaultValue":false,"label":"isCodegen","run":"Section"}
+%---
+%[control:checkbox:335c]
+%   data: {"defaultValue":true,"label":"noDcLeakage","run":"Section"}
+%---

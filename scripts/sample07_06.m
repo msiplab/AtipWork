@@ -1,35 +1,27 @@
-%% Sample 7-6
-%% 幾何学処理
-% 幾何学的変換
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Geometric image processing
-% Geometric transformations
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 7-6
+%[text] ## 幾何学処理
+%[text] 幾何学的変換
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Geometric image processing
+%[text] Geometric transformations
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-% 画像入力
-% (Image input)
-
+%%
+%[text] ### 画像入力
+%[text] (Image input)
 % Reading an image
 fixed = imread('westconcordorthophoto.png');
-%% 
-% シフト画像の生成 (Generation of shifted image)
-
+%[text] シフト画像の生成 (Generation of shifted image)
 % Setting the amount of movement
-mx = -8;
-my = 8;
+mx = -8; %[control:slider:0e86]{"position":[6,8]}
+my = 8; %[control:slider:0767]{"position":[6,7]}
 
 % (Circulary) shifting the image
 moving = circshift(fixed,[my mx]);
@@ -46,19 +38,13 @@ title('Moving')
 % Show difference of the images
 figure(2)
 imshowpair(moving,fixed)
-% 位相限定相関
-% (Phase only correlation)
-% 
-% 2枚の画像の位置ずれ量を位相特性から検出．(Detects the amount of displacement between two images 
-% from their phase characteristics.)
-% 
-% $$\mathrm{POC}(\{x[\mathbf{n}]\}_\mathbf{n},\{y[\mathbf{n}]\}_\mathbf{n})=\mathrm{IDSFT}\left(\frac{{X}(e^{\j\omega})\overline{Y(e^{\j\omega})}}{|X(e^{\j\omega})\overline{Y(e^{\j\omega})}|}\right)=\mathrm{IDSFT}\left(e^{\j(\angle 
-% X(e^{\j\omega})-\angle Y(e^{\j\omega}))}\right)$$
-% 
-% 【参考資料】(Reference)
-%% 
-% * <http://www.aoki.ecei.tohoku.ac.jp/~ito/vol1_030.pdf http://www.aoki.ecei.tohoku.ac.jp/~ito/vol1_030.pdf>
-
+%%
+%[text] ### 位相限定相関
+%[text] (Phase only correlation)
+%[text] 2枚の画像の位置ずれ量を位相特性から検出．(Detects the amount of displacement between two images from their phase characteristics.)
+%[text]  $\\mathrm{POC}(\\{x\[\\mathbf{n}\]\\}\_\\mathbf{n},\\{y\[\\mathbf{n}\]\\}\_\\mathbf{n})=\\mathrm{IDSFT}\\left(\\frac{{X}(e^{\\j\\omega})\\overline{Y(e^{\\j\\omega})}}{|X(e^{\\j\\omega})\\overline{Y(e^{\\j\\omega})}|}\\right)=\\mathrm{IDSFT}\\left(e^{\\j(\\angle X(e^{\\j\\omega})-\\angle Y(e^{\\j\\omega}))}\\right)$
+%[text] 【参考資料】(Reference)
+%[text] - [http://www.aoki.ecei.tohoku.ac.jp/~ito/vol1\_030.pdf](http://www.aoki.ecei.tohoku.ac.jp/~ito/vol1_030.pdf) \
 % Definition of POC in frequency domain
 nPoints = pow2(nextpow2(size(fixed)));
 frqPoc = @(x,y) exp(1j*(angle(fftn(x,nPoints))-angle(fftn(y,nPoints))));
@@ -104,11 +90,10 @@ px = floor(loc/nPoints(1));
 py = mod(py+nPoints(1)/2,nPoints(1))-nPoints(1)/2;
 px = mod(px+nPoints(2)/2,nPoints(2))-nPoints(2)/2;
 disp(['The peak location is [px, py] = [ ' num2str(px) ' ' num2str(py) ' ]'])
-% 画像レジストレーション
-% (Image registration)
-% 
-% 位置のずれた2枚の画像の位置合わせを実行する．(Performs registration of two misaligned images.)
-
+%%
+%[text] ### 画像レジストレーション
+%[text] (Image registration)
+%[text] 位置のずれた2枚の画像の位置合わせを実行する．(Performs registration of two misaligned images.)
 % Actual moving picture
 moving = rgb2gray(imread('westconcordaerial.png'));
 
@@ -124,21 +109,25 @@ title('Moving')
 % Show difference of the images
 figure(6)
 imshowpair(moving,fixed)
-%% 
-% 幾何学的変換の推定(Estimation of geometric transformations)
-
+%[text] 幾何学的変換の推定(Estimation of geometric transformations)
 tformEstimate = imregcorr(moving,fixed);
-%% 
-% 座標情報 (Information on the coordinate)
-
+%[text] 座標情報 (Information on the coordinate)
 Rfixed = imref2d(size(fixed));
-%% 
-% レジストレーション (Registration)
-
+%[text] レジストレーション (Registration)
 movingReg = imwarp(moving,tformEstimate,'OutputView',Rfixed);
-%% 
-% 結果の表示 (Display result)
-
+%[text] 結果の表示 (Display result)
 imshowpair(fixed,movingReg);
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:0e86]
+%   data: {"defaultValue":-8,"label":"mx","max":16,"min":-16,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:0767]
+%   data: {"defaultValue":8,"label":"my","max":16,"min":-16,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---

@@ -1,38 +1,32 @@
-%% Sample 9-2
-%% 離散ウェーブレット変換
-% ブロックDCTのフィルタバンク実装
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Discrete wavelet transform
-% Filter bank implementation of block DCT
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 9-2
+%[text] ## 離散ウェーブレット変換
+%[text] ブロックDCTのフィルタバンク実装
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Discrete wavelet transform
+%[text] Filter bank implementation of block DCT
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-%% ブロックサイズの設定
-% (Settings of block size)
-
+%%
+%[text] ## ブロックサイズの設定
+%[text] (Settings of block size)
 % # of channels
-nChs = 4;
-%% 入力信号の生成
-% (Generation of input)
-
+nChs = 4; %[control:slider:7367]{"position":[8,9]}
+%%
+%[text] ## 入力信号の生成
+%[text] (Generation of input)
 % Input signal
 u = rand(1,3*nChs);
 u = [0 u zeros(1,nChs-1)];
-% 並列フィルタバンク実装
-% (Parallel filter bank implementation)
-
+%%
+%[text] ### 並列フィルタバンク実装
+%[text] (Parallel filter bank implementation)
 % DCT matrix
 P =  dctmtx(nChs);
 
@@ -56,9 +50,9 @@ for iCh = 1:nChs
     vk = conv(fk,upsample(s(iCh,:),nChs));
     v = v + vk;
 end
-%% 信号表示
-% (Signal display)
-
+%%
+%[text] ## 信号表示
+%[text] (Signal display)
 figure(1)
 subplot(3,nChs,1:nChs)
 stem(0:length(u)-1,u,'filled')
@@ -82,9 +76,9 @@ title('Outut v[n]')
 xlabel('n')
 ax = gca;
 ax.XLim =[ 0 length(v)];
-% 合成フィルタのインパルス応答（基底ベクトル）
-% (Impluse responses of synthesis filters; basis vectors)
-
+%%
+%[text] ### 合成フィルタのインパルス応答（基底ベクトル）
+%[text] (Impluse responses of synthesis filters; basis vectors)
 figure(2)
 for iCh = 1:nChs
     fk = Q(:,iCh);
@@ -95,9 +89,9 @@ for iCh = 1:nChs
     ax = gca;
     ax.YLim =[ min(Q(:)) max(Q(:)) ];
 end
-% 合成フィルタの周波数応答（基底ベクトル）
-% (Frequency responses of synthesis filters; basis vectors)
-
+%%
+%[text] ### 合成フィルタの周波数応答（基底ベクトル）
+%[text] (Frequency responses of synthesis filters; basis vectors)
 figure(3)
 fftPoints = 512;
 F = zeros(fftPoints,nChs);
@@ -117,21 +111,13 @@ xlabel('Normalized Frequency (x\pi rad/sample)')
 ylabel('Magnitude') % (dB)')
 legend(legends,'Location','southeast')
 grid on
-% ポリフェーズ行列実装
-% (Polyphase matrix implemenation)
-% 
-% 分析合成処理 (Analysis and synthesis process)
-% 
-% $$\mathbf{E}(z)=\left(\begin{array}{cccc}  h_0[0] &h_0[1] & \cdots & h_0[M-1] 
-% \\ h_1[0]& h_1[1] & \cdots & h_1[M-1] \\ \vdots & \vdots & \ddots & \vdots \\h_{M-1}[0] 
-% & h_{M-1}[1] & \cdots & h_{M-1}[M-1]\end{array}\right)$$
-% 
-% $$\mathbf{R}(z)=\left(\begin{array}{cccc}  f_0[M-1] &f_1[M-1] &\cdots&f_{M-1}[M-1] 
-% \\ f_0[M-2]& f_1[M-2] & \cdots & f_{M-1}[M-2] \\\vdots & \vdots & \ddots & \vdots 
-% \\f_0[0] & f_1[0] & \cdots & f_{M-1}[0]\end{array}\right)$$
-% 
-% 
-
+%%
+%[text] ### ポリフェーズ行列実装
+%[text] (Polyphase matrix implemenation)
+%[text] 分析合成処理 (Analysis and synthesis process)
+%[text]  $\\mathbf{E}(z)=\\left(\\begin{array}{cccc}  h\_0\[0\] &h\_0\[1\] & \\cdots & h\_0\[M-1\] \\\\ h\_1\[0\]& h\_1\[1\] & \\cdots & h\_1\[M-1\] \\\\ \\vdots & \\vdots & \\ddots & \\vdots \\\\\nh\_{M-1}\[0\] & h\_{M-1}\[1\] & \\cdots & h\_{M-1}\[M-1\]\n\\end{array}\\right)$
+%[text]  $\\mathbf{R}(z)=\\left(\\begin{array}{cccc}  f\_0\[M-1\] &f\_1\[M-1\] &\\cdots&f\_{M-1}\[M-1\] \\\\ f\_0\[M-2\]& f\_1\[M-2\] & \\cdots & f\_{M-1}\[M-2\] \\\\\n\\vdots & \\vdots & \\ddots & \\vdots \\\\\nf\_0\[0\] & f\_1\[0\] & \\cdots & f\_{M-1}\[0\]\\end{array}\\right)$
+%[text] 
 % Input Signal
 u = [zeros(1,nChs-1) u 0 ]; % Adjust delay for downsampling
 disp(u)
@@ -162,5 +148,14 @@ for phase = nChs-1:-1:0
     idx = idx + 1;
 end
 disp(v)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:7367]
+%   data: {"defaultValue":4,"label":"nChs","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":2}
+%---

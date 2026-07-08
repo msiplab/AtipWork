@@ -1,57 +1,38 @@
-%% Sample 7-3
-%% 幾何学処理
-% 拡大処理
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Geometric image processing
-% Interpolation
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 7-3
+%[text] ## 幾何学処理
+%[text] 拡大処理
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Geometric image processing
+%[text] Interpolation
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-% 補間率の設定
-% (Setting of upsampling factor)
-%% 
-% * $M$: 補間率 (upsampling factor) 
-
+%%
+%[text] ### 補間率の設定
+%[text] (Setting of upsampling factor)
+%[text] - $M$: 補間率 (upsampling factor)  \
 % Upsampling factor
-uFactor = 2;
+uFactor = 2; %[control:slider:43ae]{"position":[11,12]}
 
 % Upsampling phase
-uPhase = 0;
-%% 
-% 最近傍補間フィルタのインパルス応答 (Impulse response of nearest-neighbor filter)
-% 
-% $$f[n]=\left\{\begin{array}{ll} 1& 0\leq n\leq M-1 \\ 0 & \mathrm{otherwise} 
-% \end{array}\right.$$
-% 
-% 一次補間フィルタのインパルス応答 (Impulse response of linear interpolation filter)
-% 
-% $$f[n]=\left\{\begin{array}{ll} \frac{1}{M}(M-|n|) & -M+1\leq n\leq M-1 \\ 
-% 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% オフセットを考慮した場合 (When considering the offset)
-% 
-% $$f[n]=\left\{\begin{array}{ll} \frac{1}{M}\left(M-\left|n-\frac{1}{2}\right|\right) 
-% & -M+1\leq n\leq M \\ 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% ただし，非因果性に注意．(Note that the incausal property.)
-%% 
-% * $\{f[n]\}_n$: インパルス応答 (Impulse response)
-
+uPhase = 0; %[control:slider:76fc]{"position":[10,11]}
+%[text] 最近傍補間フィルタのインパルス応答 (Impulse response of nearest-neighbor filter)
+%[text]  $f\[n\]=\\left\\{\\begin{array}{ll} 1& 0\\leq n\\leq M-1 \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] 一次補間フィルタのインパルス応答 (Impulse response of linear interpolation filter)
+%[text]  $f\[n\]=\\left\\{\\begin{array}{ll} \\frac{1}{M}(M-|n|) & -M+1\\leq n\\leq M-1 \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] オフセットを考慮した場合 (When considering the offset)
+%[text]  $f\[n\]=\\left\\{\\begin{array}{ll} \\frac{1}{M}\\left(M-\\left|n-\\frac{1}{2}\\right|\\right) & -M+1\\leq n\\leq M \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] ただし，非因果性に注意．(Note that the incausal property.)
+%[text] - $\\{f\[n\]\\}\_n$: インパルス応答 (Impulse response) \
 % Filter seletion
-ftype = "Nearest neighbor";
-offset = false; % Set TRUE for even M, FALSE for odd M to make the handmade bilinear interpolation similar to IMRESIZE
+ftype = "Nearest neighbor"; %[control:dropdown:8ef0]{"position":[9,27]}
+offset = false; % Set TRUE for even M, FALSE for odd M to make the handmade bilinear interpolation similar to IMRESIZE %[control:dropdown:376f]{"position":[10,15]}
 
 % Impulse response of interpolation filter
 if strcmp(ftype,'Nearest neighbor')
@@ -66,9 +47,9 @@ elseif strcmp(ftype, 'Bilinear interpolation')
 else
     error('Invalid ftype')
 end
-%% フィルタ特性の表示
-% (Display of filter characteristics)
-
+%%
+%[text] ## フィルタ特性の表示
+%[text] (Display of filter characteristics)
 % Impulse response
 figure(1)
 impz(f)
@@ -83,35 +64,18 @@ hold on
 line([0 1/uFactor 1/uFactor],[20*log10(uFactor) 20*log10(uFactor) ax.YLim(1)],...
     'LineStyle',':','LineWidth',2,'Color','red');
 hold off
-% 画像への適用
-% (Application to images)
-% 
-% $$v[\mathbf{m}]=\sum_{\mathbf{k}\in\mathbb{Z}^2}u[\mathbf{Mk}]f[\mathbf{m}-\mathbf{Mk}]$$
-% 
-% 最近傍補間フィルタのインパルス応答 (Impulse response of nearest-neighbor filter)
-% 
-% $$f[\mathbf{n}]=\left\{\begin{array}{ll} 1 & \mathbf{n}\in \mathcal{N}(\mathbf{M})\\ 
-% 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% 双一次補間フィルタのインパルス応答 (Impulse response of bilinear interpolation filter)
-% 
-% $$f[\mathbf{n}]=\left\{\begin{array}{ll} \mathrm{prod}\left(\mathbf{1}-\mathrm{abs}\left(\mathbf{M}^{-1}\mathbf{n}\right) 
-% \right)& \mathbf{n}\in \{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1)^2\} 
-% \\ 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% オフセットを考慮した場合
-% 
-% $$f[\mathbf{n}]=\left\{\begin{array}{ll} \mathrm{prod}\left(\mathbf{1}-\mathrm{abs}\left(\mathbf{M}^{-1}\mathbf{n}-\frac{1}{2}\mathbf{1}\right) 
-% \right)& \mathbf{n}\in \{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1]^2\} 
-% \\ 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% ただし， $\mathrm{prod}(\cdot)$ は要素の積．非因果性に注意．(where $\mathrm{prod}(\cdot)$ denotes 
-% the product of the array elements. Note that the incausal property.)
-% 
-% Note that if $\mathbf{M}=\mathrm{diag}(M,M)\Rightarrow \mathrm{prod}(\mathbf{1}-\mathrm{abs}(\mathbf{M}^{-1}\mathbf{n}-\alpha\mathbf{1}))=\frac{1}{M^2}(M-|n_1-\alpha|)(M-|n_2-\alpha|)$ 
-% , $\{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1)^2\}=\{-M+1,-M+2,\cdots,M-1\}^2$ 
-% and $\{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1]^2\}=\{-M+1,-M+2,\cdots,M\}^2$.
-
+%%
+%[text] ### 画像への適用
+%[text] (Application to images)
+%[text]  $v\[\\mathbf{m}\]=\\sum\_{\\mathbf{k}\\in\\mathbb{Z}^2}u\[\\mathbf{Mk}\]f\[\\mathbf{m}-\\mathbf{Mk}\]$
+%[text] 最近傍補間フィルタのインパルス応答 (Impulse response of nearest-neighbor filter)
+%[text]  $f\[\\mathbf{n}\]=\\left\\{\\begin{array}{ll} 1 & \\mathbf{n}\\in \\mathcal{N}(\\mathbf{M})\\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] 双一次補間フィルタのインパルス応答 (Impulse response of bilinear interpolation filter)
+%[text]  $f\[\\mathbf{n}\]=\\left\\{\\begin{array}{ll} \\mathrm{prod}\\left(\\mathbf{1}-\\mathrm{abs}\\left(\\mathbf{M}^{-1}\\mathbf{n}\\right) \\right)& \\mathbf{n}\\in \\{\\mathbf{Mx}\\in\\mathbb{Z}^2\\ |\\ \\mathbf{x}\\in(-1,1)^2\\} \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] オフセットを考慮した場合
+%[text]  $f\[\\mathbf{n}\]=\\left\\{\\begin{array}{ll} \\mathrm{prod}\\left(\\mathbf{1}-\\mathrm{abs}\\left(\\mathbf{M}^{-1}\\mathbf{n}-\\frac{1}{2}\\mathbf{1}\\right) \\right)& \\mathbf{n}\\in \\{\\mathbf{Mx}\\in\\mathbb{Z}^2\\ |\\ \\mathbf{x}\\in(-1,1\]^2\\} \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] ただし， $\\mathrm{prod}(\\cdot)$ は要素の積．非因果性に注意．(where $\\mathrm{prod}(\\cdot)$ denotes the product of the array elements. Note that the incausal property.)
+%[text] Note that if $\\mathbf{M}=\\mathrm{diag}(M,M)\\Rightarrow \\mathrm{prod}(\\mathbf{1}-\\mathrm{abs}(\\mathbf{M}^{-1}\\mathbf{n}-\\alpha\\mathbf{1}))=\\frac{1}{M^2}(M-|n\_1-\\alpha|)(M-|n\_2-\\alpha|)$ , $\\{\\mathbf{Mx}\\in\\mathbb{Z}^2\\ |\\ \\mathbf{x}\\in(-1,1)^2\\}=\\{-M+1,-M+2,\\cdots,M-1\\}^2$ and $\\{\\mathbf{Mx}\\in\\mathbb{Z}^2\\ |\\ \\mathbf{x}\\in(-1,1\]^2\\}=\\{-M+1,-M+2,\\cdots,M\\}^2$.
 % Reading an image
 u = imread('cameraman.tif');
 
@@ -163,17 +127,14 @@ else
     error('Invalid ftype')
 end
 
-% 画像表示
-% (Display image)
-% 
-% 原画像 (Original)
-
+%%
+%[text] ### 画像表示
+%[text] (Display image)
+%[text] 原画像 (Original)
 figure(5)
 imshow(u)
 title('Original')
-%% 
-% 拡大画像 (Interpolated image)
-
+%[text] 拡大画像 (Interpolated image)
 % Definition of MSE
 mymse = @(x,y) sum((x-y).^2,'all')/numel(x);
 
@@ -187,5 +148,23 @@ title('Interpolation w/ IMRESIZE')
 figure(8)
 imshow(imabsdiff(v,y))
 title(['Absolute difference (MSE = ' num2str(mymse(v,y)) ')'])
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:43ae]
+%   data: {"defaultValue":2,"label":"dFactor","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:76fc]
+%   data: {"defaultValue":0,"label":"dFactor","max":7,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:dropdown:8ef0]
+%   data: {"defaultValue":"\"Nearest neighbor\"","itemLabels":["Nearest neighbor","Bilinear interpolation"],"items":["\"Nearest neighbor\"","\"Bilinear interpolation\""],"label":"ドロップ ダウン","run":"SectionToEnd"}
+%---
+%[control:dropdown:376f]
+%   data: {"defaultValue":"false","itemLabels":["true","false"],"items":["true","false"],"label":"Offset","run":"SectionToEnd"}
+%---

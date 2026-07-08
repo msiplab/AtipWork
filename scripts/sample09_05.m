@@ -1,41 +1,30 @@
-%% Sample 9-5
-%% 離散ウェーブレット変換
-% インプレース実装
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Discrete wavelet transform
-% Inplace implementation
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 9-5
+%[text] ## 離散ウェーブレット変換
+%[text] インプレース実装
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Discrete wavelet transform
+%[text] Inplace implementation
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-%% 入力信号の生成
-% (Generation of input)
-
+%%
+%[text] ## 入力信号の生成
+%[text] (Generation of input)
 % Input signal
 u = rand(64,1);% [ 0 3 1 3 1 5 3 0 ]; % Set to even length
-% 9/7-DWTインプレース実装
-% (Inplace implementation of 9/7 DWT)
-% 
-% 以下の関数を利用。定義は末尾に添付。(The following functions are used. Definitions are attached 
-% at the end.)
-%% 
-% * TRANS97: Inplace implementation of forward 9/7-transform.
-% * ITRANS97: Inplace implementation of inverse 9/7-transform.
-%% 
-% 対称拡張法による境界処理も適用。(The symmetric extension method is also applied as the boundary 
-% processing.)
-
+%%
+%[text] ### 9/7-DWTインプレース実装
+%[text] (Inplace implementation of 9/7 DWT)
+%[text] 以下の関数を利用。定義は末尾に添付。(The following functions are used. Definitions are attached at the end.)
+%[text] - TRANS97: Inplace implementation of forward 9/7-transform.
+%[text] - ITRANS97: Inplace implementation of inverse 9/7-transform. \
+%[text] 対称拡張法による境界処理も適用。(The symmetric extension method is also applied as the boundary processing.)
 % 3-level hierachical analysis process
 [s10,s11] = trans97(u);
 [s20,s21] = trans97(s10);
@@ -45,9 +34,9 @@ u = rand(64,1);% [ 0 3 1 3 1 5 3 0 ]; % Set to even length
 v2 = itrans97(s30,s31);
 v1 = itrans97(v2,s21);
 v  = itrans97(v1,s11);
-%% 信号表示
-% (Signal display)
-
+%%
+%[text] ## 信号表示
+%[text] (Signal display)
 figure(1)
 % Input
 subplot(3,8,[1,8])
@@ -88,9 +77,9 @@ title('Output v[n]')
 xlabel('n')
 ax = gca;
 ax.XLim =[ 0 length(v)];
-% インパルス応答（局所基底ベクトル）
-% (Impluse responses of synthesis filters; local basis vectors)
-
+%%
+%[text] ### インパルス応答（局所基底ベクトル）
+%[text] (Impluse responses of synthesis filters; local basis vectors)
 % 3-level hierachical synthesis process
 f = cell(4,1);
 for idx = 1:4
@@ -125,9 +114,9 @@ title('f_2[n]')
 subplot(4,1,4)
 impz(f{4})
 title('f_3[n]')
-% 周波数応答
-% (Frequency responses)
-
+%%
+%[text] ### 周波数応答
+%[text] (Frequency responses)
 figure(3)
 fftPoints = 512;
 F = zeros(fftPoints,4);
@@ -145,11 +134,10 @@ ylabel('Magnitude') % (dB)')
 title('Frequency responses of synthesis filters')
 legend({'F_0','F_1','F_2','F_3'})
 grid on
-% 関数定義
-% (Function definition)
-% 
-% Forward 9/7-transform w/ inplace implementation
-
+%%
+%[text] ### 関数定義
+%[text] (Function definition)
+%[text] Forward 9/7-transform w/ inplace implementation
 function [subL,subH] = trans97(seq)
 %
 % Copyright (C) 2005-2015 Shogo MURAMATSU, All rights reserved
@@ -175,9 +163,7 @@ subL = seq(1:2:end);
 subH = seq(2:2:end);
 
 end
-%% 
-% Inverse 9/7-transform w/ inplace implementation
-
+%[text] Inverse 9/7-transform w/ inplace implementation
 function seq = itrans97(subL,subH)
 %
 % Copyright (C) 2005-2015 Shogo MURAMATSU, All rights reserved
@@ -204,9 +190,7 @@ seq = inplaceprediction(seq,-gamma);
 seq = inplaceupdate(seq,-beta);
 seq = inplaceprediction(seq,-alpha);
 end
-%% 
-% Prediction lifting step w/ inplace implementation
-
+%[text] Prediction lifting step w/ inplace implementation
 function seq = inplaceprediction(seq,p)
 %
 % Copyright (C) 2020 Shogo MURAMATSU, All rights reserved
@@ -227,9 +211,7 @@ if flagrow
     seq = seq.';
 end
 end
-%% 
-% Update lifting step w/ inplace implementation
-
+%[text] Update lifting step w/ inplace implementation
 function seq = inplaceupdate(seq,u)
 %
 % Copyright (C) 2020 Shogo MURAMATSU, All rights reserved
@@ -249,7 +231,11 @@ if flagrow
     seq = seq.';
 end
 end
-%% 
-% 
-% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[text] 
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

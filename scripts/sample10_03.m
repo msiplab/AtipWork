@@ -1,27 +1,21 @@
-%% Sample 10-3
-%% 冗長変換
-% ムーア・ペンローズの一般逆行列
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Redundant transforms
-% Moore-Penrose inverse
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 10-3
+%[text] ## 冗長変換
+%[text] ムーア・ペンローズの一般逆行列
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Redundant transforms
+%[text] Moore-Penrose inverse
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-% 合成フィルタバンクの大域行列表現
-% (Global matrix representation of synthesis filter bank)
-
+%%
+%[text] ### 合成フィルタバンクの大域行列表現
+%[text] (Global matrix representation of synthesis filter bank)
 % # of inputs
 nSamples = 4;
 
@@ -37,24 +31,21 @@ C = [zeros(nSamples,nF-1) eye(nSamples) zeros(nSamples,nF-1)]; % Clipping matrix
 % Atoms in (circular) convolution matrix
 d0 = C*convmtx(f0.',nSamples+nF-1)*X;
 d1 = C*convmtx(f1.',nSamples+1)*X;
-%% 
-% 辞書 (Dictionary) $\mathbf{D}$
-
+%[text] 辞書 (Dictionary) $\\mathbf{D}$
 % Dictionary D (Global matrix representation of synthesis filter bank)
 D = zeros(nSamples,2*nSamples);
 D(:,1:2:end) = d0;
 D(:,2:2:end) = d1;
 disp(D)
-%% ムーア・ペンローズ一般逆行列
-% (Moore-Penrose's inverse)
-% 
-% $$\mathbf{T}=\mathbf{D}^T(\mathbf{DD}^T)^{-1}=\mathbf{D}^{+}$$
-
+%%
+%[text] ## ムーア・ペンローズ一般逆行列
+%[text] (Moore-Penrose's inverse)
+%[text]  $\\mathbf{T}=\\mathbf{D}^T(\\mathbf{DD}^T)^{-1}=\\mathbf{D}^{+}$
 T = pinv(D); 
 disp(T)
-% 分析合成処理
-% (Analysis-synthesis process)
-
+%%
+%[text] ### 分析合成処理
+%[text] (Analysis-synthesis process)
 % Signal generation
 u = rand(nSamples,1);
 disp(u)
@@ -69,11 +60,11 @@ disp(v)
 % MSE evaluation
 mymse = @(x,y) mean((x(:)-y(:)).^2);
 disp(['MSE = ', num2str(mymse(u, v))]);
-%% 他の一般逆行列
-% (Another generalized inverse)
-
+%%
+%[text] ## 他の一般逆行列
+%[text] (Another generalized inverse)
 % Coefficients of analysis filters
-gamma = -0.5;
+gamma = -0.5; %[control:slider:7527]{"position":[9,13]}
 delta = 1 - gamma;
 
 % Analysis filters
@@ -102,9 +93,9 @@ v = D*s;
 disp(v)
 % MSE evaluation
 disp(['MSE = ', num2str(mymse(u, v))]);
-% $\gamma$ に対するサブバンド係数のエネルギ変化
-% (Energy change of sub-band coefficient vector w.r.t. $\gamma$)
-
+%%
+%[text] ### $\\gamma$ に対するサブバンド係数のエネルギ変化
+%[text] (Energy change of sub-band coefficient vector w.r.t. $\\gamma$)
 % Sweep gamma and evaluate energy of subband coefficient vectors
 gammas = linspace(-1.0,2.0,32);
 engs = zeros(length(gammas),1);
@@ -138,9 +129,8 @@ for idx = 1:length(gammas)
     v = D*s;
     mses(idx) = mymse(u, v);    
 end
-%% 
-% グラフ描画 (Plot)
-
+%%
+%[text] グラフ描画 (Plot)
 figure(1)
 yyaxis left
 plot(gammas,engs)
@@ -152,5 +142,14 @@ yyaxis right
 plot(gammas,mses,':')
 ylabel('MSE')
 hold off
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:7527]
+%   data: {"defaultValue":-0.5,"label":"gamma","max":2,"min":-1,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---

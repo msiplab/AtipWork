@@ -1,36 +1,30 @@
-%% Sample 9-6
-%% 離散ウェーブレット変換
-% ２変量離散ウェーブレット変換
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Discrete wavelet transform
-% Bivariate discrete wavelet transform
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 9-6
+%[text] ## 離散ウェーブレット変換
+%[text] ２変量離散ウェーブレット変換
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Discrete wavelet transform
+%[text] Bivariate discrete wavelet transform
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
 import msip.download_img
 download_img()
-%% 画像の読込
-% (Read image)
-
+%%
+%[text] ## 画像の読込
+%[text] (Read image)
 u = im2double(imread('./data/kodim23.png'));
 figure(1)
 imshow(u)
 title('Original')
-% 画像の9/7-変換と逆変換
-% (The 9/7-transform and its inverse of an image)
-
+%%
+%[text] ### 画像の9/7-変換と逆変換
+%[text] (The 9/7-transform and its inverse of an image)
 % Foreard 9/7-transform
 [subLL,subHL,subLH,subHH] = imtrans97(u);
 
@@ -48,9 +42,9 @@ v = imitrans97(subLL,subHL,subLH,subHH);
 figure(3)
 imshow(v)
 title('Reconstruction')
-% 画像の9/7-DWTと逆変換
-% (The 9/7-DWT and its inverse of an image)
-
+%%
+%[text] ### 画像の9/7-DWTと逆変換
+%[text] (The 9/7-DWT and its inverse of an image)
 % 3-Level 9/7 DWT
 [subLL2,subHL2,subLH2,subHH2] = imtrans97(u);
 [subLL1,subHL1,subLH1,subHH1] = imtrans97(subLL2);
@@ -78,19 +72,16 @@ imshow(w)
 title('Reconstruction w/ 3-level IDWT')
 % PSNR evaluation
 psnr(im2uint8(u),im2uint8(w))
-% 画像近似
-% (Image approximation)
-% 
-% 3-level 9/7-DWT による近似 (Approximation through the 3-level 9/7-DWT)
-
+%%
+%[text] ### 画像近似
+%[text] (Image approximation)
+%[text] 3-level 9/7-DWT による近似 (Approximation through the 3-level 9/7-DWT)
 % 3-Level 9/7-IDWT
 subLL1 = imitrans97(subLL0 ,0*subHL0, 0*subLH0, 0*subHH0);
 subLL2 = imitrans97(subLL1, 0*subHL1, 0*subLH1, 0*subHH1);
 r = imitrans97(subLL2, 0*subHL2, 0*subLH2, 0*subHH2);
 
-%% 
-% 8×8 DCT による近似 (Approximation through the 8×8 DCT)
-
+%[text] 8×8 DCT による近似 (Approximation through the 8×8 DCT)
 mask = zeros(8);
 mask(1) = 1;
 [c1,c2,c3] = imsplit(u);
@@ -108,9 +99,9 @@ title(['Approximation w/ 3-level DWT (PNSR: ' num2str(psnr(im2uint8(u),im2uint8(
 figure(7)
 imshow(y)
 title(['Approximation w/ 8\times 8 DCT (PNSR: ' num2str(psnr(im2uint8(u),im2uint8(y))) ' dB)'])
-% 画像圧縮
-% (Image compression)
-
+%%
+%[text] ### 画像圧縮
+%[text] (Image compression)
 % JPEG w/ DCT
 imwrite(u,'lena.jpg','Quality',10)
 jpginfo = imfinfo('lena.jpg')
@@ -127,11 +118,10 @@ figure(9)
 t = imread('lena.jp2');
 imshow(t)
 title(sprintf('JPEG2000 Size: %d, PSNR: %6.2f dB',jp2info.FileSize,psnr(im2uint8(u),t)))
-% 関数定義
-% (Function definition)
-% 
-% Forward 9/7-transform w/ inplace implementation
-
+%%
+%[text] ### 関数定義
+%[text] (Function definition)
+%[text] Forward 9/7-transform w/ inplace implementation
 function [subLL,subHL,subLH,subHH] = imtrans97(img)
 %
 % Copyright (C) 2005-2020 Shogo MURAMATSU, All rights reserved
@@ -167,9 +157,7 @@ subLH = img(2:2:end,1:2:end,:);
 subHH = img(2:2:end,2:2:end,:);
 
 end
-%% 
-% Inverse 9/7-transform w/ inplace implementation
-
+%[text] Inverse 9/7-transform w/ inplace implementation
 function img = imitrans97(subLL,subHL,subLH,subHH)
 %
 % Copyright (C) 2005-2020 Shogo MURAMATSU, All rights reserved
@@ -207,9 +195,7 @@ img = inplaceupdate2(img,-beta);
 img = inplaceprediction2(img,-alpha);
 
 end
-%% 
-% Prediction lifting step w/ inplace implementation
-
+%[text] Prediction lifting step w/ inplace implementation
 function picture = inplaceprediction2(picture,p)
 %
 % Copyright (C) 2005-2015 Shogo MURAMATSU, All rights reserved
@@ -228,9 +214,7 @@ else
         );    
 end
 end
-%% 
-% Update lifting step w/ inplace implementation
-
+%[text] Update lifting step w/ inplace implementation
 function picture = inplaceupdate2(picture,u)
 %
 % Copyright (C) 2005-2020 Shogo MURAMATSU, All rights reserved
@@ -249,5 +233,10 @@ else
         );    
 end
 end
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

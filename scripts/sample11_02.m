@@ -1,54 +1,46 @@
-%% Sample 11-2
-%% 画像ノイズ除去
-% ノイズの変換
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Image denoising
-% Transform of noise
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 11-2
+%[text] ## 画像ノイズ除去
+%[text] ノイズの変換
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Image denoising
+%[text] Transform of noise
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 clear
 close all
 import msip.download_img
 msip.download_img
-% パラメータ設定
-% (Parameter settings)
-%% 
-% * sgm: ノイズ標準偏差 $\sigma_w$ (Standard deviation of noise)
-% * nlevels: ウェーブレット段数 (Wavelet levels)
-
+%%
+%[text] ### パラメータ設定
+%[text] (Parameter settings)
+%[text] - sgm: ノイズ標準偏差 $\\sigma\_w$ (Standard deviation of noise)
+%[text] - nlevels: ウェーブレット段数 (Wavelet levels) \
 % Parameter settings
-sgmuint8 = 30; 
+sgmuint8 = 30;  %[control:slider:3ee0]{"position":[12,14]}
 sgm = sgmuint8/255;
-nlevels = 3; 
-%% 画像の読込
-% (Read image)
-
+nlevels = 3;  %[control:slider:3b0b]{"position":[11,12]}
+%%
+%[text] ## 画像の読込
+%[text] (Read image)
 u = im2double(imread('./data/kodim23.png'));
 if size(u,3) == 3
     u = rgb2gray(u);
 end
-%% 分析処理
-% (Analysis process)
-% 
-% 直交ウェーブレット変換Symlet を利用．(Uses Symlet, which is an orthogonal wavelet transform.)
-
+%%
+%[text] ## 分析処理
+%[text] (Analysis process)
+%[text] 直交ウェーブレット変換Symlet を利用．(Uses Symlet, which is an orthogonal wavelet transform.)
 % Preperation of filters for wavelets
 iswtb = license('checkout','wavelet_toolbox');
 if iswtb % Functions in Wavelet Toolbox are used
     dwtmode('per')
-    wname = "sym4";
+    wname = "sym4"; %[control:dropdown:2bb3]{"position":[13,19]}
     [h0,h1,f0,f1] = wfilters(wname);
     %save(['./data/' char(wname) '.mat'],'h0','h1','f0','f1')
 else
@@ -71,9 +63,7 @@ else
     F.f10 = f1(:)*f0(:).';
     F.f11 = f1(:)*f1(:).';
 end
-%% 
-% 分析処理 (Analysis process)
-
+%[text] 分析処理 (Analysis process)
 if iswtb
     [coefs,scales] = wavedec2(u,nlevels,h0,h1);
     % Reconstruction to check PR
@@ -84,17 +74,13 @@ else
     r = ezwaverec2(coefs,scales,F);
 end
 assert(norm(u-r,"fro")^2/numel(u)<1e-18,'Perfect reconstruction is violated.')
-%% 
-% 変換係数の配列化 (Alighment of coefficients)
-
+%[text] 変換係数の配列化 (Alighment of coefficients)
 uc = aligncoefs(coefs,scales);
-%% 観測画像
-% (Observation image)
-
+%%
+%[text] ## 観測画像
+%[text] (Observation image)
 v = imnoise(u,'gaussian',0,sgm^2);
-%% 
-% 分析処理 (Analysis process)
-
+%[text] 分析処理 (Analysis process)
 if iswtb
     [coefs,scales] = wavedec2(v,nlevels,h0,h1);
 else
@@ -104,13 +90,11 @@ end
 %% 変換係数の配列化
 pos = 0;
 dim = scales(1,:);
-%% 
-% 変換係数の配列化 (Alighment of coefficients)
-
+%[text] 変換係数の配列化 (Alighment of coefficients)
 vc = aligncoefs(coefs,scales);
-% 画像表示
-% (Image show)
-
+%%
+%[text] ### 画像表示
+%[text] (Image show)
 figure
 imshow(u);
 title('Original image u')
@@ -123,11 +107,10 @@ title(sprintf('Noisy image v：PSNR = %5.2f [dB]',psnr(u,v)))
 figure
 imshow(abs(vc))
 title('Transform Coefs. of v')
-% 関数定義
-% (Definition of function)
-% 
-% 変換係数の配列化 (Alighment of coefficients)
-
+%%
+%[text] ### 関数定義
+%[text] (Definition of function)
+%[text] 変換係数の配列化 (Alighment of coefficients)
 function c00 = aligncoefs(coefs,scales)
 nlevels = size(scales,1)-2;
 pos = 0;
@@ -151,5 +134,19 @@ for ilv = 1:nlevels
     c00 = [ c00 c01; c10 c11 ];
 end
 end
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:3ee0]
+%   data: {"defaultValue":30,"label":"スライダー","max":50,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":10}
+%---
+%[control:slider:3b0b]
+%   data: {"defaultValue":3,"label":"nlevels","max":5,"min":1,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:dropdown:2bb3]
+%   data: {"defaultValue":"\"sym4\"","itemLabels":["haar","db2","sym4"],"items":["\"haar\"","\"db2\"","\"sym4\""],"label":"wname","run":"Section"}
+%---

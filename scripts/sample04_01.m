@@ -1,46 +1,38 @@
-%% Sample 4-1
-%% 線形シフト不変システム
-% 単変量畳み込み
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Linear shift-invariant systems
-% Univariate convolution
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 4-1
+%[text] ## 線形シフト不変システム
+%[text] 単変量畳み込み
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Linear shift-invariant systems
+%[text] Univariate convolution
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-% 入力信号 $\{u[n]\}_n$ 
-% (Input signal $\{u[n]\}_n$)
-
+%%
+%[text] ### 入力信号 $\\{u\[n\]\\}\_n\n$ 
+%[text] (Input signal $\\{u\[n\]\\}\_n\n$)
 % Input x[n]
 u = [1 2 3];
-% 線形シフト不変システムのインパルス応答 $\{h[n]\}_n$ 
-% (Impulse response of a linear shift-invariant system $\{h[n]\}_n$)
-
+%%
+%[text] ### 線形シフト不変システムのインパルス応答 $\\{h\[n\]\\}\_n\n$ 
+%[text] (Impulse response of a linear shift-invariant system $\\{h\[n\]\\}\_n\n$)
 % Impulse response h[n]
 h = [1 1 1]/3;
-% 線形シフト不変システムの出力応答$\{v[n]\}_n$ 
-% (The linear shift-invariant system response $\{v[n]\}_n$)
-% 
-% 畳み込み演算 (Convolution)
-% 
-% $$\{v[n]\}_n=\{h[n]\}_n \ast \{u[n]\}_n = \sum_{k=-\infty}^{\infty}u[k]\{h[n-k]\}_n$$
-
+%%
+%[text] ### 線形シフト不変システムの出力応答$\\{v\[n\]\\}\_n\n$ 
+%[text] (The linear shift-invariant system response $\\{v\[n\]\\}\_n\n$)
+%[text] 畳み込み演算 (Convolution)
+%[text]  $\\{v\[n\]\\}\_n=\\{h\[n\]\\}\_n \\ast \\{u\[n\]\\}\_n = \\sum\_{k=-\\infty}^{\\infty}u\[k\]\\{h\[n-k\]\\}\_n\n$
 % Output y[n]
 v = conv(h,u);
-% 入出力のプロット
-% (Plot of the input and output)
-
+%%
+%[text] ### 入出力のプロット
+%[text] (Plot of the input and output)
 % Lengths of u, h and v
 nu = length(u);
 nh = length(h);
@@ -68,22 +60,15 @@ stem(0:nv-1,v,'filled')
 axis([0 nv -amax amax])
 xlabel('n')
 ylabel('v[n]')
-% 重み付けインパルス信号への分解と重み付けインパルス応答の合成
-% (Decomposition into weighted impulse signals and synthesis of weighted impulse 
-% responses)
-% 
-% $$\{v[n]\}_n = \sum_{k=-\infty}^{\infty} \{v_k[n]\}_n,$$
-% 
-% $$\{u[n]\}_n = \sum_{k=-\infty}^{\infty} \{u_k[n]\}_n,$$
-% 
-% ただし、(where)
-% 
-% $$\{v_k[n]\}_n = \{h[n]\}_n \ast \{u_k[n]\}_n,$$
-% 
-% $$\{u_k[n]\}_n = u[k]\{\delta[n-k]\}_n.$$
-% 
-% 
-
+%%
+%[text] ### 重み付けインパルス信号への分解と重み付けインパルス応答の合成
+%[text] (Decomposition into weighted impulse signals and synthesis of weighted impulse responses)
+%[text]  $\\{v\[n\]\\}\_n = \\sum\_{k=-\\infty}^{\\infty} \\{v\_k\[n\]\\}\_n,$
+%[text]  $\\{u\[n\]\\}\_n = \\sum\_{k=-\\infty}^{\\infty} \\{u\_k\[n\]\\}\_n,$
+%[text] ただし、(where)
+%[text]  $\\{v\_k\[n\]\\}\_n = \\{h\[n\]\\}\_n \\ast \\{u\_k\[n\]\\}\_n,\n$
+%[text]  $\\{u\_k\[n\]\\}\_n = u\[k\]\\{\\delta\[n-k\]\\}\_n.$
+%[text] 
 figure(2)
 uu = 0;
 vv = 0;
@@ -124,18 +109,21 @@ stem(0:nv-1,vv,'filled')
 axis([0 nv -amax amax])
 xlabel('n')
 ylabel('\Sigma_k y_k[n]')
-% 平均自乗誤差(MSE)による評価
-% (Evaluation in terms of the mean squared errors (MSE))
-% 
-% $$\mathrm{MSE}(\{x[n]\}_n,\{y[n]\}_n) \colon =\frac{1}{\left|\Omega\right|}\sum_{n\in\Omega}\left|x[n]-y[n]\right|^2,$$
-% 
-% ただし， $\Omega$は添え字集合， $|\Omega|$ は添え字の数．(where $\Omega$ denotes the index set 
-% and $|\Omega|$ means the cardinality.)
-
+%%
+%[text] ### 平均自乗誤差(MSE)による評価
+%[text] (Evaluation in terms of the mean squared errors (MSE))
+%[text]  $\\mathrm{MSE}(\\{x\[n\]\\}\_n,\\{y\[n\]\\}\_n) \\colon =\\frac{1}{\\left|\\Omega\\right|}\\sum\_{n\\in\\Omega}\\left|x\[n\]-y\[n\]\\right|^2,$
+%[text] ただし， $\\Omega$は添え字集合， $|\\Omega|$ は添え字の数．(where $\\Omega$ denotes the index set and $|\\Omega|$ means the cardinality.)
 % Evaluation of uu
 mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
 mymse(u,uu)
 % Evaluation of vv
 mymse(v,vv)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

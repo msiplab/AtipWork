@@ -1,39 +1,32 @@
-%% Sample 13-4
-%% 辞書学習
-% 畳込み辞書学習
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Dictionary learning
-% Convolutional dictionary learning
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 13-4
+%[text] ## 辞書学習
+%[text] 畳込み辞書学習
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Dictionary learning
+%[text] Convolutional dictionary learning
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 clear 
 close all
 
 nsoltDic = "nsoltdictionary_20230620211447804"; % Set "" if you train new dictionary.
 
-isCodegen = false; % コード生成
+isCodegen = false; % コード生成 %[control:checkbox:6590]{"position":[13,18]}
 msip.saivdr_setup(isCodegen)
 
 import msip.download_img
 msip.download_img
-% パラメータ設定
-%% 
-% * ブロックサイズ 
-% * 冗長度
-% * スパース度
-
+%%
+%[text] ### パラメータ設定
+%[text] - ブロックサイズ 
+%[text] - 冗長度
+%[text] - スパース度 \
 % Block size
 szBlk = [ 8 8 ];
 
@@ -42,11 +35,10 @@ redundancyRatio = 7/3;
 
 % Sparsity ratio 
 sparsityRatio = 3/64;
-%% 画像の読込
-% (Read image)
-%% 
-% * $\mathbf{u}\in\mathbb{R}^{N}$
-
+%%
+%[text] ## 画像の読込
+%[text] (Read image)
+%[text] - $\\mathbf{u}\\in\\mathbb{R}^{N}$ \
 file_uorg = './data/kodim23.png';
 u = im2double(imread(file_uorg));
 if size(u,3) == 3
@@ -61,78 +53,37 @@ y = meansubtract(u);
 
 % # of patches
 nPatches = prod(szOrg./szBlk); 
-%% 2変量ラティス構造冗長フィルタバンク
-% (Bivariate lattice-structure oversampled filter banks) 
-% 
-% 例として，（偶対称チャネルと奇対称チャネルが等しい）偶数チャネル、偶数のポリフェーズ次数をもつタイプI非分離冗長重複変換(NSOLT)
-% 
-% (As an example, let us adopt a non-separable oversampled lapped transform 
-% (NSOLT) of  type-I with the number of channels (the numbers of even and odd 
-% symmetric channels are identical to each other) and polyphase order (even):)
-% 
-% $$\mathbf{E}(z_\mathrm{v},z_\mathbf{h})=\left(\prod_{k_\mathrm{h}=1}^{N_\mathrm{h}/2}{\mathbf{V}_{2k_\mathrm{h}}^{\{\mathrm{h}\}}}\bar{\mathbf{Q}}(z_\mathrm{h}){\mathbf{V}_{2k_\mathrm{h}-1}^{\{\mathrm{h}\}}}{\mathbf{Q}}(z_\mathrm{h})\right)%\left(\prod_{k_{\mathrm{v}}=1}^{N_\mathrm{v}/2}{\mathbf{V}_{2k_\mathrm{v}}^{\{\mathrm{v}\}}}\bar{\mathbf{Q}}(z_\mathrm{v}){\mathbf{V}_{2k_\mathrm{v}-1}^{\{\mathrm{v}\}}}{\mathbf{Q}}(z_\mathrm{v})\right)%\mathbf{V}_0\mathbf{E}_0,$$
-% 
-% $$\mathbf{R}(z_\mathrm{v},z_\mathbf{h})=\mathbf{E}^T(z_\mathrm{v}^{-1},z_\mathrm{h}^{-1}),$$
-% 
-% を採用する．ただし，(where)
-%% 
-% * $\mathbf{E}(z_\mathrm{v},z_\mathrm{h})$:  Type-I polyphase matrix of the 
-% analysis filter bank
-% * $\mathbf{R}(z_\mathrm{v},z_\mathrm{h})$: Type-II polyphase matrix in the 
-% synthesis filter bank
-% * $z_d\in\mathbb{C}, d\in\{\mathrm{v},\mathrm{h}\}$: The parameter of Z-transformation 
-% direction
-% * $N_d\in \mathbb{N}, d\in\{\mathrm{v},\mathrm{h}\}$: Polyphase order in direction 
-% $d$ (number of overlapping blocks)
-% * $\mathbf{V}_0=\left(\begin{array}{cc}\mathbf{W}_{0} & \mathbf{O} \\\mathbf{O} 
-% & \mathbf{U}_0\end{array}\right)%\left(\begin{array}{c}\mathbf{I}_{M/2} \\ \mathbf{O} 
-% \\\mathbf{I}_{M/2} \\\mathbf{O}\end{array}\right)\in\mathbb{R}^{P\times M}$,$\mathbf{V}_n^{\{d\}}=\left(\begin{array}{cc}\mathbf{I}_{P/2} 
-% & \mathbf{O} \\\mathbf{O} & \mathbf{U}_n^{\{d\}}\end{array}\right)\in\mathbb{R}^{P\times 
-% P}, d\in\{\mathrm{v},\mathrm{h}\}$, where$\mathbf{W}_0, \mathbf{U}_0,\mathbf{U}_n^{\{d\}}\in\mathbb{R}^{P/2\times 
-% P/2}$are orthonromal matrices.
-% * $\mathbf{Q}(z)=\mathbf{B}_{P}\left(\begin{array}{cc} \mathbf{I}_{P/2} &  
-% \mathbf{O} \\ \mathbf{O} &  z^{-1}\mathbf{I}_{P/2}\end{array}\right)\mathbf{B}_{P}$, 
-% $\bar{\mathbf{Q}}(z)=\mathbf{B}_{P}\left(\begin{array}{cc} z\mathbf{I}_{P/2} 
-% &  \mathbf{O} \\ \mathbf{O} &  \mathbf{I}_{P/2}\end{array}\right)\mathbf{B}_{P}$, 
-% $\mathbf{B}_{P}=\frac{1}{\sqrt{2}}\left(\begin{array}{cc} \mathbf{I}_{P/2} &  
-% \mathbf{I}_{P/2} \\ \mathbf{I}_{P/2} &  -\mathbf{I}_{P/2}\end{array}\right)$
-%% 
-% です。
-% 
-% 【References】 
-%% 
-% * <https://jp.mathworks.com/help/dsp/ug/overview-of-filter-banks.html Overview 
-% of Filter Banks - MATLAB & Simulink - MathWorks 日本>
-% * MATLAB SaivDr Package: <https://github.com/msiplab/SaivDr https://github.com/msiplab/SaivDr>
-% * S. Muramatsu, K. Furuya and N. Yuki, "Multidimensional Nonseparable Oversampled 
-% Lapped Transforms: Theory and Design," in IEEE Transactions on Signal Processing, 
-% vol. 65, no. 5, pp. 1251-1264, 1 March1, 2017, doi: 10.1109/TSP.2016.2633240.
-% * S. Muramatsu, T. Kobayashi, M. Hiki and H. Kikuchi, "Boundary Operation 
-% of 2-D Nonseparable Linear-Phase Paraunitary Filter Banks," in IEEE Transactions 
-% on Image Processing, vol. 21, no. 4, pp. 2314-2318, April 2012, doi: 10.1109/TIP.2011.2181527.
-% * S. Muramatsu, M. Ishii and Z. Chen, "Efficient parameter optimization for 
-% example-based design of nonseparable oversampled lapped transform," 2016 IEEE 
-% International Conference on Image Processing (ICIP), Phoenix, AZ, 2016, pp. 
-% 3618-3622, doi: 10.1109/ICIP.2016.7533034.
-% * Furuya, K., Hara, S., Seino, K., & Muramatsu, S. (2016). Boundary operation 
-% of 2D non-separable oversampled lapped transforms. _APSIPA Transactions on Signal 
-% and Information Processing, 5_, E9. doi:10.1017/ATSIP.2016.3.
-%% 2次元画像の階層的分析
-% (Hierachical decomposition for 2-D Grayscale image)
-% 
-% $R_M^P(\tau)$ をツリーレベル $\tau$の階層構造フィルタバンクの冗長度とすると、
-% 
-% (Let $R_M^P(\tau)$ be the redundancy of $\tau$-level tree-structured filter 
-% bank, then we have the relation )
-% 
-% $$R_M^P(\tau)=\left\{\begin{array}{ll} (P-1)\tau + 1, & M=1, \\ \frac{P-1}{M-1}-\frac{P-M}{(M-1)M^\tau}, 
-% & M\geq 2.\end{array}\right.$$
-% 
-% となる．
-% 
-% 
-% 構成パラメータ設定
-
+%%
+%[text] ## 2変量ラティス構造冗長フィルタバンク
+%[text] (Bivariate lattice-structure oversampled filter banks) 
+%[text] 例として，（偶対称チャネルと奇対称チャネルが等しい）偶数チャネル、偶数のポリフェーズ次数をもつタイプI非分離冗長重複変換(NSOLT)
+%[text] (As an example, let us adopt a non-separable oversampled lapped transform (NSOLT) of  type-I with the number of channels (the numbers of even and odd symmetric channels are identical to each other) and polyphase order (even):)
+%[text]  $\\mathbf{E}(z\_\\mathrm{v},z\_\\mathbf{h})\n=\n\\left(\\prod\_{k\_\\mathrm{h}=1}^{N\_\\mathrm{h}/2}\n{\\mathbf{V}\_{2k\_\\mathrm{h}}^{\\{\\mathrm{h}\\}}}\\bar{\\mathbf{Q}}(z\_\\mathrm{h}){\\mathbf{V}\_{2k\_\\mathrm{h}-1}^{\\{\\mathrm{h}\\}}}{\\mathbf{Q}}(z\_\\mathrm{h})\\right)\n%\n\\left(\\prod\_{k\_{\\mathrm{v}}=1}^{N\_\\mathrm{v}/2}{\\mathbf{V}\_{2k\_\\mathrm{v}}^{\\{\\mathrm{v}\\}}}\\bar{\\mathbf{Q}}(z\_\\mathrm{v}){\\mathbf{V}\_{2k\_\\mathrm{v}-1}^{\\{\\mathrm{v}\\}}}{\\mathbf{Q}}(z\_\\mathrm{v})\\right)\n%\n\\mathbf{V}\_0\\mathbf{E}\_0,$
+%[text]  $\\mathbf{R}(z\_\\mathrm{v},z\_\\mathbf{h})\n=\\mathbf{E}^T(z\_\\mathrm{v}^{-1},z\_\\mathrm{h}^{-1}),$
+%[text] を採用する．ただし，(where)
+%[text] - $\\mathbf{E}(z\_\\mathrm{v},z\_\\mathrm{h})$:  Type-I polyphase matrix of the analysis filter bank
+%[text] - $\\mathbf{R}(z\_\\mathrm{v},z\_\\mathrm{h})$: Type-II polyphase matrix in the synthesis filter bank
+%[text] - $z\_d\\in\\mathbb{C}, d\\in\\{\\mathrm{v},\\mathrm{h}\\}$: The parameter of Z-transformation direction
+%[text] - $N\_d\\in \\mathbb{N}, d\\in\\{\\mathrm{v},\\mathrm{h}\\}$: Polyphase order in direction $d$ (number of overlapping blocks)
+%[text] - $\\mathbf{V}\_0=\\left(\\begin{array}{cc}\\mathbf{W}\_{0} & \\mathbf{O} \\\\\\mathbf{O} & \\mathbf{U}\_0\\end{array}\\right)\n%\n\\left(\\begin{array}{c}\\mathbf{I}\_{M/2} \\\\ \n\\mathbf{O} \\\\\n\\mathbf{I}\_{M/2} \\\\\n\\mathbf{O}\n\\end{array}\\right)\\in\\mathbb{R}^{P\\times M}$,$\\mathbf{V}\_n^{\\{d\\}}=\\left(\\begin{array}{cc}\\mathbf{I}\_{P/2} & \\mathbf{O} \\\\\\mathbf{O} & \\mathbf{U}\_n^{\\{d\\}}\\end{array}\\right)\\in\\mathbb{R}^{P\\times P}, d\\in\\{\\mathrm{v},\\mathrm{h}\\}$, where$\\mathbf{W}\_0, \\mathbf{U}\_0,\\mathbf{U}\_n^{\\{d\\}}\\in\\mathbb{R}^{P/2\\times P/2}$are orthonromal matrices.
+%[text] - $\\mathbf{Q}(z)=\\mathbf{B}\_{P}\\left(\\begin{array}{cc} \\mathbf{I}\_{P/2} &  \\mathbf{O} \\\\ \\mathbf{O} &  z^{-1}\\mathbf{I}\_{P/2}\\end{array}\\right)\\mathbf{B}\_{P}$, $\\bar{\\mathbf{Q}}(z)=\\mathbf{B}\_{P}\\left(\\begin{array}{cc} z\\mathbf{I}\_{P/2} &  \\mathbf{O} \\\\ \\mathbf{O} &  \\mathbf{I}\_{P/2}\\end{array}\\right)\\mathbf{B}\_{P}$, $\\mathbf{B}\_{P}=\\frac{1}{\\sqrt{2}}\\left(\\begin{array}{cc} \\mathbf{I}\_{P/2} &  \\mathbf{I}\_{P/2} \\\\ \\mathbf{I}\_{P/2} &  -\\mathbf{I}\_{P/2}\\end{array}\\right)$ \
+%[text] です。
+%[text] 【References】 
+%[text] - [Overview of Filter Banks - MATLAB & Simulink - MathWorks 日本](https://jp.mathworks.com/help/dsp/ug/overview-of-filter-banks.html)
+%[text] - MATLAB SaivDr Package: [https://github.com/msiplab/SaivDr](https://github.com/msiplab/SaivDr)
+%[text] - S. Muramatsu, K. Furuya and N. Yuki, "Multidimensional Nonseparable Oversampled Lapped Transforms: Theory and Design," in IEEE Transactions on Signal Processing, vol. 65, no. 5, pp. 1251-1264, 1 March1, 2017, doi: 10.1109/TSP.2016.2633240.
+%[text] - S. Muramatsu, T. Kobayashi, M. Hiki and H. Kikuchi, "Boundary Operation of 2-D Nonseparable Linear-Phase Paraunitary Filter Banks," in IEEE Transactions on Image Processing, vol. 21, no. 4, pp. 2314-2318, April 2012, doi: 10.1109/TIP.2011.2181527.
+%[text] - S. Muramatsu, M. Ishii and Z. Chen, "Efficient parameter optimization for example-based design of nonseparable oversampled lapped transform," 2016 IEEE International Conference on Image Processing (ICIP), Phoenix, AZ, 2016, pp. 3618-3622, doi: 10.1109/ICIP.2016.7533034.
+%[text] - Furuya, K., Hara, S., Seino, K., & Muramatsu, S. (2016). Boundary operation of 2D non-separable oversampled lapped transforms. *APSIPA Transactions on Signal and Information Processing, 5*, E9. doi:10.1017/ATSIP.2016.3. \
+%%
+%[text] ## 2次元画像の階層的分析
+%[text] (Hierachical decomposition for 2-D Grayscale image)
+%[text] $R\_M^P(\\tau)$ をツリーレベル $\\tau$の階層構造フィルタバンクの冗長度とすると、
+%[text]  (Let $R\_M^P(\\tau)$ be the redundancy of $\\tau$-level tree-structured filter bank, then we have the relation )
+%[text]  $R\_M^P(\\tau)=\\left\\{\\begin{array}{ll} (P-1)\\tau + 1, & M=1, \\\\ \\frac{P-1}{M-1}-\\frac{P-M}{(M-1)M^\\tau}, & M\\geq 2.\\end{array}\\right.$
+%[text] となる．
+%[text] 
+%[text] #### 構成パラメータ設定
 %%{
 % Decimation factor (Strides)
 decFactor = [2 2]; % [μv μh] 
@@ -183,10 +134,7 @@ redundancyNsolt = ...
     (prod(decFactor)>1)*((P-1)/(M-1)-(P-M)/((M-1)*M^nLevels))
 assert(redundancyNsolt<redundancyRatio)
 
-%% 
-% $$L_\mathrm{v}\times L_\mathrm{h}=\left(\mu_\mathrm{v}^{\tau}+{\nu}_\mathrm{v}\frac{\mu_\mathrm{v}(\mu_\mathrm{v}^{\tau}-1)}{\mu_\mathrm{v}-1}\right) 
-% \times\left(\mu_\mathrm{h}^{\tau}+\nu_\mathrm{h}\frac{\mu_\mathrm{h}(\mu_\mathrm{h}^{\tau}-1)}{\mu_\mathrm{h}-1}\right)$$ 
-
+%[text] $L\_\\mathrm{v}\\times L\_\\mathrm{h}=\\left(\\mu\_\\mathrm{v}^{\\tau}+{\\nu}\_\\mathrm{v}\\frac{\\mu\_\\mathrm{v}(\\mu\_\\mathrm{v}^{\\tau}-1)}{\\mu\_\\mathrm{v}-1}\\right) \\times\\left(\\mu\_\\mathrm{h}^{\\tau}+\\nu\_\\mathrm{h}\\frac{\\mu\_\\mathrm{h}(\\mu\_\\mathrm{h}^{\\tau}-1)}{\\mu\_\\mathrm{h}-1}\\right)$ 
 % Filter size [ Ly Lx ]
 maxDecFactor = decFactor.^nLevels;
 szFilters = maxDecFactor + ppOrder.*decFactor.*(maxDecFactor-1)./(decFactor-1)
@@ -201,9 +149,9 @@ nSubImgs = floor(nPatches*prod(szBlk./szPatchTrn))
 assert(nSubImgs > 0)
 
 % No DC-leakage
-noDcLeakage = true
-% 辞書の設定
-
+noDcLeakage = true %[control:checkbox:6b23]{"position":[15,19]}
+%%
+%[text] #### 辞書の設定
 if exist("./data/"+nsoltDic+".mat","file")
     S = load("./data/"+nsoltDic);
     analysisnet = S.analysisnet;
@@ -257,9 +205,8 @@ else
         ...'SequencePaddingDirection','right',...
         ...'DispatchInBackground',0,...
         'ResetInputNormalization',0);...1
-%% 層構造の構築
-% (Construction of layers)
-
+%[text] ## 層構造の構築
+%[text] (Construction of layers)
   import saivdr.dcnn.*
     analysislgraph = fcn_creatensoltlgraph2d([],...
         'InputSize',szPatchTrn,...
@@ -304,11 +251,10 @@ else
     synthesislgraph = layerGraph(synthesisnet);
     analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
     analysisnet = dlnetwork(analysislgraph);
-% 随伴関係（完全再構成）の確認
-% (Confirmation of the adjoint relation (perfect reconstruction))
-% 
-% NSOLTはパーセバルタイト性を満たすことに注意．(Note that NSOLT satisfy the Parseval tight property.)
-
+%%
+%[text] ### 随伴関係（完全再構成）の確認
+%[text] (Confirmation of the adjoint relation (perfect reconstruction))
+%[text] NSOLTはパーセバルタイト性を満たすことに注意．(Note that NSOLT satisfy the Parseval tight property.)
     nOutputs = nLevels+1;
     x = rand(szPatchTrn,'single');
     s = cell(1,nOutputs);
@@ -316,20 +262,18 @@ else
     [s{1:nOutputs}] = analysisnet.predict(dlx);
     dly = synthesisnet.predict(s{:});
     display("MSE: " + num2str(mse(dlx,dly)))
-% 要素画像の初期状態
-% (Initial state of the atomic images)
-
+%%
+%[text] ### 要素画像の初期状態
+%[text] (Initial state of the atomic images)
     import saivdr.dcnn.*
     figure
     atomicimshow(synthesisnet,[],2^(nLevels-1))
     title('Atomic images of initial NSOLT')
-% 訓練画像の準備
-% (Preparation of traning image)
-% 
-% 画像データストアからランダムにパッチを抽出
-% 
-% (Randomly extracting patches from the image data store)
-
+%%
+%[text] ### 訓練画像の準備
+%[text] (Preparation of traning image)
+%[text] 画像データストアからランダムにパッチを抽出
+%[text] (Randomly extracting patches from the image data store)
     imds = imageDatastore(file_uorg,"ReadFcn",@(x) meansubtract(rgb2gray(im2single(imread(x)))));
     patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',nSubImgs);
     figure
@@ -339,44 +283,31 @@ else
     figure
     montage(responses,'Size',[2 4]);
     drawnow
-% 畳み込み辞書学習
-% (Convolutional dictionary learning)
-% 問題設定(Problem setting):
-% $$\{\hat{\mathbf{\theta}},\{ \hat{\mathbf{s}}_n \}\}=\arg\min_{\{\mathbf{\theta},\{\mathbf{s}_n\}\}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{v}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{s}}_n\|_2^2,\ 
-% \quad\mathrm{s.t.}\ \forall n, \|\mathbf{s}_n\|_0\leq K,$$$
-% 
-% ただし， $\mathbf{D}_{\mathbf{\theta}}$は設計パラメータベクトル $\mathbf{\theta}}$をもつ畳み込み辞書．
-% 
-% (where $\mathbf{D}_{\mathbf{\theta}}$ is a convolutional dictionary with the 
-% design parameter vector $\mathbf{\theta}}$.)
-% 
-% 
-% アルゴリズム(Algorithm):
-% スパース近似ステップと辞書更新ステップを繰返す．
-% 
-% (Iterate the sparse approximation step and the dictionary update step.)
-%% 
-% * Sparse approximation step
-%% 
-% $$\hat{\mathbf{s}}_n=\arg\min_{\mathbf{s}_n}\frac{1}{2} \|\mathbf{v}_n-\hat{\mathbf{D}}\mathbf{s}_n\|_2^2\ 
-% \quad \mathrm{s.t.}\ \|\mathbf{s}_n\|_0\leq K$$
-%% 
-% * Dictionary update step
-%% 
-% $$\hat{\mathbf{\theta}}=\arg\min_{\mathbf{\theta}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{v}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{s}}_n\|_2^2$$
-% 
-% $$\hat{\mathbf{D}}=\mathbf{D}_{\hat{\mathbf{\theta}}$$
-% 採用するスパース近似と辞書更新の手法(Adopted methods for the sparse approximation step and dictioary update step):
-%% 
-% * Sparse approximation：Iterative hard thresholding
-% * Dictionary update： Stochastic gradient descent w/ momentum
-
+%%
+%[text] ### 畳み込み辞書学習
+%[text] (Convolutional dictionary learning)
+%[text] #### 問題設定(Problem setting):
+%[text]  $\\{\\hat{\\mathbf{\\theta}},\\{ \\hat{\\mathbf{s}}\_n \\}\\}=\\arg\\min\_{\\{\\mathbf{\\theta},\\{\\mathbf{s}\_n\\}\\}}\\frac{1}{2S}\\sum\_{n=1}^{S}\\|\\mathbf{v}\_n-\\mathbf{D}\_{\\mathbf{\\theta}}\\hat{\\mathbf{s}}\_n\\|\_2^2,\\ \\quad\\mathrm{s.t.}\\ \\forall n, \\|\\mathbf{s}\_n\\|\_0\\leq K,&dollar&;$
+%[text] ただし， $\\mathbf{D}\_{\\mathbf{\\theta}}$は設計パラメータベクトル $\\mathbf{\\theta}}$をもつ畳み込み辞書．
+%[text] (where $\\mathbf{D}\_{\\mathbf{\\theta}}$ is a convolutional dictionary with the design parameter vector $\\mathbf{\\theta}}$.)
+%[text] 
+%[text] #### アルゴリズム(Algorithm):
+%[text] スパース近似ステップと辞書更新ステップを繰返す．
+%[text] (Iterate the sparse approximation step and the dictionary update step.)
+%[text] - Sparse approximation step \
+%[text]  $\\hat{\\mathbf{s}}\_n=\\arg\\min\_{\\mathbf{s}\_n}\\frac{1}{2} \\|\\mathbf{v}\_n-\\hat{\\mathbf{D}}\\mathbf{s}\_n\\|\_2^2\\ \\quad \\mathrm{s.t.}\\ \\|\\mathbf{s}\_n\\|\_0\\leq K$
+%[text] - Dictionary update step \
+%[text]  $\\hat{\\mathbf{\\theta}}=\\arg\\min\_{\\mathbf{\\theta}}\\frac{1}{2S}\\sum\_{n=1}^{S}\\|\\mathbf{v}\_n-\\mathbf{D}\_{\\mathbf{\\theta}}\\hat{\\mathbf{s}}\_n\\|\_2^2$
+%[text]  $\\hat{\\mathbf{D}}=\\mathbf{D}\_{\\hat{\\mathbf{\\theta}}$
+%[text] #### 採用するスパース近似と辞書更新の手法(Adopted methods for the sparse approximation step and dictioary update step):
+%[text] - Sparse approximation：Iterative hard thresholding
+%[text] - Dictionary update： Stochastic gradient descent w/ momentum \
     % Check if IHT works for dlarray
     %x = dlarray(randn(szPatchTrn,'single'),'SSCB');
     %[y,coefs{1:nOutputs}] = iht(x,analysisnet,synthesisnet,sparsityRatio);
-% 繰返し計算
-% (Iterative calculation of alternative steps)
-
+%%
+%[text] ### 繰返し計算
+%[text] (Iterative calculation of alternative steps)
     import saivdr.dcnn.*
     %profile on
     for iIter = 1:nItersNsolt
@@ -405,18 +336,17 @@ else
     end
     %profile off
     %profile viewer
-% 訓練ネットワークの保存
-% (Save the designed network)
-
+%[text] ### 訓練ネットワークの保存
+%[text] (Save the designed network)
     import saivdr.dcnn.*
     synthesislgraph = layerGraph(synthesisnet);
     analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
     analysisnet = dlnetwork(analysislgraph);
     save(sprintf('./data/nsoltdictionary_%s',datetime('now','Format','yyyyMMddHHmmssSSS')),'analysisnet','synthesisnet','nLevels')
 end
-% 訓練辞書の要素画像
-% (The atomic images of trained dictionary)
-
+%%
+%[text] ### 訓練辞書の要素画像
+%[text] (The atomic images of trained dictionary)
 analysislgraph = layerGraph(analysisnet);
 synthesislgraph = layerGraph(synthesisnet);
 
@@ -434,31 +364,18 @@ figure
 
 atomicimshow(synthesisnet,[],2^(nLevels-1))
 title('Atomic images of trained NSOLT')
-% 繰返しハード閾値処理関数
-% (Function of iterative hard thresholding)
-% 
-% The input images of the patch pairs are replaced with sparse coefficients 
-% obtained by IHT, where normalization is omitted for the Parseval tight property 
-% of NSOLT ( $\mathbf{DD}^T=\mathbf{I}$ ).
-% 
-% $$\mathbf{s}^{(t+1)}\leftarrow \mathcal{H}_{T_K}\left(\mathbf{s}^{(t)}-\gamma 
-% \hat{\mathbf{D}}^T\left(\hat{\mathbf{D}}\mathbf{s}^{(t)}-\mathbf{v}\right)\right)$$
-% 
-% $$t\leftarrow t+1$$
-% 
-% where
-% 
-% $$[\mathcal{H}_{T_K}(\mathbf{x})]_i=\left\{\begin{array}{ll} 0 , & |[\mathbf{x}]_i| 
-% \leq T_K \\ [\mathbf{x}]_i, & |[\mathbf{x}]_i|> T_K \end{array}\right.$$
-% 
-% 【Reference】
-%% 
-% * T. Blumensath and M. E. Davies, "Normalized Iterative Hard Thresholding: 
-% Guaranteed Stability and Performance," in IEEE Journal of Selected Topics in 
-% Signal Processing, vol. 4, no. 2, pp. 298-309, April 2010, doi: 10.1109/JSTSP.2010.2042411.
-% 深層学習配列に対する繰返しハード閾値処理(IHT)のバッチ処理
-% (Iterative Hard Thresholding (IHT) batch processing for deep learning arrays)
-
+%%
+%[text] ### 繰返しハード閾値処理関数
+%[text] (Function of iterative hard thresholding)
+%[text] The input images of the patch pairs are replaced with sparse coefficients obtained by IHT, where normalization is omitted for the Parseval tight property of NSOLT ( $\\mathbf{DD}^T=\\mathbf{I}$ ).
+%[text]  $\\mathbf{s}^{(t+1)}\\leftarrow \\mathcal{H}\_{T\_K}\\left(\\mathbf{s}^{(t)}-\\gamma \\hat{\\mathbf{D}}^T\\left(\\hat{\\mathbf{D}}\\mathbf{s}^{(t)}-\\mathbf{v}\\right)\\right)$
+%[text]  $t\\leftarrow t+1$
+%[text] where
+%[text]  $\[\\mathcal{H}\_{T\_K}(\\mathbf{x})\]\_i=\\left\\{\\begin{array}{ll} 0 , & |\[\\mathbf{x}\]\_i| \\leq T\_K \\\\ \[\\mathbf{x}\]\_i, & |\[\\mathbf{x}\]\_i|\> T\_K \\end{array}\\right.$
+%[text] 【Reference】
+%[text] -  T. Blumensath and M. E. Davies, "Normalized Iterative Hard Thresholding: Guaranteed Stability and Performance," in IEEE Journal of Selected Topics in Signal Processing, vol. 4, no. 2, pp. 298-309, April 2010, doi: 10.1109/JSTSP.2010.2042411. \
+%[text] #### 深層学習配列に対する繰返しハード閾値処理(IHT)のバッチ処理
+%[text] (Iterative Hard Thresholding (IHT) batch processing for deep learning arrays)
 function newdata = iht4patchds(oldtbl,analyzer,synthesizer,sparsityRatio)
 % IHT for InputImage in randomPatchExtractionDatastore
 %
@@ -480,9 +397,8 @@ end
 % Output as a cell in order to make multiple-input datastore
 newdata = [ coefarray table2cell(restbl) ];
 end
-% 深層学習配列に対する繰返しハード閾値処理(IHT)
-% (Iterative hard thresholding (IHT) for deep learning arrays)
-
+%[text] #### 深層学習配列に対する繰返しハード閾値処理(IHT)
+%[text] (Iterative hard thresholding (IHT) for deep learning arrays)
 function [dly,varargout] = iht4dlarray(dlx,analyzer,synthesizer,sparsityRatio)
 % IHT Iterative hard thresholding
 %
@@ -514,9 +430,8 @@ for iter=1:nIters
 end
 varargout = dlcoefs;
 end
-% NSOLTネットワークの随伴関係の確認
-% (Confirmation of NSOLT network adjoint relations)
-
+%[text] #### NSOLTネットワークの随伴関係の確認
+%[text] (Confirmation of NSOLT network adjoint relations)
 function checkadjointrelation(analysislgraph,synthesislgraph,nLevels,szInput)
 import saivdr.dcnn.*
 x = rand(szInput,'single');
@@ -546,5 +461,16 @@ y = synthesisnet4predict.predict(s{:});
 % Evaluation
 display("MSE: " + num2str(mse(x,y)))
 end
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:checkbox:6590]
+%   data: {"defaultValue":false,"label":"isCodegen","run":"Section"}
+%---
+%[control:checkbox:6b23]
+%   data: {"defaultValue":true,"label":"noDcLeakage","run":"Section"}
+%---

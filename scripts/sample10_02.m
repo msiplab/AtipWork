@@ -1,38 +1,31 @@
-%% Sample 10-2
-%% 冗長変換
-% 分析問題
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Redundant transforms
-% Analysis problem
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 10-2
+%[text] ## 冗長変換
+%[text] 分析問題
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Redundant transforms
+%[text] Analysis problem
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-%% フィルタ係数設定と入力信号の生成
-% (Setting of filter Coefs. and generation of input)
-
+%%
+%[text] ## フィルタ係数設定と入力信号の生成
+%[text] (Setting of filter Coefs. and generation of input)
 % Coefficients of analysis filters
-gamma = 0.5;
+gamma = 0.5; %[control:slider:8df8]{"position":[9,12]}
 delta = 1 - gamma;
 
 % Input signal
 u = [ 0 3 1 3 1 5 3 0 ]; % Set to even length
-% 並列フィルタバンク実装
-% (Parallel filter bank implementation)
-% 
-% 分析フィルタバンクをデシメータで、合成フィルタバンクをインタポレータで実装
-
+%%
+%[text] ### 並列フィルタバンク実装
+%[text] (Parallel filter bank implementation)
+%[text] 分析フィルタバンクをデシメータで、合成フィルタバンクをインタポレータで実装
 % # of channels
 nChs = 2;
 
@@ -55,9 +48,9 @@ v = v0 + v1;
 
 % Energy of subband Coefs.
 disp(['||s||_2^2 = ' num2str(norm([s0(:);s1(:)],2)^2)])
-%% 信号表示
-% (Signal display)
-
+%%
+%[text] ## 信号表示
+%[text] (Signal display)
 figure(1)
 % Input
 subplot(3,2,1)
@@ -96,9 +89,9 @@ ax.XLim =[ 0 length(v)];
 % MSE 評価
 mymse = @(x,y) mean((x(:)-y(:)).^2);
 disp(['MSE = ', num2str(mymse(u, v(2:end-1)))]);
-% インパルス応答
-% (Impluse responses of synthesis filters)
-
+%%
+%[text] ### インパルス応答
+%[text] (Impluse responses of synthesis filters)
 figure(2)
 
 % Low-pass analysis filter
@@ -132,9 +125,9 @@ title('f_1[n]')
 xlabel('n')
 ax = gca;
 ax.YLim =[ min([f0(:);f1(:)]) max([f0(:);f1(:)]) ];
-% 周波数応答
-% (Frequency responses)
-
+%%
+%[text] ### 周波数応答
+%[text] (Frequency responses)
 figure(3)
 fftPoints = 512;
 
@@ -163,20 +156,12 @@ axis([0 1 0 1]) %-70 10])
 xlabel('Normalized Frequency (x\pi rad/sample)')
 ylabel('Magnitude') % (dB)')
 grid on
-% ポリフェーズ行列実装（PPMATRIXオブジェクト利用）
-% (Polyphase matrix implemenation with PPMATRIX object)
-% 
-% フィルタバンクをポリフェーズフィルタに分解して、ポリフェーズ行列として実装 (Decompose the filter bank into polyphase 
-% filters and implement them in a polyphase matrix.)
-% 
-% $$\mathbf{E}(z)=\left(\begin{array}{c}  h_0[0] \\ h_1[0]\end{array}\right)+\left(\begin{array}{c}  
-% h_0[1] \\ h_1[1]\end{array}\right)z^{-1}=\left(\begin{array}{cc}  h_0[0]+h_0[1]z^{-1}  
-% \\ h_1[0]+h_1[1]z^{-1}\end{array}\right)$$
-% 
-% $$\mathbf{R}(z)=\left(\begin{array}{cc}  f_0[0] &f_1[0]\end{array}\right)+\left(\begin{array}{cc}  
-% f_0[1] &f_1[1]\end{array}\right)z^{-1}=\left(\begin{array}{cc}  f_0[0]+f_0[1]z^{-1} 
-% &f_1[0]+f_1[1]z^{-1} \end{array}\right)$$
-
+%%
+%[text] ### ポリフェーズ行列実装（PPMATRIXオブジェクト利用）
+%[text] (Polyphase matrix implemenation with PPMATRIX object)
+%[text] フィルタバンクをポリフェーズフィルタに分解して、ポリフェーズ行列として実装 (Decompose the filter bank into polyphase filters and implement them in a polyphase matrix.)
+%[text]  $\\mathbf{E}(z)=\\left(\\begin{array}{c}  h\_0\[0\] \\\\ h\_1\[0\]\\end{array}\\right)\n+\\left(\\begin{array}{c}  h\_0\[1\] \\\\ h\_1\[1\]\\end{array}\\right)z^{-1}\n=\\left(\\begin{array}{cc}  h\_0\[0\]+h\_0\[1\]z^{-1}  \\\\ h\_1\[0\]+h\_1\[1\]z^{-1}\\end{array}\\right)$
+%[text]  $\\mathbf{R}(z)=\\left(\\begin{array}{cc}  f\_0\[0\] &f\_1\[0\]\\end{array}\\right)\n+\\left(\\begin{array}{cc}  f\_0\[1\] &f\_1\[1\]\\end{array}\\right)z^{-1}\n=\\left(\\begin{array}{cc}  f\_0\[0\]+f\_0\[1\]z^{-1} &f\_1\[0\]+f\_1\[1\]z^{-1} \\end{array}\\right)$
 % Type-I polyphase filters of analyzer
 e00 = h0(1:end);
 e10 = h1(1:end);
@@ -184,17 +169,9 @@ e10 = h1(1:end);
 % Type-II polyphase filters of synthesizer
 r00 = f0(1:end);
 r01 = f1(1:end);
-%% 
-% ポリフェーズ行列演算が簡便となるよう以下のクラスを定義した。インスタンス化の際、3番目の添え字が遅延を示す3次元配列を渡す。(In order to 
-% make polyphase matrix operations easier, the following classe is defined. At 
-% instantiation, plase pass a three-dimensional array where the third subscript 
-% indicates a delay.)
-%% 
-% * PPMATRIX： Polyphase Matrix Class (originally from saivdr.dictionary.utility.PolyPhaseMatrix1D 
-% in <https://github.com/msiplab/SaivDr SaivDr package> )
-%% 
-% 分析合成処理 (Analysis and synthesis process)
-
+%[text] ポリフェーズ行列演算が簡便となるよう以下のクラスを定義した。インスタンス化の際、3番目の添え字が遅延を示す3次元配列を渡す。(In order to make polyphase matrix operations easier, the following classe is defined. At instantiation, plase pass a three-dimensional array where the third subscript indicates a delay.)
+%[text] - PPMATRIX： Polyphase Matrix Class (originally from saivdr.dictionary.utility.PolyPhaseMatrix1D in [SaivDr package](https://github.com/msiplab/SaivDr) ) \
+%[text] 分析合成処理 (Analysis and synthesis process)
 import msip.ppmatrix
 % Polyphase matrix of analysis bank
 e00 = reshape(e00,1,1,length(e00));
@@ -204,14 +181,8 @@ E = ppmatrix(cat(1,e00,e10))
 r00 = reshape(r00,1,1,length(r00));
 r01 = reshape(r01,1,1,length(r01));
 R = ppmatrix(cat(2,r00,r01))
-%% 
-% 完全再構成条件の確認 (Confirmation of perfect reconstruction)
-% 
-% $$\mathbf{R}(z)\mathbf{E}(z)=(\mathbf{R}_0 +\mathbf{R}_1 z^{-1} )(\mathbf{E}_0 
-% + \mathbf{E}_1 z^{-1} )=\mathbf{R}_0 \mathbf{E}_0 + (\mathbf{R}_1 \mathbf{E}_0 
-% +\mathbf{R}_0 \mathbf{E}_1 )z^{-1}+\mathbf{R}_1\mathbf{E}_1 z^{-2}=z^{-1}\mathbf{I} 
-% $$ 
-
+%[text] 完全再構成条件の確認 (Confirmation of perfect reconstruction)
+%[text]  $\\mathbf{R}(z)\\mathbf{E}(z)=(\\mathbf{R}\_0 +\\mathbf{R}\_1 z^{-1} )(\\mathbf{E}\_0 + \\mathbf{E}\_1 z^{-1} )=\\mathbf{R}\_0 \\mathbf{E}\_0 + (\\mathbf{R}\_1 \\mathbf{E}\_0 +\\mathbf{R}\_0 \\mathbf{E}\_1 )z^{-1}+\\mathbf{R}\_1\\mathbf{E}\_1 z^{-2}=z^{-1}\\mathbf{I} $ 
 disp(R*E)
 % Define delaychain
 clear delaychain
@@ -233,5 +204,14 @@ disp(y)
 v = delaychain.'*y;
 disp(v)
 disp(squeeze(double(v)).')
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:8df8]
+%   data: {"defaultValue":0.5,"label":"gamma","max":2,"min":-2,"run":"SectionToEnd","runOn":"ValueChanging","step":0.1}
+%---

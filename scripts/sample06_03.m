@@ -1,43 +1,32 @@
-%% Sample 6-3
-%% 標本化
-% 二変量ダウンサンプリング
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Sampling
-% Bivariate downsampling
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
+%[text] # Sample 6-3
+%[text] ## 標本化
+%[text] 二変量ダウンサンプリング
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Sampling
+%[text] Bivariate downsampling
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a
+%%
+%[text] ### 準備
+%[text] (Preparation)
 close all
-% 可分離間引き行列の設定
-% (Setting a separable downsampling factor)
-%% 
-% * $\mathbf{M}$: 間引き行列 (downsampling factor)
-%% 
-% 可分離の場合 (In the separable case)
-% 
-% $$\mathbf{M}=\left(\begin{array}{cc} M_1 & 0 \\ 0 & M_2 \end{array}\right)\in 
-% \mathbb{Z}^{2\times 2}$$
-
+%%
+%[text] ### 可分離間引き行列の設定
+%[text] (Setting a separable downsampling factor)
+%[text] - $\\mathbf{M}$: 間引き行列 (downsampling factor) \
+%[text]  可分離の場合 (In the separable case)
+%[text]  $\\mathbf{M}=\\left(\\begin{array}{cc} M\_1 & 0 \\\\ 0 & M\_2 \\end{array}\\right)\\in \\mathbb{Z}^{2\\times 2}$
 % Vertical downsampling ratio
-verticalDFactor = 2; 
+verticalDFactor = 2;  %[control:slider:7bbd]{"position":[19,20]}
 % Horizontal downsampling factor
-horizontalDFactor = 3; 
-% 入力配列の設定
-% (Setting an input array)
-%% 
-% * $\{u[\mathbf{n}]\}_\mathbf{n}$: 入力配列 (input array)
-
+horizontalDFactor = 3;  %[control:slider:5e87]{"position":[21,22]}
+%%
+%[text] ### 入力配列の設定
+%[text] (Setting an input array)
+%[text] - $\\{u\[\\mathbf{n}\]\\}\_\\mathbf{n}$: 入力配列 (input array) \
 % Standard deviation 
 sigma = 2;
 % Array size
@@ -45,9 +34,9 @@ sizeU = 31;
 
 % Generate an array with bivariate Gaussian function
 arrayU = fspecial('gaussian',sizeU,sigma);
-% 入力配列のスペクトル
-% (Spectrum of the input array)
-
+%%
+%[text] ### 入力配列のスペクトル
+%[text] (Spectrum of the input array)
 % Spectrum of u[n]
 figure(1)
 freqz2(arrayU)
@@ -55,13 +44,11 @@ xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('Before downsampling')
 axis ij
-% 出力配列の計算
-% (Computation of the output array)
-%% 
-% * $\{v[\mathbf{m}]\}_\mathbf{m}$: 出力数列 (output array)
-%% 
-% $$v[\mathbf{m}] = u[\mathbf{Mm}],\ \mathbf{m}\in\mathbb{Z}^2$$
-
+%%
+%[text] ### 出力配列の計算
+%[text] (Computation of the output array)
+%[text] - $\\{v\[\\mathbf{m}\]\\}\_\\mathbf{m}$: 出力数列 (output array) \
+%[text]  $v\[\\mathbf{m}\] = u\[\\mathbf{Mm}\],\\ \\mathbf{m}\\in\\mathbb{Z}^2$
 % Definition of bivariate separable downsampling
 downsample2 = @(x,n) ...
     shiftdim(downsample(...
@@ -72,9 +59,9 @@ downsample2 = @(x,n) ...
 % Bivariate separable downsampling
 arrayV = downsample2(arrayU, [verticalDFactor horizontalDFactor]);
 
-% 出力配列のスペクトル
-% (Spectrum of the output array)
-
+%%
+%[text] ### 出力配列のスペクトル
+%[text] (Spectrum of the output array)
 % Spectrum of v[m]
 figure(2)
 freqz2(arrayV)
@@ -82,21 +69,17 @@ xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('After downsampling')
 axis ij
-% 非可分間引き行列の設定
-% (Setting a non-separable downsampling factor)
-%% 
-% * $\mathbf{M}$: 間引き行列 (downsampling factor)
-%% 
-% 一般的な場合 (In the general case)
-% 
-% $$\mathbf{M}=\left(\begin{array}{cc} \mathbf{m}_{1} & \mathbf{m}_{2} \end{array}\right)\in 
-% \mathbb{Z}^{2\times 2}$$
-
+%%
+%[text] ### 非可分間引き行列の設定
+%[text] (Setting a non-separable downsampling factor)
+%[text] - $\\mathbf{M}$: 間引き行列 (downsampling factor) \
+%[text]  一般的な場合 (In the general case)
+%[text]  $\\mathbf{M}=\\left(\\begin{array}{cc} \\mathbf{m}\_{1} & \\mathbf{m}\_{2} \\end{array}\\right)\\in \\mathbb{Z}^{2\\times 2}$
 % Downsampling factor
 downMtx = [ 1 1 ; -1 1 ];
-% 入力配列の設定
-% (Setting an input array)
-
+%%
+%[text] ### 入力配列の設定
+%[text] (Setting an input array)
 % Covariance matrix
 covMtx  = [2 0 ; 0 1/2];
 % Array size
@@ -112,9 +95,9 @@ xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('Before downsampling')
 axis ij
-% 出力配列の計算
-% (Computation of the output array)
-
+%%
+%[text] ### 出力配列の計算
+%[text] (Computation of the output array)
 % Bivariate non-separable downsampling
 arrayV = mydownsample2(arrayU,downMtx);
 
@@ -125,11 +108,10 @@ xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('After downsampling')
 axis ij
-% プライベート関数の定義
-% (Definitions of private functions)
-% 
-% 二変量ガウス配列の生成関数　(Generation function of bivariate Gaussian arrays)
-
+%%
+%[text] ### プライベート関数の定義
+%[text] (Definitions of private functions)
+%[text] 二変量ガウス配列の生成関数　(Generation function of bivariate Gaussian arrays)
 function x = mygaussian2(sizeX, covMtx)
 % MYGAUSSIAN2
 %
@@ -162,9 +144,7 @@ end
 x = x / sum(sum(x));
 
 end % of mygaussian2
-%% 
-% 二変量非可分ダウンサンプリング関数 (bivariate non-separable downsampling function)
-
+%[text] 二変量非可分ダウンサンプリング関数 (bivariate non-separable downsampling function)
 function [outputArray, X, Y] = mydownsample2(inputArray,downMtx,phase)
 % MYDOWNSAMPLE2
 %
@@ -227,5 +207,16 @@ Y = minPoint(1):maxPoint(1);
 X = minPoint(2):maxPoint(2);
 
 end % of mydownsample2
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:7bbd]
+%   data: {"defaultValue":2,"label":"verticalDFactor","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:5e87]
+%   data: {"defaultValue":3,"label":"horizontalDFactor","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---

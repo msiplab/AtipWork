@@ -1,37 +1,35 @@
-%% Sample 1-3
-%% 画像データの表現
-% FOR ループ
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Digital image representation
-% FOR loop
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a 
-% 変数 $s$ の初期化 
-% (Initialize variable $s$)
-% 
-% $$s\leftarrow 0$$
-
+%[text] # Sample 1-3
+%[text] ## 画像データの表現
+%[text] FOR ループ
+%[text] 画像処理特論
+%[text] 村松 正吾 
+%[text] 動作確認: MATLAB R2023a
+%[text] ## Digital image representation
+%[text] FOR loop
+%[text] Advanced Topics in Image Processing
+%[text] Shogo MURAMATSU
+%[text] Verified: MATLAB R2023a 
+%%
+%[text] ### 変数 $s$ の初期化 
+%[text] (Initialize variable $s$)
+%[text]{"align":"center"} $s\\leftarrow 0$
 s = 0;
-% 累積加算
-% (Accumulation)
-% 
-% $$s = \sum_{k=1}^{10}k$$
-
+%%
+%[text] ### 累積加算
+%[text] (Accumulation)
+%[text]{"align":"center"} $s = \\sum\_{k=1}^{10}k$
 for k=1:10
    s = s + k;
 end
-% 結果の表示
-% (Display result)
-
+%%
+%[text] ### 結果の表示
+%[text] (Display result)
 disp(s)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
