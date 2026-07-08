@@ -5,7 +5,7 @@ if nargin < 1
 end
 
 % SaivDr パッケージバージョン
-SAIVDR_VER = "4.2.2.2";
+SAIVDR_VER = "4.2.2.5";
 SAIVDR_DIR = "SaivDr-"+SAIVDR_VER;
 if ~exist(SAIVDR_DIR,"dir")
     unzip("https://github.com/msiplab/SaivDr/archive/refs/tags/"+SAIVDR_VER+".zip")
