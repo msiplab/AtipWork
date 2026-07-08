@@ -3,7 +3,7 @@ function rec = ezwaverec2(valueC,valueS,F)
 %
 % Requirements: MATLAB R2011b
 %
-% Copyright (c) 2020, Shogo MURAMATSU
+% Copyright (c) 2020-2026, Shogo MURAMATSU
 %
 % All rights reserved.
 %
@@ -37,11 +37,11 @@ for ilv = 2:nlevels+1
     numc = prod(nsubdim);
     %
     c10 = reshape(valueC(pos+1:pos+numc),nsubdim);
-    r10 = circshift(imfilter(upsample2x2(c10),f1,'conv','circ'),[1 1]);
+    r10 = circshift(imfilter(upsample2x2(c10),f2,'conv','circ'),[1 1]);
     pos = pos + numc;
     %
     c01 = reshape(valueC(pos+1:pos+numc),nsubdim);
-    r01 = circshift(imfilter(upsample2x2(c01),f2,'conv','circ'),[1 1]);
+    r01 = circshift(imfilter(upsample2x2(c01),f1,'conv','circ'),[1 1]);
     pos = pos + numc;
     %
     c11 = reshape(valueC(pos+1:pos+numc),nsubdim);

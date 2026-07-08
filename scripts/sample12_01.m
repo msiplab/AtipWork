@@ -45,7 +45,7 @@ meanu = mean(u(:));
 % * $\mathbf{w}\sim\mathrm{Norm}\left(\mathbf{w}|\mathbf{\mu}_w=\mathbf{0},\sigma_w^2\mathbf{I}\right)$
 
 % Definition of measurment process
-psf = fspecial('motion',21,11);
+psf = fspecial('motion',31,21);
 measureproc = @(x) imfilter(x,psf,'conv','circular');
 % Simulation of AWGN
 v = imnoise(measureproc(u),'gaussian',0,sgmw^2);
@@ -72,7 +72,7 @@ v = imnoise(measureproc(u),'gaussian',0,sgmw^2);
 % $$\mathbf{P}^{T} \mathbf{P}\stackrel{\mathrm{DFT}}{\longleftrightarrow} \overline{P[\mathbf{k}]}P[\mathbf{k}]=|P[\mathbf{k}]|^{2}$$
 
 % Determine the DFT points
-nPoints = 2.^nextpow2(size(u))
+nPoints = size(u); % 2.^nextpow2(size(u))
 % Ratio of variances between noise w and signal u (ideal estimation)
 nsr = sgmw^2/sgmu^2;
 % DFT(OTF) of PSF, where the phase response is adjusted to zero  

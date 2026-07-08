@@ -260,7 +260,9 @@ v = imnoise(measureproc(u),'gaussian',0,sgm^2);
 %% 
 % 勾配フィルタ (Gradient filter)
 
-g0 = fspecial('sobel'); % Vetical difference
+g0 = [   0     1     0
+         0    -1     0
+         0     0     0 ]; % Vetical difference
 g1 = rot90(g0);  % Horizontal difference
 gradproc = @(x) cat(3,imfilter(x,g0,'conv','circ'),imfilter(x,g1,'conv','circ'));
 gradadjp = @(x) imfilter(x(:,:,1),g0,'corr','circ') + imfilter(x(:,:,2),g1,'corr','circ');
