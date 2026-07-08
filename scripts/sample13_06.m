@@ -662,7 +662,8 @@ u = rand(szOrg,'single');
 v = synthesisnet4predict.predict(s{1:nLevels+1});
 assert(mse(u,v)<1e-9)
 %[text] #### NSOLTによる合成処理とその随伴処理の定義
-nsoltconfig.nLevels = nLevels;
+%[text] NSOLTのレベル・チャネルごとの合成処理は，係数のゼロ詰め（アップサンプリング）とその等価インパルス応答（カーネル）との巡回（周期）畳み込みの重ね合わせに等価である．これはサンプル10-5で示した1次元の巡回畳み込み行列表現を2次元・多重解像度に拡張したものである．各カーネルは学習済みネットワークに単位インパルスを入力して一度だけ抽出し，以降の反復（IHT）ではFFTベースの畳み込みで推論を行うことで高速化する．
+%[text] (The level-by-level, channel-by-channel NSOLT synthesis is equivalent to zero-stuffing (upsampling) the coefficients followed by circular (periodic) convolution with the corresponding impulse response (kernel) -- a 2-D, multiresolution extension of the 1-D circular convolution matrix shown in Sample 10-5. Each kernel is extracted just once by feeding a unit impulse through the trained network; subsequent iterations (IHT) then run the much faster FFT-based convolution instead of repeated network inference.)
 szCoefs = zeros(nLevels+1,3);
 for iLevel = 1:nLevels+1
     s_iLevel = s{iLevel};
@@ -670,9 +671,9 @@ for iLevel = 1:nLevels+1
     szCoefs(iLevel,2) = size(s_iLevel,2);
     szCoefs(iLevel,3) = size(s_iLevel,3);
 end
-nsoltconfig.szCoefs = szCoefs;
-syn_nsolt = @(x) synthesisnsolt(x,synthesisnet4predict,nsoltconfig);
-adj_nsolt = @(y) analysisnsolt(y,analysisnet4predict,nsoltconfig);
+nsoltFftDic = fcn_buildnsoltfftkernels(synthesisnet4predict,decFactor,szCoefs,nLevels,szOrg);
+syn_nsolt = @(x) synthesisnsolt(x,nsoltFftDic);
+adj_nsolt = @(y) analysisnsolt(y,nsoltFftDic);
 %[text] #### 随伴関係の確認
 x = adj_nsolt(y);
 v = randn(size(x));
@@ -810,36 +811,71 @@ for idx = 1:nDics
 end
 %%
 %[text] ## 【関数定義】
+%[text] #### NSOLTの等価畳み込みカーネルの構築関数
+%[text] レベル $\\ell$・チャネル $c$ の係数原点に単位インパルスを入力し，学習済み合成ネットワークの応答をFFT領域の等価カーネルとして一度だけ抽出する．
+function dic = fcn_buildnsoltfftkernels(synthesisnet4predict,decFactor,szCoefs,nLevels,szOrg)
+kernelsF = cell(nLevels+1,1);
+Ds = cell(nLevels+1,1);
+for iLevel = 1:nLevels+1
+    if iLevel <= nLevels
+        Dj = decFactor.^iLevel;
+    else
+        Dj = decFactor.^nLevels;
+    end
+    Ds{iLevel} = Dj;
+    nCh = szCoefs(iLevel,3);
+    K = zeros(szOrg(1),szOrg(2),nCh,'single');
+    for c = 1:nCh
+        sImp = cell(1,nLevels+1);
+        for iL = 1:nLevels+1
+            sImp{iL} = zeros(szCoefs(iL,:),'single');
+        end
+        sImp{iLevel}(1,1,c) = 1;
+        K(:,:,c) = extractdata(synthesisnet4predict.predict(sImp{1:nLevels+1}));
+    end
+    kernelsF{iLevel} = fft2(K);
+end
+dic.kernelsF = kernelsF;
+dic.Ds = Ds;
+dic.szCoefs = szCoefs;
+dic.nLevels = nLevels;
+dic.szOrg = szOrg;
+end
+
 %[text] #### NSOLT合成処理関数
-function y = synthesisnsolt(x,synthesisnet4predict,config)
-nLevels = config.nLevels;
-szCoefs = config.szCoefs;
-s = cell(1,nLevels+1);
+%[text] 各レベルの係数をゼロ詰めし，等価カーネルとの巡回畳み込み（FFT）で合成する．
+function y = synthesisnsolt(x,dic)
+kernelsF = dic.kernelsF; Ds = dic.Ds; szCoefs = dic.szCoefs;
+nLevels = dic.nLevels; szOrg = dic.szOrg;
+y = zeros(szOrg,'like',x);
 sidx = 1;
 for iLevel = 1:nLevels+1
     sz_iLevel = szCoefs(iLevel,:);
     eidx = sidx+prod(sz_iLevel)-1;
-    x_iLevel = x(sidx:eidx);
-    s{iLevel} = reshape(x_iLevel,sz_iLevel);
+    x_iLevel = reshape(x(sidx:eidx),sz_iLevel);
     sidx = eidx+1;
+    Dj = Ds{iLevel};
+    zs = zeros([szOrg sz_iLevel(3)],'like',x_iLevel);
+    zs(1:Dj(1):end,1:Dj(2):end,:) = x_iLevel;
+    y = y + sum(real(ifft2(fft2(zs).*kernelsF{iLevel})),3);
 end
-y = synthesisnet4predict.predict(s{1:nLevels+1});
 end
 
 %[text] #### NSOLT分析処理関数
-function x = analysisnsolt(y,analysisnet4predict,config)
-nLevels = config.nLevels;
-szCoefs = config.szCoefs;
-[s{1:nLevels+1}] = analysisnet4predict.predict(y);
+%[text] 画像との巡回相互相関（等価カーネルの複素共役とのFFT積）をとり，各レベルの間引き位相でダウンサンプリングする．
+function x = analysisnsolt(y,dic)
+kernelsF = dic.kernelsF; Ds = dic.Ds; szCoefs = dic.szCoefs; nLevels = dic.nLevels;
+fy = fft2(y);
 nCoefs = sum(prod(szCoefs,2),1);
-%x = [];
-x = zeros(nCoefs,1);
+x = zeros(nCoefs,1,'like',y);
 sidx = 1;
 for iLevel = 1:nLevels+1
-    %x = [x; s{iLevel}(:)];
-    eidx = sidx - 1 + prod(szCoefs(iLevel,:));
-    x(sidx:eidx) = s{iLevel}(:);
-    sidx = eidx + 1;
+    Dj = Ds{iLevel};
+    corr_ = real(ifft2(fy.*conj(kernelsF{iLevel})));
+    coef = corr_(1:Dj(1):end,1:Dj(2):end,:);
+    eidx = sidx-1+numel(coef);
+    x(sidx:eidx) = coef(:);
+    sidx = eidx+1;
 end
 end
 %[text] #### ハード閾値処理

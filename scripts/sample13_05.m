@@ -152,6 +152,22 @@ x = rand(szOrg,'single');
 y = synthesisnet4predict.predict(s{1:nLevels+1});
 display("MSE: " + num2str(mse(x,y)))
 %%
+%[text] ### 高速化：等価畳み込みカーネルの構築
+%[text] NSOLTのレベル・チャネルごとの合成/分析処理は，係数のゼロ詰め（アップサンプリング）／間引き（ダウンサンプリング）とその等価インパルス応答（カーネル）との巡回（周期）畳み込みの重ね合わせに等価である．これはサンプル10-5で示した1次元の巡回畳み込み行列表現を2次元・多重解像度に拡張したものである．各カーネルは学習済みネットワークに単位インパルスを入力して一度だけ抽出し，以降の近接勾配法(ISTA)の反復ではFFTベースの畳み込みで推論を行うことで高速化する．
+%[text] (The level-by-level, channel-by-channel NSOLT synthesis/analysis is equivalent to zero-stuffing (upsampling) / decimation (downsampling) of the coefficients combined with circular (periodic) convolution with the corresponding impulse response (kernel) -- a 2-D, multiresolution extension of the 1-D circular convolution matrix shown in Sample 10-5. Each kernel is extracted just once by feeding a unit impulse through the trained network; the subsequent proximal-gradient (ISTA) iterations then run the much faster FFT-based convolution instead of repeated network inference.)
+szCoefs = zeros(nLevels+1,3);
+for iLevel = 1:nLevels+1
+    s_iLevel = s{iLevel};
+    szCoefs(iLevel,1) = size(s_iLevel,1);
+    szCoefs(iLevel,2) = size(s_iLevel,2);
+    szCoefs(iLevel,3) = size(s_iLevel,3);
+end
+nsoltFftDic = fcn_buildnsoltfftkernels(synthesisnet4predict,decFactor,szCoefs,nLevels,szOrg);
+%[text] #### 高速版での随伴関係（完全再構成）の確認
+[s3{1:nLevels+1}] = analysisnsoltCell(x,nsoltFftDic);
+y3 = synthesisnsoltCell(nsoltFftDic,s3{1:nLevels+1});
+display("MSE (FFT-based): " + num2str(mse(x,y3)))
+%%
 %[text] #### 観測過程の随伴作用素
 %[text] (Adjoint operator of the measurement process)
 % Adjoint process P.'
@@ -171,12 +187,12 @@ isDcSkip = true;
 %%
 % Initalization
 z = zeros(szOrg,'like',u);
-[coefs{1:nLevels+1}] = analysisnet4predict.predict(z);
+[coefs{1:nLevels+1}] = analysisnsoltCell(z,nsoltFftDic);
 
 % profile on
 for itr = 1:nIters
-    x = linproc(synthesisnet4predict.predict(coefs{1:nLevels+1}));
-    [g{1:nLevels+1}] = analysisnet4predict.predict(adjproc(x-v));
+    x = linproc(synthesisnsoltCell(nsoltFftDic,coefs{1:nLevels+1}));
+    [g{1:nLevels+1}] = analysisnsoltCell(adjproc(x-v),nsoltFftDic);
     % Gradient descnet
     for iOutput = 1:nLevels+1
         coefs{iOutput} = coefs{iOutput}-gamma*g{iOutput};
@@ -191,7 +207,7 @@ end
 %%
 
 % Reconstruction
-r = synthesisnet4predict.predict(coefs{1:nLevels+1});
+r = synthesisnsoltCell(nsoltFftDic,coefs{1:nLevels+1});
 %[text] ### 結果の表示
 %[text] (Display the result)
 figure
@@ -238,6 +254,62 @@ for iLayer = 1:nLayers
     if ~isempty(regexp(layer.Name,expfinallayer,'once'))
         nChannels = layer.NumberOfChannels;
     end
+end
+end
+%[text] #### NSOLTの等価畳み込みカーネルの構築関数
+%[text] レベル $\\ell$・チャネル $c$ の係数原点に単位インパルスを入力し，学習済み合成ネットワークの応答をFFT領域の等価カーネルとして一度だけ抽出する．
+function dic = fcn_buildnsoltfftkernels(synthesisnet4predict,decFactor,szCoefs,nLevels,szOrg)
+kernelsF = cell(nLevels+1,1);
+Ds = cell(nLevels+1,1);
+for iLevel = 1:nLevels+1
+    if iLevel <= nLevels
+        Dj = decFactor.^iLevel;
+    else
+        Dj = decFactor.^nLevels;
+    end
+    Ds{iLevel} = Dj;
+    nCh = szCoefs(iLevel,3);
+    K = zeros(szOrg(1),szOrg(2),nCh,'single');
+    for c = 1:nCh
+        sImp = cell(1,nLevels+1);
+        for iL = 1:nLevels+1
+            sImp{iL} = zeros(szCoefs(iL,:),'single');
+        end
+        sImp{iLevel}(1,1,c) = 1;
+        K(:,:,c) = extractdata(synthesisnet4predict.predict(sImp{1:nLevels+1}));
+    end
+    kernelsF{iLevel} = fft2(K);
+end
+dic.kernelsF = kernelsF;
+dic.Ds = Ds;
+dic.szCoefs = szCoefs;
+dic.nLevels = nLevels;
+dic.szOrg = szOrg;
+end
+%[text] #### NSOLT分析処理関数（セル配列版）
+%[text] 画像との巡回相互相関（等価カーネルの複素共役とのFFT積）をとり，各レベルの間引き位相でダウンサンプリングする．
+function varargout = analysisnsoltCell(y,dic)
+kernelsF = dic.kernelsF; Ds = dic.Ds; nLevels = dic.nLevels;
+fy = fft2(y);
+varargout = cell(1,nLevels+1);
+for iLevel = 1:nLevels+1
+    Dj = Ds{iLevel};
+    corr_ = real(ifft2(fy.*conj(kernelsF{iLevel})));
+    varargout{iLevel} = corr_(1:Dj(1):end,1:Dj(2):end,:);
+end
+end
+%[text] #### NSOLT合成処理関数（セル配列版）
+%[text] 各レベルの係数をゼロ詰めし，等価カーネルとの巡回畳み込み（FFT）で合成する．
+function y = synthesisnsoltCell(dic,varargin)
+kernelsF = dic.kernelsF; Ds = dic.Ds; nLevels = dic.nLevels; szOrg = dic.szOrg;
+y = zeros(szOrg,'like',varargin{1});
+for iLevel = 1:nLevels+1
+    xLv = varargin{iLevel};
+    Dj = Ds{iLevel};
+    nCh = size(xLv,3);
+    zs = zeros([szOrg nCh],'like',xLv);
+    zs(1:Dj(1):end,1:Dj(2):end,:) = xLv;
+    y = y + sum(real(ifft2(fft2(zs).*kernelsF{iLevel})),3);
 end
 end
 %[text] © Copyright, Shogo MURAMATSU, All rights reserved.
