@@ -1,24 +1,36 @@
-*.mlx -crlf -diff -merge
-*.mat -crlf -diff -merge
-*.fig -crlf -diff -merge
-*.mdl -crlf -diff -merge
-*.slx -crlf -diff -merge
-*.mlapp -crlf -diff -merge
-*.p -crlf -diff -merge
-*.mdlp -crlf -diff -merge
-*.slxp -crlf -diff -merge
-*.sldd -crlf -diff -merge
-*.slxc -crlf -diff -merge
-*.mlproj -crlf -diff -merge
-*.mldatx -crlf -diff -merge
-*.slreqx -crlf -diff -merge
-*.sfx -crlf -diff -merge
-*.sltx -crlf -diff -merge
-*.mexa64 -crlf -diff -merge
-*.mexw64 -crlf -diff -merge
-*.mexmaci64 -crlf -diff -merge
-*.xlsx -crlf -diff -merge
-*.docx -crlf -diff -merge
-*.pdf -crlf -diff -merge
-*.jpg -crlf -diff -merge
-*.png -crlf -diff -merge
+* text=auto
+
+*.fig binary
+*.mat binary
+*.mdl binary diff merge=mlAutoMerge
+*.mdlp binary
+*.mex* binary
+*.mlapp binary
+*.mldatx binary merge=mlAutoMerge
+*.mlproj binary
+*.mlx binary
+*.p binary
+*.plprj binary
+*.sbproj binary
+*.sfx binary
+*.sldd binary
+*.slreqx binary merge=mlAutoMerge
+*.slmx binary merge=mlAutoMerge
+*.sltx binary
+*.slxc binary
+*.slx binary merge=mlAutoMerge
+*.slxp binary
+
+## MATLAB Project metadata files use LF line endings
+/resources/project/**/*.xml text eol=lf
+
+## Other common binary file types
+*.docx binary
+*.exe binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.xlsx binary
+*.tif binary
+*.avi binary
+*.zip binary

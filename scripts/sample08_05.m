@@ -1,89 +1,56 @@
-%% Sample 8-5
-%% 離散コサイン変換
-% DFTとの関係
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Discrete cosine transform
-% Relation to DFT
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% DCT 行列
-% (DCT matrix)
-% 
-% $$[\mathbf{C}_M]_{k,n}=\sqrt{\frac{2}{M}} \alpha_k\cos\frac{k(n+1∕2)\pi}{M},\ 
-% k,n=0,1,\cdots,M-1$$
-% 
-% $$\alpha_k=\left\{\begin{array}{ll} \frac{1}{\sqrt{2}} & k=0 \\1 & k=1,2,\cdots,M-1\end{array}\right.$$
-
-% DCT points
-nPoints = 4;
+%[text] # Sample 8-5: Relation to DFT
+%[text] Advanced Topics in Image Processing, Lecture 8 "Discrete Cosine Transforms"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## DCT matrix
+%[text]  $\[\\mathbf{C}\_M\]\_{m,n}=\\alpha\_m\\cos\\frac{m(2n+1)\\pi}{2M},\\ m,n\\in\\{0,1,\\ldots,M-1\\}$
+%[text]  $\\alpha\_m=\\left\\{\\begin{array}{ll} 1/\\sqrt{M} & m=0 \\\\ \\sqrt{2/M} & m\\in\\{1,2,\\ldots,M-1\\}\\end{array}\\right.$
+% Number of DCT points
+nPoints = 4; %[control:slider:5fb5]{"position":[11,12]}
 C = dctmtx(nPoints)
-% OTDFT行列
-% (OTDFT matrix)
-% 
-% OTDFTはDCTと深い関係にある。(OTDFT is closely related to DCT.)
-% 
-% OTDFT: Odd-time discrete Fourier transform (GDFT w/ $a=0,b=1/2$)
-%% 
-% * 一般化DFT (GDFT: generalized DFT)
-%% 
-% $$X_{N}^{(a, b)}[k]=\sum_{n=0}^{N-1} x[n] W_{N}^{(k+a)(n+b)},\ k=0,1,\cdots,N-1$$
-%% 
-% * OTDFT行列 (OTDFT matrix)
-%% 
-% $$[\mathbf{W}_N^{\left(0,\frac{1}{2}\right)}]_{k,n}=e^{-\j\frac{\pi}{N}k}e^{-\j\frac{2\pi}{N}kn}$$
-
-% DFT points
+%%
+%[text] ## OTDFT matrix
+%[text] The odd-time DFT (OTDFT) is closely related to the DCT.
+%[text] OTDFT: the generalized DFT (GDFT) with $a=0$, $b=1/2$
+%[text] - GDFT matrix \
+%[text]  $\[\\mathbf{W}\_N^{(a,b)}\]\_{k,n}=e^{-\\mathrm{j}2\\pi(k+a)(n+b)/N},\\ k,n\\in\\{0,1,\\ldots,N-1\\}$
+%[text] - OTDFT matrix \
+%[text]  $\\mathbf{W}\_N^{(0,1/2)}=\\boldsymbol{\\Lambda}\_N\\mathbf{W}\_N$, $\[\\boldsymbol{\\Lambda}\_N\]\_{k,k}=e^{-\\mathrm{j}\\pi k/N}$
+% Number of DFT points
 nPointsDft = 2 * nPoints;
 
 % OTDFT matrix
-k=0:nPointsDft-1;
+k = 0:nPointsDft-1;
 Wdft = dftmtx(nPointsDft);
 Lambda = diag(exp(-1j*pi/nPointsDft*k));
 Wotdft = Lambda * Wdft
-% OTDFT によるDCT
-% (DCT through OTDFT)
-% 
-% OTDFTとDCTの関係 (Relation between OTDFT and DCT)
-% 
-% $$\left[\mathbf{C}_{M}\right]_{k, n}=\frac{\alpha_{k}}{\sqrt{2 M}}\left[\mathbf{W}_{2 
-% M}^{\left(0, \frac{1}{2}\right)} \mathbf{E}_{M}\right]_{k, n},\ k,n=0,1,\cdots,M-1$$
-% 
-% ただし、 $\mathbf{E}_{M}$ は対称拡張行列 (where $\mathbf{E}_{M}$is the symmetric extension 
-% matrix defined by )
-% 
-% $$\mathbf{E}_{M}=\left(\begin{array}{cccc}1 & 0 & \cdots & 0 \\0 & 1 & \cdots 
-% & 0 \\\vdots & \vdots & \ddots & \vdots \\0 & 0 & \cdots & 1 \\0 & 0 & \cdots 
-% & 1 \\\vdots & \vdots & \ddots & \vdots \\0 & 1 & \cdots & 0 \\1 & 0 & \cdots 
-% & 0\end{array}\right).$$
-% 
-% である。
-
+%%
+%[text] ## DCT through OTDFT
+%[text] Relation between the OTDFT and the DCT
+%[text]  $\\left\[\\mathbf{C}\_{M}\\right\]\_{m,n}=\\frac{\\alpha\_{m}}{2}\\left\[\\mathbf{W}\_{2M}^{(0,1/2)}\\mathbf{E}\_{M}\\right\]\_{m,n},\\ m,n\\in\\{0,1,\\ldots,M-1\\}$
+%[text] where $\\mathbf{E}\_{M}$ is the $2M\\times M$ symmetric extension matrix
+%[text]  $\\mathbf{E}\_{M}=\\begin{pmatrix}\\mathbf{I}\_M \\\\ \\mathbf{J}\_M\\end{pmatrix}=\\left(\\begin{array}{cccc}1 & 0 & \\cdots & 0 \\\\0 & 1 & \\cdots & 0 \\\\\\vdots & \\vdots & \\ddots & \\vdots \\\\0 & 0 & \\cdots & 1 \\\\0 & 0 & \\cdots & 1 \\\\\\vdots & \\vdots & \\ddots & \\vdots \\\\0 & 1 & \\cdots & 0 \\\\1 & 0 & \\cdots & 0\\end{array}\\right)$
+%[text] ($\\mathbf{I}\_M$: identity matrix, $\\mathbf{J}\_M$: reversal matrix).
 % Symmetric extension matrix
 E = [ eye(nPoints) ; fliplr(eye(nPoints)) ]
 
-% DCT matrix through OTDFT
+% DCT matrix through OTDFT (alpha_m/2 = 1/sqrt(2M) * [1/sqrt(2) 1 ... 1])
 D = 1/sqrt(2*nPoints)*...
     diag([1/sqrt(2) ones(1,nPoints-1) ])*...
     Wotdft(1:nPoints,:)*E
-%% 
-% 誤差の評価 (Evaluation of error)
+%[text] Evaluation of the error
+norm(D-C,"fro")
+%[text] The fast Fourier transform (FFT) can be applied to the transform with `Wdft` (DFT).
+%[text] Hence the DCT has fast algorithms.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
 
-norm(D-C,'Fro')
-%% 
-% Wdft による変換(DFT)には、高速フーリエ変換(FFT)を適用できる。(The Fast Fourier Transform (FFT) can 
-% be applied to the  transform with Wdft (DFT).)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:5fb5]
+%   data: {"defaultValue":4,"label":"nPoints","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---

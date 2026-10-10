@@ -1,237 +1,177 @@
-%% Sample 10-2
-%% 冗長変換
-% 分析問題
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Redundant transforms
-% Analysis problem
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-%% フィルタ係数設定と入力信号の生成
-% (Setting of filter Coefs. and generation of input)
-
-% Coefficients of analysis filters
-gamma = 0.5;
+%[text] # Sample 10-2: Analysis problem
+%[text] Advanced Topics in Image Processing, Lecture 10 "Redundant Transforms"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Filter coefficients and input
+%[text] Flexible analysis filters $H\_0(z)=\\gamma+\\delta z^{-1}$, $H\_1(z)=-\\gamma+\\delta z^{-1}$ with the
+%[text] perfect reconstruction (PR) condition $\\gamma+\\delta=1$.  Change $\\gamma$ with the slider.
+% Coefficients of the analysis filters
+gamma = 0.5; %[control:slider:9502]{"position":[9,12]}
 delta = 1 - gamma;
 
-% Input signal
-u = [ 0 3 1 3 1 5 3 0 ]; % Set to even length
-% 並列フィルタバンク実装
-% (Parallel filter bank implementation)
-% 
-% 分析フィルタバンクをデシメータで、合成フィルタバンクをインタポレータで実装
-
-% # of channels
+% Input signal (even length)
+x = [ 0 3 1 3 1 5 3 0 ];
+%%
+%[text] ## Parallel filter bank implementation
+%[text] Undecimated 2-channel filter bank (no down- and up-samplers) with the fixed synthesis filters
+%[text] $F\_0(z)=\\frac{1}{2}(1+z^{-1})$ and $F\_1(z)=\\frac{1}{2}(1-z^{-1})$.
+% Number of channels
 nChs = 2;
 
 % Analysis filters
 h0 = [ gamma  delta ];
-h1 = [ gamma -delta ];
+h1 = [ -gamma delta ];
 
 % Synthesis filters
-f0 = [  1 1 ]/2; 
-f1 = [ -1 1 ]/2;
+f0 = [  1 1 ]/2;
+f1 = [ 1 -1 ]/2;
 
 % Analysis process
-s0 = conv(h0,u);
-s1 = conv(h1,u);
+s0 = conv(h0,x);
+s1 = conv(h1,x);
 
 % Synthesis process
-v0 = conv(f0,s0);
-v1 = conv(f1,s1);
-v = v0 + v1;
+y0 = conv(f0,s0);
+y1 = conv(f1,s1);
+xhat = y0 + y1;
+%[text] Energy of the sub-band coefficients $\\|\\mathbf{s}\\|\_2^2$
+disp("||s||_2^2 = " + norm([s0(:);s1(:)],2)^2)
+%%
+%[text] ## Signal display
+fig1 = figure;
+tl = tiledlayout(fig1,3,2,"TileSpacing","compact");
+ylims = [ min([s0(:);s1(:)]) max([s0(:);s1(:)]) ];
 
-% Energy of subband Coefs.
-disp(['||s||_2^2 = ' num2str(norm([s0(:);s1(:)],2)^2)])
-%% 信号表示
-% (Signal display)
-
-figure(1)
 % Input
-subplot(3,2,1)
-stem(0:length(u)-1,u,'filled')
-title('Input u[n]')
-xlabel('n')
-ax = gca;
-ax.XLim =[ 0 length(v)];
+ax = nexttile(tl,1);
+stem(ax,0:length(x)-1,x,"filled")
+title(ax,"Input $x[n]$","Interpreter","latex")
+xlabel(ax,"$n$","Interpreter","latex")
+ax.XLim = [ 0 length(xhat) ];
 
 % Subband 0
-subplot(3,2,3)
-stem(0:length(s0)-1,s0,'filled')
-title('Subbnad s_0[n]')
-xlabel('m')
-ax = gca;
-ax.XLim =[ 0 length(v)];
-ax.YLim =[ min([s0(:);s1(:)]) max([s0(:);s1(:)]) ];
+ax = nexttile(tl,3);
+stem(ax,0:length(s0)-1,s0,"filled")
+title(ax,"Subband $s_0[n]$","Interpreter","latex")
+xlabel(ax,"$n$","Interpreter","latex")
+ax.XLim = [ 0 length(xhat) ];
+ax.YLim = ylims;
 
 % Subband 1
-subplot(3,2,4)
-stem(0:length(s1)-1,s1,'filled')
-title('Subbnad s_1[n]')
-xlabel('m')
-ax = gca;
-ax.XLim =[ 0 length(v)];
-ax.YLim =[ min([s0(:);s1(:)]) max([s0(:);s1(:)]) ];
+ax = nexttile(tl,4);
+stem(ax,0:length(s1)-1,s1,"filled")
+title(ax,"Subband $s_1[n]$","Interpreter","latex")
+xlabel(ax,"$n$","Interpreter","latex")
+ax.XLim = [ 0 length(xhat) ];
+ax.YLim = ylims;
 
 % Output
-subplot(3,2,5)
-stem(0:length(v)-1,v,'filled')
-title('Outut v[n]')
-xlabel('n')
-ax = gca;
-ax.XLim =[ 0 length(v)];
-
-% MSE 評価
-mymse = @(x,y) mean((x(:)-y(:)).^2);
-disp(['MSE = ', num2str(mymse(u, v(2:end-1)))]);
-% インパルス応答
-% (Impluse responses of synthesis filters)
-
-figure(2)
-
-% Low-pass analysis filter
-subplot(2,2,1)
-stem(0:length(h0)-1,h0,'filled')
-title('h_0[n]')
-xlabel('n')
-ax = gca;
-ax.YLim =[ min([h0(:);h1(:)]) max([h0(:);h1(:)]) ];
-
-% High-pass analysis filter
-subplot(2,2,2)
-stem(0:length(h1)-1,h1,'filled')
-title('h_1[n]')
-xlabel('n')
-ax = gca;
-ax.YLim =[ min([h0(:);h1(:)]) max([h0(:);h1(:)]) ];
-
-% Low-pass synthesis filter
-subplot(2,2,3)
-stem(0:length(f0)-1,f0,'filled')
-title('f_0[n]')
-xlabel('n')
-ax = gca;
-ax.YLim =[ min([f0(:);f1(:)]) max([f0(:);f1(:)]) ];
-
-% High-pass synthesis filter
-subplot(2,2,4)
-stem(0:length(f1)-1,f1,'filled')
-title('f_1[n]')
-xlabel('n')
-ax = gca;
-ax.YLim =[ min([f0(:);f1(:)]) max([f0(:);f1(:)]) ];
-% 周波数応答
-% (Frequency responses)
-
-figure(3)
+ax = nexttile(tl,5);
+stem(ax,0:length(xhat)-1,xhat,"filled")
+title(ax,"Output $\hat{x}[n]$","Interpreter","latex")
+xlabel(ax,"$n$","Interpreter","latex")
+ax.XLim = [ 0 length(xhat) ];
+%[text] MSE evaluation (the output is delayed by one sample)
+disp("MSE = " + immse(x, xhat(2:end-1)))
+%%
+%[text] ## Impulse responses
+fig2 = figure;
+tl = tiledlayout(fig2,2,2,"TileSpacing","compact");
+filters = {h0, h1, f0, f1};
+fnames = ["$h_0[n]$", "$h_1[n]$", "$f_0[n]$", "$f_1[n]$"];
+for idx = 1:4
+    ax = nexttile(tl);
+    stem(ax,0:length(filters{idx})-1,filters{idx},"filled")
+    title(ax,fnames(idx),"Interpreter","latex")
+    xlabel(ax,"$n$","Interpreter","latex")
+    ax.XLim = [ -0.5 1.5 ];
+end
+%%
+%[text] ## Frequency responses
+fig3 = figure;
+tl = tiledlayout(fig3,2,1,"TileSpacing","compact");
 fftPoints = 512;
 
 % Analysis filters
-subplot(2,1,1)
+ax = nexttile(tl);
 H = zeros(fftPoints,nChs);
-% Low-pass filter
-[H(:,1),W] = freqz(h0,1,fftPoints);
-% High-pass filter
-H(:,2)     = freqz(h1,1,fftPoints);
-plot(W/pi,abs(H)) %20*log10(abs(F)))
-%axis([0 1 0 1]) %-70 10])
-xlabel('Normalized Frequency (x\pi rad/sample)')
-ylabel('Magnitude') % (dB)')
-grid on
+[H(:,1),w] = freqz(h0,1,fftPoints);   % Low-pass filter
+H(:,2)     = freqz(h1,1,fftPoints);   % High-pass filter
+plot(ax,w/pi,abs(H))
+xlabel(ax,"Normalized frequency $\omega/\pi$","Interpreter","latex")
+ylabel(ax,"Magnitude")
+title(ax,"Analysis filters")
+legend(ax,["$|H_0|$","$|H_1|$"],"Interpreter","latex")
+grid(ax,"on")
 
 % Synthesis filters
-subplot(2,1,2)
+ax = nexttile(tl);
 F = zeros(fftPoints,nChs);
-% Low-pass filter
-[F(:,1),W] = freqz(f0,1,fftPoints);
-% High-pass filter
-F(:,2)     = freqz(f1,1,fftPoints);
-plot(W/pi,abs(F)) %20*log10(abs(F)))
-axis([0 1 0 1]) %-70 10])
-xlabel('Normalized Frequency (x\pi rad/sample)')
-ylabel('Magnitude') % (dB)')
-grid on
-% ポリフェーズ行列実装（PPMATRIXオブジェクト利用）
-% (Polyphase matrix implemenation with PPMATRIX object)
-% 
-% フィルタバンクをポリフェーズフィルタに分解して、ポリフェーズ行列として実装 (Decompose the filter bank into polyphase 
-% filters and implement them in a polyphase matrix.)
-% 
-% $$\mathbf{E}(z)=\left(\begin{array}{c}  h_0[0] \\ h_1[0]\end{array}\right)+\left(\begin{array}{c}  
-% h_0[1] \\ h_1[1]\end{array}\right)z^{-1}=\left(\begin{array}{cc}  h_0[0]+h_0[1]z^{-1}  
-% \\ h_1[0]+h_1[1]z^{-1}\end{array}\right)$$
-% 
-% $$\mathbf{R}(z)=\left(\begin{array}{cc}  f_0[0] &f_1[0]\end{array}\right)+\left(\begin{array}{cc}  
-% f_0[1] &f_1[1]\end{array}\right)z^{-1}=\left(\begin{array}{cc}  f_0[0]+f_0[1]z^{-1} 
-% &f_1[0]+f_1[1]z^{-1} \end{array}\right)$$
-
-% Type-I polyphase filters of analyzer
+[F(:,1),w] = freqz(f0,1,fftPoints);   % Low-pass filter
+F(:,2)     = freqz(f1,1,fftPoints);   % High-pass filter
+plot(ax,w/pi,abs(F))
+axis(ax,[0 1 0 1])
+xlabel(ax,"Normalized frequency $\omega/\pi$","Interpreter","latex")
+ylabel(ax,"Magnitude")
+title(ax,"Synthesis filters")
+legend(ax,["$|F_0|$","$|F_1|$"],"Interpreter","latex")
+grid(ax,"on")
+%%
+%[text] ## Polyphase matrix implementation with the PPMATRIX object
+%[text] The filter bank is decomposed into polyphase filters and implemented as polyphase matrices.
+%[text] Since no resampling is applied ($M=1$), the polyphase matrices are the vectors of the transfer functions:
+%[text] $\\mathbf{E}(z)=\\left(\\begin{array}{c}  h\_0\[0\] \\\\ h\_1\[0\]\\end{array}\\right)+\\left(\\begin{array}{c}  h\_0\[1\] \\\\ h\_1\[1\]\\end{array}\\right)z^{-1}=\\left(\\begin{array}{c}  h\_0\[0\]+h\_0\[1\]z^{-1}  \\\\ h\_1\[0\]+h\_1\[1\]z^{-1}\\end{array}\\right)$
+%[text] $\\mathbf{R}(z)=\\left(\\begin{array}{cc}  f\_0\[0\] &f\_1\[0\]\\end{array}\\right)+\\left(\\begin{array}{cc}  f\_0\[1\] &f\_1\[1\]\\end{array}\\right)z^{-1}=\\left(\\begin{array}{cc}  f\_0\[0\]+f\_0\[1\]z^{-1} &f\_1\[0\]+f\_1\[1\]z^{-1} \\end{array}\\right)$
+% Type-I polyphase filters of the analyzer
 e00 = h0(1:end);
 e10 = h1(1:end);
 
-% Type-II polyphase filters of synthesizer
+% Type-II polyphase filters of the synthesizer
 r00 = f0(1:end);
 r01 = f1(1:end);
-%% 
-% ポリフェーズ行列演算が簡便となるよう以下のクラスを定義した。インスタンス化の際、3番目の添え字が遅延を示す3次元配列を渡す。(In order to 
-% make polyphase matrix operations easier, the following classe is defined. At 
-% instantiation, plase pass a three-dimensional array where the third subscript 
-% indicates a delay.)
-%% 
-% * PPMATRIX： Polyphase Matrix Class (originally from saivdr.dictionary.utility.PolyPhaseMatrix1D 
-% in <https://github.com/msiplab/SaivDr SaivDr package> )
-%% 
-% 分析合成処理 (Analysis and synthesis process)
-
+%[text] The class below makes polyphase matrix operations easy.  At instantiation, pass a three-dimensional
+%[text] array whose third index indicates the delay.
+%[text] - PPMATRIX: polyphase matrix class (originally saivdr.dictionary.utility.PolyPhaseMatrix1D in the [SaivDr package](https://github.com/msiplab/SaivDr)) \
+%[text] Analysis and synthesis process
 import msip.ppmatrix
-% Polyphase matrix of analysis bank
+% Polyphase matrix of the analysis bank
 e00 = reshape(e00,1,1,length(e00));
 e10 = reshape(e10,1,1,length(e10));
 E = ppmatrix(cat(1,e00,e10))
-% Polyphase matrix of synthesis bank
+% Polyphase matrix of the synthesis bank
 r00 = reshape(r00,1,1,length(r00));
 r01 = reshape(r01,1,1,length(r01));
 R = ppmatrix(cat(2,r00,r01))
-%% 
-% 完全再構成条件の確認 (Confirmation of perfect reconstruction)
-% 
-% $$\mathbf{R}(z)\mathbf{E}(z)=(\mathbf{R}_0 +\mathbf{R}_1 z^{-1} )(\mathbf{E}_0 
-% + \mathbf{E}_1 z^{-1} )=\mathbf{R}_0 \mathbf{E}_0 + (\mathbf{R}_1 \mathbf{E}_0 
-% +\mathbf{R}_0 \mathbf{E}_1 )z^{-1}+\mathbf{R}_1\mathbf{E}_1 z^{-2}=z^{-1}\mathbf{I} 
-% $$ 
-
+%[text] Check of the perfect reconstruction
+%[text] $\\mathbf{R}(z)\\mathbf{E}(z)=(\\mathbf{R}\_0 +\\mathbf{R}\_1 z^{-1} )(\\mathbf{E}\_0 + \\mathbf{E}\_1 z^{-1} )=\\mathbf{R}\_0 \\mathbf{E}\_0 + (\\mathbf{R}\_1 \\mathbf{E}\_0 +\\mathbf{R}\_0 \\mathbf{E}\_1 )z^{-1}+\\mathbf{R}\_1\\mathbf{E}\_1 z^{-2}=z^{-1}\\mathbf{I}$
 disp(R*E)
-% Define delaychain
-clear delaychain
-delaychain(1,1,1) = 1;
-delaychain = ppmatrix(delaychain)
-% Z-transform of input
-u = ppmatrix(reshape(u,1,1,length(u)));
-disp(u)
-% Polyphase decomposition of input
-x = delaychain*u;
-disp(x)
-% Analysis process w/ the polyphase matrix
-s = E*x;
-disp(s)
-% Synthesis process w/ the polyphase matrix
-y = R*s;
-disp(y)
-% Parallel/Serial conversion
-v = delaychain.'*y;
-disp(v)
-disp(squeeze(double(v)).')
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+% Delay chain (M = 1)
+delaychain = ppmatrix(1)
+% Z-transform of the input
+xz = ppmatrix(reshape(x,1,1,length(x)));
+disp(xz)
+% Polyphase decomposition of the input
+xp = delaychain*xz;
+disp(xp)
+% Analysis process with the polyphase matrix
+sz = E*xp;
+disp(sz)
+% Synthesis process with the polyphase matrix
+yz = R*sz;
+disp(yz)
+% Parallel/serial conversion
+xhatz = delaychain.'*yz;
+disp(xhatz)
+disp(squeeze(double(xhatz)).')
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:9502]
+%   data: {"defaultValue":0.5,"label":"gamma","max":2,"min":-2,"run":"SectionToEnd","runOn":"ValueChanging","step":0.1}
+%---

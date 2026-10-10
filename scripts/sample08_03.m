@@ -1,147 +1,97 @@
-%% Sample 8-3
-%% 離散コサイン変換
-% 画像符号化
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Discrete cosine transform
-% Image codec
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% 単変量変換行列の定義
-% (Definition of univariate transform)
-%% 
-% * 回転行列(rotation matrix)
-%% 
-% $$\mathbf{A}_{\theta} = \left(\begin{array}{cc} \cos\theta & -\sin\theta \\ 
-% \sin\theta & \cos\theta \end{array}\right)$$
-
-Atheta = @(theta) [cos(theta) -sin(theta) ; sin(theta) cos(theta)];
-% ブロック毎の処理の定義
-% (Definition of patch processing)
-% 
-% 順変換　→　量子化　→　逆量子化　→　逆変換
-% 
-% (Forward transform → Quantization → Inverse quantization → Inverse transform)
-% 
-% $$T(\mathbf{X})=\mathbf{A}^{-1}\left(\mathbf{Q}\odot\mathrm{round}( (\mathbf{AXA}^T)\oslash\mathbf{Q})\right)\mathbf{A}^{-T}$$
-%% 
-% * $\odot$: 要素毎の掛け算 (Entry-wise multiplication)
-% * $\oslash$: 要素毎の割り算 (Entry-wise division)
-
+%[text] # Sample 8-3: Image codec
+%[text] Advanced Topics in Image Processing, Lecture 8 "Discrete Cosine Transforms"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Definition of a univariate transform
+%[text] - Discrete Haar transform (DHT) matrix of the reference text (Sec. 6.2.2) \
+%[text]  $\\mathbf{H}\_2=\\frac{1}{\\sqrt{2}}\\begin{pmatrix} 1 & 1 \\\\ 1 & -1 \\end{pmatrix}$
+H2 = [1 1 ; 1 -1]/sqrt(2);
+%%
+%[text] ## Definition of the patch processing
+%[text] Forward transform $\\rightarrow$ quantization $\\rightarrow$ inverse quantization $\\rightarrow$ inverse transform
+%[text]  $\\mathcal{T}(\\mathbf{X})=\\mathbf{A}^{-1}\\left(\\mathbf{Q}\\odot\\mathrm{round}\\left( (\\mathbf{A}\\mathbf{X}\\mathbf{A}^\\top)\\oslash\\mathbf{Q}\\right)\\right)\\mathbf{A}^{-\\top}$
+%[text] - $\\odot$: entry-wise multiplication
+%[text] - $\\oslash$: entry-wise division
+%[text] - $\\mathbf{Q}$: quantization table (quantization step of each coefficient)
 mycodec = @(X,A,Q) inv(A)*(Q.*(round((A*double(X.data)*A.')./Q)))*inv(A).';
-%% 
-% ブロックサイズ (Patch size)
-
+%[text] Patch size
 blkSz = [2 2];
-% 配列に対するブロック処理
-% 品質制御パラメータ (Quality factor)
-%% 
-% * 量子化ステップを制御 (Controls the quantization step)
-
-Qfactor = 1;
-% 入力配列の定義
-% (Definition of input array)
-
+%%
+%[text] ## Block processing of an array
+%[text] Quality factor
+%[text] - Controls the quantization steps
+Qfactor = 1; %[control:slider:0daa]{"position":[11,12]}
+%%
+%[text] ## Definition of the input array
 U = [
     2 2 3 1 ;
     2 2 3 1 ;
     3 3 2 0 ;
     1 1 0 2 ];
-% 単位行列の場合
-% (For the indentity matrix case)
-
-A0 = eye(blkSz) % or Atheta(0)
-%% 
-% 量子化テーブル (Quantization table) $\mathbf{Q}$
-
-Q0 = Qfactor*[ % Flat
-    2 2 ; 
+%%
+%[text] ## Identity matrix case
+A0 = eye(blkSz)
+%[text] Quantization table $\\mathbf{Q}$
+Q0 = Qfactor*[ % flat
+    2 2 ;
     2 2 ];
-%% 
-% 符号化および復号(Coding and decoding)
-
-% Definition of block processing
-mycodec0 = @(x) mycodec(x,A0,Q0);
-
-% Run codec
-V0 = blockproc(U,blkSz,mycodec0)
-% Error
-U-V0
-% ハール変換の場合
-% (For the Haar case)
-
-Ah = Atheta(-pi/4)
-%% 
-% 量子化テーブル (Quantization table) $\mathbf{Q}$
-
-Qh = Qfactor*[ % Manually weighted
+%[text] Coding and decoding
+mycodec0 = @(x) mycodec(x,A0,Q0);   % block processing
+V0 = blockproc(U,blkSz,mycodec0)    % run the codec
+U-V0                                % error
+%%
+%[text] ## Haar transform case
+Ah = H2
+%[text] Quantization table $\\mathbf{Q}$
+Qh = Qfactor*[ % manually weighted
     3 4 ;
     4 5 ]/2;
-%% 
-% 符号化および復号(Coding and decoding)
-
-% Definition of block processing
-mycodech = @(x) mycodec(x,Ah,Qh);
-% Run codec
-Vh = blockproc(U,blkSz,mycodech)
-% Error
-U-Vh
-% 品質評価 
-% (Quality assesment) 
-% 
-% $\mathrm{PSNR}(\mathbf{U},\mathbf{V}) = 10\log_{10}\frac{\mathrm{peak}^2}{\mathrm{MSE}(\mathbf{U},\mathbf{V})}$ 
-% [dB]
-%% 
-% * PSNRが大きいほど誤差が小さい (Larger PSNR means smaller error.)
-
+%[text] Coding and decoding
+mycodech = @(x) mycodec(x,Ah,Qh);   % block processing
+Vh = blockproc(U,blkSz,mycodech)    % run the codec
+U-Vh                                % error
+%%
+%[text] ## Quality assessment
+%[text]  $\\mathrm{PSNR}(\\mathsf{u},\\mathsf{v})=10\\log\_{10}\\frac{V\_\\mathrm{peak}^2}{\\mathrm{MSE}(\\mathsf{u},\\mathsf{v})}$ \[dB\]
+%[text] - A larger PSNR means a smaller error.
 Qfactor
-fprintf('PSNR (theta=0): %6.2f [dB]',psnr(U,V0,max(U(:))))
-fprintf('PSNR (theta=-π/4): %6.2f [dB]',psnr(U,Vh,max(U(:))))
-% 原画像の読込
-% (Read an image)
-
-U = rgb2gray(imread('data/barbaraFaceRgb.tif'));
-% 符号化および復号
-% (Coding and decoding)
-% 
-% 単位行列の場合 (For the indentity matrix case)
-
-% Run codec w/ θ = 0
-V0 = cast(blockproc(U,blkSz,mycodec0),'like',U);
-%% 
-% ハール変換の場合 (For the Haar case)
-
-% Run codec w/ θ=-π/4
-Vh = cast(blockproc(U,blkSz,mycodech),'like',U);
-% 品質評価 
-% (Quality assesment) 
-
+fprintf("PSNR (identity): %6.2f [dB]\n", psnr(U,V0,max(U(:))))
+fprintf("PSNR (Haar H_2): %6.2f [dB]\n", psnr(U,Vh,max(U(:))))
+%%
+%[text] ## Read an image
+[datfolder,~] = atip.prjfolders();
+U = rgb2gray(imread(fullfile(datfolder,"barbaraFaceRgb.tif")));
+%%
+%[text] ## Coding and decoding
+%[text] Identity matrix case
+V0 = cast(blockproc(U,blkSz,mycodec0),"like",U);
+%[text] Haar transform case
+Vh = cast(blockproc(U,blkSz,mycodech),"like",U);
+%%
+%[text] ## Quality assessment
 Qfactor
-
-fprintf('PSNR (theta=-π/4): %6.2f [dB]',psnr(U,Vh))
-% 画像表示
-% (Image show)
-
-figure(1)
+fprintf("PSNR (identity): %6.2f [dB]\n", psnr(U,V0))
+fprintf("PSNR (Haar H_2): %6.2f [dB]\n", psnr(U,Vh))
+%%
+%[text] ## Image show
+figure
 imshow(U)
-title('Original picture')
-figure(2)
+title("Original picture")
+figure
 imshow(V0)
-title(['Decoded picture w/ \theta=0 (PSNR: ' num2str(psnr(U,V0)) ' dB)'])
-figure(3)
+title("Decoded picture w/ identity (PSNR: " + psnr(U,V0) + " dB)")
+figure
 imshow(Vh)
-title(['Decoded picture w/ \theta=-\pi/4 (PSNR: ' num2str(psnr(U,Vh)) ' dB)'])
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+title("Decoded picture w/ Haar H_2 (PSNR: " + psnr(U,Vh) + " dB)")
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:0daa]
+%   data: {"defaultValue":1,"label":"Qfactor","max":8,"min":0.5,"run":"SectionToEnd","runOn":"ValueChanging","step":0.5}
+%---

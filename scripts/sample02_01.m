@@ -1,83 +1,75 @@
-%% Sample 2-1
-%% 画像データの入出力
-% RGB-グレースケール変換 
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Input and output of images
-% RGB to grayscale
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-%  準備 
-% (Preparation)
-% 
-% 本サンプルで利用する画像でーがを収めたdata フォルダにパスをとおす。
-% 
-% Create a path to the data folder that contains images used in this sample.
-
-addpath('./data')
-% RGBからグレースケールへ
-% (RGB to Grayscale)
-% 
-% RGB色空間からグレースケールへの変換の定義
-% 
-% Definition of conversion from RGB color space to grayscale.
-% 
-% $$x_\mathrm{Y} = 0.2989x_\mathrm{R}+0.5870x_\mathrm{G}+0.1140x_\mathrm{B}$$
-
-% Importing color images
-pictureRgb = imread('firenzeRgb.jpg');
-% COnversion to grayscale
-pictureGray = uint8(...
-    0.2959 * double(pictureRgb(:,:,1)) + ... % R
+%[text] # Sample 2-1: RGB to grayscale
+%[text] Advanced Topics in Image Processing, Lecture 2 "Input and Output of Images"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation
+%[text] The data folder holds the images used in this sample; outputs go to the results folder.
+[datfolder,resfolder] = atip.prjfolders();
+%%
+%[text] ## RGB to grayscale
+%[text] Grayscale conversion is the inner product of an RGB pixel $\\vec{x}=(x\_\\mathrm{R}\\ x\_\\mathrm{G}\\ x\_\\mathrm{B})^\\top$
+%[text] with a weight vector (\[M\] Example "Grayscale conversion", Section 2.3.1):
+%[text]{"align":"center"} $y=\\phi(\\vec{x})=0.2989x\_\\mathrm{R}+0.5870x\_\\mathrm{G}+0.1140x\_\\mathrm{B}$
+% Read a colour image
+pictureRgb = imread(fullfile(datfolder,'firenzeRgb.jpg'));
+% Conversion to grayscale
+pictureGray = uint8( ...
+    0.2989 * double(pictureRgb(:,:,1)) + ... % R
     0.5870 * double(pictureRgb(:,:,2)) + ... % G
     0.1140 * double(pictureRgb(:,:,3)) ...   % B
-);
+    );
 whos pictureRgb pictureGray
-% uint8型画像の表示
-% (Image show in uint8)
-%% 
-% * RGBカラー画像(RGB color image)
-% * グレースケール画像(Grayscale image)
-
-figure(1)
+%%
+%[text] ## Image show in uint8
+%[text] - RGB colour image
+%[text] - Grayscale image \
+figure
 imshow(pictureRgb)
-figure(2)
+title('RGB colour image (uint8)')
+figure
 imshow(pictureGray)
-% RGB2GRAY関数
-% (RGB2GRAY funciton)
-% 
-% 入出力のデータ型を保存するグレースケール変換関数
-% 
-% Grayscale conversion function to store input and output data types.
-
+title('Grayscale image (uint8)')
+%%
+%[text] ## RGB2GRAY function
+%[text] `rgb2gray` keeps the data type of the input: a `double` input gives a `double` output.
 pictureRgbDouble = im2double(pictureRgb);
 pictureGrayDouble = rgb2gray(pictureRgbDouble);
 whos pictureRgbDouble pictureGrayDouble
-% double型画像の表示
-% (Image show in double)
-%% 
-% * RGBカラー画像(RGB color image)
-% * グレースケール画像(Grayscale image)
-
-figure(3)
+%%
+%[text] ## Image show in double
+%[text] - RGB colour image
+%[text] - Grayscale image \
+figure
 imshow(pictureRgbDouble)
-figure(4)
+title('RGB colour image (double)')
+figure
 imshow(pictureGrayDouble)
-% 画像ビューアアプリ
-% (Image viewer app)
-%% 
-% * RGBカラー画像(RGB color image)
-% * グレースケール画像(Grayscale image)
+title('Grayscale image (double)')
+%%
+%[text] ## Image write
+%[text] `imwrite` decides the format from the file extension.  The files are saved in the results folder.
+imwrite(pictureRgb, fullfile(resfolder,'firenzeRgb.tif'))
+imwrite(pictureGray, fullfile(resfolder,'firenzeGray.jpg'))
+dir(fullfile(resfolder,'firenze*'))
+%[text] JPEG is lossy.  The quality factor (0 to 100, default 75) controls the trade-off between
+%[text] the file size and the image quality.
+imwrite(pictureGray, fullfile(resfolder,'q50.jpg'), 'Quality', 50)
+dir(fullfile(resfolder,'q50.jpg'))
+%%
+%[text] ## Image viewer app
+%[text] `imageViewer` shows the pixel values and allows zooming (desktop only).
+%[text] - RGB colour image
+%[text] - Grayscale image \
+if usejava('desktop')
+    imageViewer(pictureRgbDouble)
+    imageViewer(pictureGrayDouble)
+end
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
 
-imtool(pictureRgbDouble)
-imtool(pictureGrayDouble)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

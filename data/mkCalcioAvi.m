@@ -1,24 +1,28 @@
 %
-% Make Calcio AVI file from Sequense of JPEG files
+% Make the Calcio AVI file from the sequence of JPEG files
 %
-% Copyright (C) 2014-2021 Shogo MURAMATSU, All rights reserved
+% Reads calcio000.jpg, ..., calcio149.jpg from the data folder of AtipWork
+% and writes calcio.avi (uncompressed, 30 frames/s) to the results folder.
+% Sample 2-2 (scripts/sample02_02.m) contains the same steps.
+%
+% Copyright (C) 2014-2026 Shogo MURAMATSU, All rights reserved
 %
 nFrames = 150;
 frameRate = 30;
+[datfolder,resfolder] = atip.prjfolders();
 
-%% 出力ファイル
-fileNameOut = './data/calcio.avi';
+%% Output file
+fileNameOut = fullfile(resfolder,'calcio.avi');
 vwObj = VideoWriter(fileNameOut,'Uncompressed AVI');
-set(vwObj,'FrameRate',frameRate);
+vwObj.FrameRate = frameRate;
 open(vwObj)
 
-%% フレーム毎の処理
+%% Frame-by-frame processing
 for iFrame = 1:nFrames
-    % フレームの読出し
-    fileNameIn = sprintf('./data/calcio%03d.jpg', ...
-        iFrame - 1);
+    % Read the frame
+    fileNameIn = fullfile(datfolder,sprintf('calcio%03d.jpg',iFrame-1));
     picture = imread(fileNameIn);
-    % フレームの出力
-    writeVideo(vwObj,im2frame(picture));
+    % Write the frame
+    writeVideo(vwObj,picture)
 end
 close(vwObj)

@@ -1,130 +1,82 @@
-%% Sample 13-1
-%% 辞書学習
-% カルーネン-レーベ変換（主成分分析）
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Dictionary learning
-% Karhunen–Loève transform (principle component analysis) 
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-clear 
-close all
-import msip.download_img
-msip.download_img
-% パラメータ設定
-% (Parameter settings)
-%% 
-% * ブロックサイズ (Block size)
-
+%[text] # Sample 13-1: KLT (PCA)
+%[text] Advanced Topics in Image Processing, Lecture 13 "Dictionary Learning"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation
+%[text] The Kodak images are downloaded to the data folder once.
+datfolder = atip.prjfolders();
+atip.download_img(false)
+%%
+%[text] ## Parameter settings
+%[text] - szBlk: block size \
 szBlk = [ 8 8 ];
-%% 画像の読込
-% (Read image)
-%% 
-% * $\mathbf{u}\in\mathbb{R}^{N}$
-
-file_uorg = './data/kodim23.png';
-u = im2double(imread(file_uorg));
-if size(u,3) == 3
-    u = rgb2gray(u);
-end
-szOrg = size(u);
+%%
+%[text] ## Read image
+%[text] - $\\mathbf{x}\\in\\mathbb{R}^{N}$ \
+xorg = im2gray(im2double(imread(fullfile(datfolder,"kodim23.png"))));
+szOrg = size(xorg);
 figure
-imshow(u);
-title('Original image u')
-%% 
-% 
+imshow(xorg)
+title("Original image x")
+%%
+%[text] ### Generation of the data matrix from the image
+%[text] Instead of subtracting the sample mean block, the image is centered beforehand,
+%[text] and blocks (patches) $\\{\\mathbf{x}\_i\\}\_{i=1}^S$ are extracted at random positions.
+meansubtract = @(u) u-mean(u,"all");
+xc = meansubtract(xorg);
 
-
-% 画像 $\mathbf{y}$からのデータ行列 $\mathbf{Y}$ の生成 
-% (Generate data matrices from images )
-% 
-% 標本平均ブロックを引く代わりに，予め零平均化したデータで学習(Instead of subtracting the sample average block, 
-% training with pre-zero averaged data)
-
-meansubtract = @(x) x-mean(x,"all");
-y = meansubtract(u);
-
-% # of patches
-nPatches = prod(szOrg./szBlk); 
+% Number of patches
+nPatches = prod(szOrg./szBlk);
 
 npos = randsample(prod(szOrg-szBlk),nPatches);
-ybs = zeros(szBlk(1),szBlk(2),nPatches,'like',y);
+xbs = zeros(szBlk(1),szBlk(2),nPatches,'like',xc);
 szSrchy = szOrg(1)-szBlk(1);
 for iPatch = 1:nPatches
     ny_ = mod(npos(iPatch)-1,szSrchy)+1;
     nx_ = floor((npos(iPatch)-1)/szSrchy)+1;
-    ybs(:,:,iPatch) = y(ny_:ny_+szBlk(1)-1,nx_:nx_+szBlk(2)-1);
+    xbs(:,:,iPatch) = xc(ny_:ny_+szBlk(1)-1,nx_:nx_+szBlk(2)-1);
 end
 figure
-montage(ybs+0.5,'Size',[8 8]);
+montage(xbs+0.5,"Size",[8 8]);
 drawnow
 
-Y = reshape(ybs,prod(szBlk),[]);
-
-%% カルーネン-レーベ変換（主成分分析）
-% (Karhunen–Loève transform (principle component analysis))
-% 問題設定 (Problem setting):
-% $$\widehat{\mathbf{\Phi}}=\arg \max _{\mathbf{\Phi}\in\mathbb{R}^{M\times 
-% M}} \mathrm{tr}\left(\mathbf{\Phi}_{:, 1: p}^{T} \widehat{\mathbf{\Sigma}}_{y} 
-% \mathbf{\Phi}_{:, 1: p}\right), \text { s.t. } \mathbf{\Phi}^{T} \mathbf{\Phi}=\mathbf{I}_{M}, 
-% \forall p \in\{1,2, \cdots, M\}$$
-% 
-% ただし， $\widehat{\mathbf{\Sigma}}_{y}$は 観測ベクトル $\{\mathbf{y}_n\}_n$ （零平均を仮定）の標本分散共分散行列 
-% (where， $\widehat{\mathbf{\Sigma}}_{y}$ is the sample covariance matrix of the 
-% observation vectors $\{\mathbf{y}_n\}_n$ (assumed to have zero mean:)
-% 
-% $$\widehat{\mathbf{\Sigma}}_{y}=\frac{1}{S-1}\sum_{n=1}^{S}\mathbf{y}_n\mathbf{y}_n^T$$
-% 解 (Solution):
-% 固有値分解 (Eigendecomposition) 
-% 
-% $$\widehat{\mathbf{\Phi}}^T\widehat{\mathbf{\Sigma}_y}\widehat{\mathbf{\Phi}}=\mathbf{\Lambda}$$
-% 
-% ただし， $\mathbf{\Lambda}=\mathrm{diag}(\lambda_1,\lambda_2,\cdots,\lambda_M)$． 
-% $\lambda_1\geq\lambda_2\geq\cdots\lambda_M$ は $\widehat{\mathbf{\Sigma}}_{y}$の固有値．(where,  
-% $\mathbf{\Lambda}=\mathrm{diag}(\lambda_1,\lambda_2,\cdots,\lambda_M)$． $\lambda_1\geq\lambda_2\geq\cdots\lambda_M$ 
-% are the eigenvalues of $\widehat{\mathbf{\Sigma}}_{y}$.)
-% 
-% 
-% 
-% 標本分散共分散行列 $\widehat{\mathbf{\Sigma}}_{y}$の計算 (Calculation of sample covariance 
-% matrix $\widehat{\mathbf{\Sigma}}_{y}$)
-
-SigmaY = cov(Y.');
-%% 
-% 標本分散共分散行列 $\widehat{\mathbf{\Sigma}}_{y}$の固有値分解 (Eigendecomposition of sample 
-% covariance matrix  $\widehat{\mathbf{\Sigma}}_{y}$)
-
-[Phi_pca,Lambda] = eig(SigmaY);
-%% 
-% 固有値 $\lambda$ の大きさの降順に列ベクトルをソート (Sorting column vectors in the descending 
-% order of the eigenvalues $\lambda$)
-
-[~,idx] = sort(diag(Lambda),'descend');
+X = reshape(xbs,prod(szBlk),[]);
+%%
+%[text] ## Karhunen-Loeve transform (principal component analysis)
+%[text] ### Problem setting
+%[text] $\\hat{\\boldsymbol{\\Phi}}=\\arg\\max\_{\\boldsymbol{\\Phi}\\in\\mathcal{U}(M)}\\mathrm{trace}\\left(\\boldsymbol{\\Phi}\_{:,0:K-1}^\\top\\hat{\\boldsymbol{\\Sigma}}\_{\\mathcal{X}}\\boldsymbol{\\Phi}\_{:,0:K-1}\\right),\\quad K\\in\\{1,2,\\ldots,M-1\\}$
+%[text] where $\\hat{\\boldsymbol{\\Sigma}}\_{\\mathcal{X}}$ is the sample covariance matrix of the (centered) data $\\{\\mathbf{x}\_i\\}\_i$
+%[text] $\\hat{\\boldsymbol{\\Sigma}}\_{\\mathcal{X}}=\\frac{1}{S}\\sum\_{i=1}^{S}\\mathbf{x}\_i\\mathbf{x}\_i^\\top$
+%[text] (`cov` uses the factor $1/(S-1)$, which does not change the eigenvectors).
+%[text] ### Solution
+%[text] Eigendecomposition
+%[text] $\\hat{\\boldsymbol{\\Phi}}^\\top\\hat{\\boldsymbol{\\Sigma}}\_{\\mathcal{X}}\\hat{\\boldsymbol{\\Phi}}=\\boldsymbol{\\Lambda}$
+%[text] where $\\boldsymbol{\\Lambda}=\\mathrm{diag}(\\lambda\_0,\\lambda\_1,\\ldots,\\lambda\_{M-1})$ and $\\lambda\_0\\geq\\lambda\_1\\geq\\cdots\\geq\\lambda\_{M-1}$ are the eigenvalues of $\\hat{\\boldsymbol{\\Sigma}}\_{\\mathcal{X}}$.
+%[text]
+%[text] Calculation of the sample covariance matrix $\\hat{\\boldsymbol{\\Sigma}}\_{\\mathcal{X}}$
+SigmaX = cov(X.');
+%[text] Eigendecomposition of the sample covariance matrix $\\hat{\\boldsymbol{\\Sigma}}\_{\\mathcal{X}}$
+[Phi_pca,Lambda] = eig(SigmaX);
+%[text] Sorting the column vectors in the descending order of the eigenvalues $\\lambda\_m$
+[~,idx] = sort(diag(Lambda),"descend");
 Phi_pca = Phi_pca(:,idx);
-%% 
-% 固有ベクトルを基底画像に変換 (Reshape the eigenvectures into basis images)
-
+%[text] Reshape the eigenvectors into basis images
 nBases = prod(szBlk);
 basisImagesPca = zeros(szBlk(1),szBlk(2),nBases);
 for iBasis = 1:nBases
     basisImagesPca(:,:,iBasis) = reshape(Phi_pca(:,iBasis),szBlk(1),szBlk(2));
 end
-% 基底画像の表示
-% (Show basis images)
-
+%%
+%[text] ### Show the basis images
 figure
-montage(imresize(basisImagesPca,8,'nearest')+.5,'BorderSize',[2 2])
-title('Basis images of KLT(PCA)')
-%% 
-% © Copyright, 2018-2023, Shogo MURAMATSU, All rights reserved.
+montage(imresize(basisImagesPca,8,"nearest")+.5,"BorderSize",[2 2])
+title("Basis images of KLT (PCA)")
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

@@ -1,128 +1,101 @@
-%% Sample 8-4
-%% 離散コサイン変換
-% 基底画像
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Discrete cosine transform
-% Basis images
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% DCT点数
-% (DCT points)
-
-nPoints = 4;
-% DCT基底ベクトルの抽出
-% (Extraction of DCT basis vectors)
-% 
-% $$[\mathbf{C}_M]_{k,n}=\sqrt{\frac{2}{M}} \alpha_k\cos\frac{k(n+1∕2)\pi}{M},\ 
-% k,n=0,1,\cdots,M-1$$
-% 
-% $$\alpha_k=\left\{\begin{array}{ll} \frac{1}{\sqrt{2}} & k=0 \\1 & k=1,2,\cdots,M-1\end{array}\right.$$
-% 
-% 基底ベクトル (Basis vector)
-% 
-% $$\mathbf{b}_k=\mathbf{C}_M^{-1}\mathbf{e}_k,\ k=0,1,\cdots,M-1$$
-% 
-% $$\mathbf{e}_0= (1\ 0\ \cdots\ 0)^T$$
-% 
-% $$\mathbf{e}_1= (0\ 1\ \cdots\ 0)^T$$
-% 
-% $$\vdots$$
-% 
-% $$\mathbf{e}_{M-1}= (0\ 0\ \cdots\ 1)^T$$
-
+%[text] # Sample 8-4: Basis images
+%[text] Advanced Topics in Image Processing, Lecture 8 "Discrete Cosine Transforms"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Number of DCT points
+nPoints = 4; %[control:slider:1ca1]{"position":[11,12]}
+%%
+%[text] ## Extraction of the DCT basis vectors
+%[text]  $\[\\mathbf{C}\_M\]\_{m,n}=\\alpha\_m\\cos\\frac{m(2n+1)\\pi}{2M},\\ m,n\\in\\{0,1,\\ldots,M-1\\}$
+%[text]  $\\alpha\_m=\\left\\{\\begin{array}{ll} 1/\\sqrt{M} & m=0 \\\\ \\sqrt{2/M} & m\\in\\{1,2,\\ldots,M-1\\}\\end{array}\\right.$
+%[text] Basis vectors (responses of the inverse transform to the standard basis vectors)
+%[text]  $\\mathbf{b}\_m=\\mathbf{C}\_M^{-1}\\mathbf{e}\_m,\\ m\\in\\{0,1,\\ldots,M-1\\}$
+%[text]  $\\mathbf{e}\_0=(1\\ 0\\ \\cdots\\ 0)^\\top$
+%[text]  $\\mathbf{e}\_1=(0\\ 1\\ \\cdots\\ 0)^\\top$
+%[text]  $\\vdots$
+%[text]  $\\mathbf{e}\_{M-1}=(0\\ 0\\ \\cdots\\ 1)^\\top$
 B = zeros(nPoints,nPoints);
 for idx = 1:nPoints
     e = zeros(nPoints,1);
     e(idx) = 1;
     B(:,idx) = idct(e);
 end
-% 基底ベクトルの表示
-% (Display the basis vectors)
-
-figure(1)
+%%
+%[text] ## Display of the basis vectors
+figure
+tiledlayout(ceil(nPoints/2), 2, "TileSpacing", "compact")
 for idx = 1:nPoints
-    subplot(ceil(nPoints/2),2,idx);
-    stem(0:nPoints-1,B(:,idx),'filled');
-    ax = gca;
+    ax = nexttile;
+    stem(ax, 0:nPoints-1, B(:,idx), "filled");
     ax.YLim = 1.2*[min(B(:)) max(B(:))];
-    xlabel('n')
+    xlabel(ax, "n")
+    title(ax, "b_" + (idx-1))
 end
-% DCT基底画像の抽出
-% (Extraction of DCT basis images)
-% 
-% $$\mathbf{B}_{k,\ell}=\mathbf{C}_M^{-1}\mathbf{E}_{k,\ell}\mathbf{C}_M^{-T},\ 
-% k,\ell=0,1,\cdots,M-1$$
-% 
-% $$\mathbf{E}_{k,\ell}= \mathbf{e}_k\mathbf{e}_\ell^T$$
-
+%%
+%[text] ## Extraction of the DCT basis images
+%[text]  $\\mathsf{b}\_{m\_\\mathrm{v},m\_\\mathrm{h}}=\\mathbf{C}\_M^{-1}\\mathbf{E}\_{m\_\\mathrm{v},m\_\\mathrm{h}}\\mathbf{C}\_M^{-\\top},\\ m\_\\mathrm{v},m\_\\mathrm{h}\\in\\{0,1,\\ldots,M-1\\}$
+%[text]  $\\mathbf{E}\_{m\_\\mathrm{v},m\_\\mathrm{h}}=\\mathbf{e}\_{m\_\\mathrm{v}}\\mathbf{e}\_{m\_\\mathrm{h}}^\\top$
 B = zeros(nPoints,nPoints,nPoints^2);
 iBasis = 1;
-for iRow=1:nPoints
-    for iCol=1:nPoints
+for iRow = 1:nPoints
+    for iCol = 1:nPoints
         E = zeros(nPoints,nPoints);
         E(iRow,iCol) = 1;
         B(:,:,iBasis) = idct2(E,nPoints,nPoints);
         iBasis = iBasis + 1;
     end
 end
-% 基底画像の表示
-% (Display the basis images)
-
-hfig2 = figure(2);
-hfig2.Color = 0.9*[1 1 1];
-iBasis = 1;
-for iRow=1:nPoints
-    for iCol=1:nPoints
-        b = B(:,:,iBasis);
-        subplot(nPoints,nPoints,nPoints*(iRow-1)+iCol);
-        imshow(b+.5)
-        iBasis = iBasis + 1;
-    end
+%%
+%[text] ## Display of the basis images
+hfig = figure;
+hfig.Color = 0.9*[1 1 1];
+tiledlayout(hfig, nPoints, nPoints, "TileSpacing", "tight")
+for iBasis = 1:nPoints^2       % row-major order (m_v, m_h)
+    nexttile
+    imshow(B(:,:,iBasis) + 0.5)
 end
-% 非線形近似
-% (Non-linear approximation)
-% 
-% 絶対値の大きな係数のみを残して再構成 (Reconst by leaving only the coefficients with large absolute 
-% values)
+%%
+%[text] ## Non-linear approximation
+%[text] Reconstruction leaving only the coefficients with large absolute values
+% Ratio of the remaining coefficients [%]
+coefRatio = 5 ; %[control:slider:5b43]{"position":[13,14]}
 
-% Ratio of remaining coefficients
-coefRatio = 5 ;
+% Read an image
+X = im2double(imread("cameraman.tif"));
 
-% Read image
-X = im2double(imread('cameraman.tif'));
-
-% Block DCT 
+% Block DCT
 U = blockproc(X,nPoints*[1 1],@(x) dct2(x.data));
 
-% Non-linear approximation (Shrinking small coefficients to zero)
+% Non-linear approximation (set the small coefficients to zero)
 nCoefs = round(coefRatio/100*numel(U));
-[~,I] = mink(U(:),numel(U)-nCoefs,'ComparisonMethod','abs');
+[~,I] = mink(U(:),numel(U)-nCoefs,"ComparisonMethod","abs");
 U(I) = 0;
-disp(['Sparsity: ' num2str(nnz(U(:))) '/' num2str(numel(U(:))) ])
+disp("Sparsity: " + nnz(U(:)) + "/" + numel(U(:)))
+
 % Block IDCT
 R = blockproc(U,nPoints*[1 1],@(x) idct2(x.data));
-% 非線形近似の結果表示
-% (Display non-linear approximatiom result)
-
-figure(3)
-subplot(1,2,1)
+%%
+%[text] ## Display of the non-linear approximation result
+figure
+tiledlayout(1, 2, "TileSpacing", "compact")
+nexttile
 imshow(X)
-title('Original')
-subplot(1,2,2)
+title("Original")
+nexttile
 imshow(R)
-title(['NLA result w/ ' num2str(coefRatio) ' % Coefs. (PSNR: ' num2str(psnr(X,R)) ' dB)'])
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+title("NLA w/ " + coefRatio + "% coefs. (PSNR: " + psnr(X,R) + " dB)")
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:1ca1]
+%   data: {"defaultValue":4,"label":"nPoints","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:5b43]
+%   data: {"defaultValue":5,"label":"coefRatio","max":100,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---

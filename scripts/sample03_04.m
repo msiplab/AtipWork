@@ -1,80 +1,84 @@
-%% Sample 3-4
-%% 平滑化／先鋭化処理
-% 順序統計フィルタ 
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Image smoothing/sharpening
-% Oder statistic filter
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% サンプル画像の準備
-% (Preparation of sample image)
-
-close
-% Reading original image
+%[text] # Sample 3-4: Order statistic filters
+%[text] Advanced Topics in Image Processing, Lecture 3 "Image Smoothing and Sharpening"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation of sample image
+%[text] An order statistic filter outputs the $K$-th smallest value in the neighbourhood (\[M\] Section 3.3)
+%[text]{"align":"center"} $y\[\\boldsymbol{n}\]=\\mathrm{ord}\\left(\\left(x\[\\boldsymbol{n}+\\boldsymbol{m}\]\\right)\_{\\boldsymbol{m}\\in\\mathcal{N}\_\\mathrm{f}},K\\right)$
+% Read the original image
 I = im2double(imread('cameraman.tif'));
-figure(1)
+figure
 imshow(I)
 title('Original')
-% ゴマ塩ノイズ画像の準備
-% (Preparation of a contaminated image with salt & pepper noise)
-
-% Density
-d = 0.05;
+%%
+%[text] ## Image contaminated with salt & pepper noise
+% Noise density
+d = 0.05; %[control:slider:2397]{"position":[5,9]}
 % Add noise
 J = imnoise(I,'salt & pepper',d);
 
 % Show the result
-figure(2)
+figure
 imshow(J)
 title('Contaminated image')
-% 中央値フィルタ
-% (Median filter)
-
-% Domain size setting 
-hsize = 3
-% Median fltering
+%%
+%[text] ## Median filter
+%[text] $K=(|\\mathcal{N}\_\\mathrm{f}|+1)/2$: robust to impulsive noise.
+% Neighbourhood size
+hsize = 3 %[control:slider:2003]{"position":[9,10]}
+% Median filtering
 K = medfilt2(J,[hsize hsize]);
 
 % Show the result
-figure(3)
+figure
 imshow(K)
 title('Median filter')
-% 最大値フィルタ
-% (Maximum filter)
-
-% Domain setting
-hsize = 3;
+%%
+%[text] ## Maximum filter
+%[text] $K=|\\mathcal{N}\_\\mathrm{f}|$: bright regions spread.
+% Neighbourhood setting
+hsize = 3; %[control:slider:681f]{"position":[9,10]}
 domain = ones(hsize);
 
 % Maximum filtering
 L = ordfilt2(J,nnz(domain),domain);
 
 % Show the result
-figure(4)
+figure
 imshow(L)
 title('Maximum filter')
-% 最小値フィルタ
-% (Minumum filter)
-
-% Domain setting
-hsize = 3;
+%%
+%[text] ## Minimum filter
+%[text] $K=1$: dark regions spread.
+% Neighbourhood setting
+hsize = 3; %[control:slider:8984]{"position":[9,10]}
 domain = ones(hsize);
 
 % Minimum filtering
 M = ordfilt2(J,1,domain);
 
 % Show the result
-figure(5)
+figure
 imshow(M)
 title('Minimum filter')
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:2397]
+%   data: {"defaultValue":0.05,"label":"d","max":1,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":0.05}
+%---
+%[control:slider:2003]
+%   data: {"defaultValue":3,"label":"hsize","max":31,"min":1,"run":"Section","runOn":"ValueChanging","step":2}
+%---
+%[control:slider:681f]
+%   data: {"defaultValue":3,"label":"hsize","max":31,"min":1,"run":"Section","runOn":"ValueChanging","step":2}
+%---
+%[control:slider:8984]
+%   data: {"defaultValue":3,"label":"hsize","max":31,"min":1,"run":"Section","runOn":"ValueChanging","step":2}
+%---

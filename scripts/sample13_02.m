@@ -1,132 +1,89 @@
-%% Sample 13-2
-%% 辞書学習
-% 再構成独立成分分析
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Dictionary learning
-% Reconstruction ICA
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-clear 
-close all
-import msip.download_img
-msip.download_img
-% パラメータ設定
-% (Parameter settings)
-%% 
-% * ブロックサイズ (Block size)
-% * 冗長率 (Redundancy ratio)
-% * 正則化パラメータ (Regularization parameter)
-% * 繰返し回数 (Number of iterations)
-% * 正則化パラメータ (Regularization parameter)
-
+%[text] # Sample 13-2: Reconstruction ICA (RICA)
+%[text] Advanced Topics in Image Processing, Lecture 13 "Dictionary Learning"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation
+%[text] The Kodak images are downloaded to the data folder once.
+datfolder = atip.prjfolders();
+atip.download_img(false)
+%%
+%[text] ## Parameter settings
+%[text] - szBlk: block size
+%[text] - redundancyRatio: redundancy ratio $P/M$
+%[text] - nItersRica: maximum number of iterations
+%[text] - lambda: regularization parameter $\\lambda$ \
 % Block size
 szBlk = [ 8 8 ];
 
-% Redundancy ratio 
-redundancyRatio = 7/3; 
+% Redundancy ratio
+redundancyRatio = 7/3;
 
-% Sparsity ratio 
-sparsityRatio = 3/64;
-
-% Number of iterations
-nItersRica = 1e5; 
+% Maximum number of iterations (rica stops earlier when it converges)
+nItersRica = 1e5;
 
 % Regularization parameter
-alpha = 2e-3;
-%% 画像の読込
-% (Read image)
-%% 
-% * $\mathbf{u}\in\mathbb{R}^{N}$
-
-file_uorg = './data/kodim23.png';
-u = im2double(imread(file_uorg));
-if size(u,3) == 3
-    u = rgb2gray(u);
-end
-szOrg = size(u);
+lambda = 2e-3;
+%%
+%[text] ## Read image
+%[text] - $\\mathbf{x}\\in\\mathbb{R}^{N}$ \
+xorg = im2gray(im2double(imread(fullfile(datfolder,"kodim23.png"))));
+szOrg = size(xorg);
 figure
-imshow(u);
-title('Original image u')
-% 画像 $\mathbf{y}$からのデータ行列 $\mathbf{Y}$ の生成 
-% (Generate data matrices from images )
-% 
-% 標本平均ブロックを引く代わりに，予め零平均化したデータで学習(Instead of subtracting the sample average block, 
-% training with pre-zero averaged data)
+imshow(xorg)
+title("Original image x")
+%%
+%[text] ### Generation of the data matrix from the image
+%[text] Instead of subtracting the sample mean block, the image is centered beforehand,
+%[text] and blocks (patches) $\\{\\mathbf{x}\_i\\}\_{i=1}^S$ are extracted at random positions.
+meansubtract = @(u) u-mean(u,"all");
+xc = meansubtract(xorg);
 
-meansubtract = @(x) x-mean(x,"all");
-y = meansubtract(u);
-
-% # of patches
-nPatches = prod(szOrg./szBlk); 
+% Number of patches
+nPatches = prod(szOrg./szBlk);
 
 npos = randsample(prod(szOrg-szBlk),nPatches);
-ybs = zeros(szBlk(1),szBlk(2),nPatches,'like',y);
+xbs = zeros(szBlk(1),szBlk(2),nPatches,'like',xc);
 szSrchy = szOrg(1)-szBlk(1);
 for iPatch = 1:nPatches
     ny_ = mod(npos(iPatch)-1,szSrchy)+1;
     nx_ = floor((npos(iPatch)-1)/szSrchy)+1;
-    ybs(:,:,iPatch) = y(ny_:ny_+szBlk(1)-1,nx_:nx_+szBlk(2)-1);
+    xbs(:,:,iPatch) = xc(ny_:ny_+szBlk(1)-1,nx_:nx_+szBlk(2)-1);
 end
 figure
-montage(ybs+0.5,'Size',[8 8]);
+montage(xbs+0.5,"Size",[8 8]);
 drawnow
 
-Y = reshape(ybs,prod(szBlk),[]);
-%% 再構成独立成分分析
-% (Reconstruction ICA)
-% 問題設定 (Problem setting):
-% $$\widehat{\mathbf{\Phi}}=\arg \max _{\mathbf{\Phi}} \frac{1}{2S}\sum_{n=1}^S\|\mathbf{y}_n-\mathbf{\Phi}\mathbf{\Phi}^T\mathbf{y}_n\|_2^2+\frac{\alpha}{S}\sum_{n=1}^{S}\rho(\mathbf{\Phi}^T\mathbf{y}_n)$$
-% 
-% $$=\arg \max _{\mathbf{\Phi}} \frac{(2\alpha)^{-1}}{S}\sum_{n=1}^S\|\mathbf{y}_n-\mathbf{\Phi}\mathbf{\Phi}^T\mathbf{y}_n\|_2^2+\frac{1}{S}\sum_{n=1}^{S}\rho(\mathbf{\Phi}^T\mathbf{y}_n)$$
-% 
-% ただし，  $\{\mathbf{y}_n\}_n\subset\mathbb{R}^{M}$,  $\mathbf{\Phi}=(\mathbf{\phi}_1,\mathbf{\phi}_2,\cdots,\mathbf{\phi}_P)\in\mathbb{R}^{M\times 
-% P}$, $M\geq P$ である．(where，$\{\mathbf{y}_n\}_n\subset\mathbb{R}^{M}$ and  $\mathbf{\Phi}=(\mathbf{\phi}_1,\mathbf{\phi}_2,\cdots,\mathbf{\phi}_P)\in\mathbb{R}^{M\times 
-% P}$, $M\geq P$.)
-% 
-% 
-% 参考文献 (Reference):
-% Le, Quoc V., Alexandre Karpenko, Jiquan Ngiam, and Andrew Y. Ng. “ICA with 
-% Reconstruction Cost for Efficient Overcomplete Feature Learning.” Advances in 
-% Neural Information Processing Systems. Vol. 24, 2011, pp. 1017–1025. https://papers.nips.cc/paper/4467-ica-with-reconstruction-cost-for-efficient-overcomplete-feature-learning.pdf. 
-% 
-% 
-% 
-% コントラスト関数の例 (Example of contrast function)
-% 
-% $$\rho(\mathbf{\Phi}^T\mathbf{y})\colon = \frac{1}{2}\sum_{p=1}^{P}\log\circ\cosh(2\mathbf{\phi}_p^T\mathbf{y})$$
-
+X = reshape(xbs,prod(szBlk),[]);
+%%
+%[text] ## Reconstruction ICA
+%[text] ### Problem setting
+%[text] $\\hat{\\boldsymbol{\\Phi}}=\\arg\\min\_{\\boldsymbol{\\Phi}}\\frac{1}{2S}\\sum\_{i=1}^S\\|\\mathbf{x}\_i-\\boldsymbol{\\Phi}\\boldsymbol{\\Phi}^\\top\\mathbf{x}\_i\\|\_2^2+\\frac{1}{S}\\sum\_{i=1}^{S}\\mathfrak{R}(\\boldsymbol{\\Phi}^\\top\\mathbf{x}\_i)$
+%[text] $=\\arg\\min\_{\\boldsymbol{\\Phi}}\\frac{(2\\lambda)^{-1}}{S}\\sum\_{i=1}^S\\|\\mathbf{x}\_i-\\boldsymbol{\\Phi}\\boldsymbol{\\Phi}^\\top\\mathbf{x}\_i\\|\_2^2+\\frac{1}{S}\\sum\_{i=1}^{S}\\frac{1}{\\lambda}\\mathfrak{R}(\\boldsymbol{\\Phi}^\\top\\mathbf{x}\_i)$
+%[text] where $\\{\\mathbf{x}\_i\\}\_i\\subset\\mathbb{R}^{M}$ and $\\boldsymbol{\\Phi}=(\\boldsymbol{\\phi}\_0\\ \\ \\boldsymbol{\\phi}\_1\\ \\cdots\\ \\boldsymbol{\\phi}\_{P-1})\\in\\mathbb{R}^{M\\times P}$, $M\\leq P$ (redundant).
+%[text] The weight of the reconstruction term of `rica` ('Lambda') is $(2\\lambda)^{-1}$.
+%[text]
+%[text] ### Reference
+%[text] Le, Quoc V., Alexandre Karpenko, Jiquan Ngiam, and Andrew Y. Ng. "ICA with Reconstruction Cost for Efficient Overcomplete Feature Learning." Advances in Neural Information Processing Systems. Vol. 24, 2011, pp. 1017-1025. https://papers.nips.cc/paper/4467-ica-with-reconstruction-cost-for-efficient-overcomplete-feature-learning.pdf
+%[text]
+%[text] Example of the contrast function
+%[text] $\\mathfrak{R}(\\boldsymbol{\\Phi}^\\top\\mathbf{x})=\\frac{\\lambda}{2}\\sum\_{p=0}^{P-1}\\log\\circ\\cosh(2\\boldsymbol{\\phi}\_p^\\top\\mathbf{x})$
 figure
-fplot(@(x) abs(x),[-5 5],':','LineWidth',2,'DisplayName','|\cdot|')
+fplot(@(u) abs(u),[-5 5],':','LineWidth',2,'DisplayName','|\cdot|')
 hold on
-fplot(@(x) log(cosh(2*x))/2,[-5 5],'-','LineWidth',2,'DisplayName','1/2log(cosh(2\cdot))')
-xlabel('x')
+fplot(@(u) log(cosh(2*u))/2,[-5 5],'-','LineWidth',2,'DisplayName','1/2log(cosh(2\cdot))')
+xlabel('y')
 legend
 grid on
 axis equal
 hold off
-%% 
-% 要素画像の数 (Number of atomic images)
-
+%[text] Number of atomic images
 nDims = prod(szBlk);
 nAtoms = ceil(redundancyRatio*nDims);
-%% 
-% 辞書 $\mathbf{\Phi}$の初期化 (Initializatio of dictionary $\mathbf{\Phi}$)
-%% 
-% * 二変量離散コサイン変換(Bivariate DCT)
-% * ランダム (random)
-
+%%
+%[text] Initialization of the dictionary $\\boldsymbol{\\Phi}$
+%[text] - two-dimensional DCT
+%[text] - random \
 Phi_rica = randn(nDims,nAtoms);
 Phi_rica = Phi_rica/norm(Phi_rica,'fro');
 for iAtom = 1:nDims
@@ -134,46 +91,44 @@ for iAtom = 1:nDims
     delta(iAtom) = 1;
     Phi_rica(:,iAtom) = reshape(idct2(delta),nDims,1);
 end
-%% 
-% 要素ベクトルを要素画像に変換 (Reshape the atoms into atomic images)
-
+%[text] Reshape the atoms into atomic images
 atomicImagesRica = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesRica(:,:,iAtom) = reshape(Phi_rica(:,iAtom),szBlk(1),szBlk(2));
 end
 figure
-montage(imresize(atomicImagesRica,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
-title('Atomic images of initial dictionary (DCT & random)')
-% 再構成 ICA オブジェクトの作成 (Creation of reconstructio ICA object)
-
-model = rica(Y.',nAtoms,...
+montage(imresize(atomicImagesRica,8,"nearest")+.5,"BorderSize",[2 2],"Size",[ceil(nAtoms/8) 8])
+title("Atomic images of the initial dictionary (DCT & random)")
+%%
+%[text] ### Creation of the reconstruction ICA object
+model = rica(X.',nAtoms,...
     'IterationLimit',nItersRica,...
     'ContrastFcn','logcosh',...
     'InitialTransformWeight',Phi_rica,...
-    'Lambda',1/(2*alpha));
-%% 
-% コスト評価のグラフ (Graph of cost variation)
-
+    'Lambda',1/(2*lambda));
+%[text] Graph of the cost
 info = model.FitInfo;
 figure
 plot(info.Iteration,info.Objective)
-xlabel('Number of iteration')
-ylabel('Cost')
+xlabel("Number of iterations")
+ylabel("Cost")
 grid on
-%% 
-% 要素ベクトルを要素画像に変換 (Reshape the atoms into atomic images)
-
+%[text] Reshape the atoms into atomic images
 Phi_rica = model.TransformWeights;
 atomicImagesRica = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesRica(:,:,iAtom) = reshape(Phi_rica(:,iAtom),szBlk(1),szBlk(2));
 end
-
-% 要素画像の表示
-% (Show atomic images)
-
+%%
+%[text] ### Show the atomic images
 figure
-montage(imresize(atomicImagesRica,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
-title('Atomic images of RICA')
-%% 
-% © Copyright, 2018-2023, Shogo MURAMATSU, All rights reserved.
+montage(imresize(atomicImagesRica,8,"nearest")+.5,"BorderSize",[2 2],"Size",[ceil(nAtoms/8) 8])
+title("Atomic images of RICA")
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

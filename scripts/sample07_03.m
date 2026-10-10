@@ -1,59 +1,28 @@
-%% Sample 7-3
-%% 幾何学処理
-% 拡大処理
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Geometric image processing
-% Interpolation
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% 補間率の設定
-% (Setting of upsampling factor)
-%% 
-% * $M$: 補間率 (upsampling factor) 
-
-% Upsampling factor
-uFactor = 2;
+%[text] # Sample 7-3: Interpolation
+%[text] Advanced Topics in Image Processing, Lecture 7 "Geometric Image Processing"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Setting the upsampling ratio
+%[text] - $M$: upsampling ratio \
+% Upsampling ratio
+uFactor = 2; %[control:slider:6af5]{"position":[11,12]}
 
 % Upsampling phase
-uPhase = 0;
-%% 
-% 最近傍補間フィルタのインパルス応答 (Impulse response of nearest-neighbor filter)
-% 
-% $$f[n]=\left\{\begin{array}{ll} 1& 0\leq n\leq M-1 \\ 0 & \mathrm{otherwise} 
-% \end{array}\right.$$
-% 
-% 一次補間フィルタのインパルス応答 (Impulse response of linear interpolation filter)
-% 
-% $$f[n]=\left\{\begin{array}{ll} \frac{1}{M}(M-|n|) & -M+1\leq n\leq M-1 \\ 
-% 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% オフセットを考慮した場合 (When considering the offset)
-% 
-% $$f[n]=\left\{\begin{array}{ll} \frac{1}{M}\left(M-\left|n-\frac{1}{2}\right|\right) 
-% & -M+1\leq n\leq M \\ 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% ただし，非因果性に注意．(Note that the incausal property.)
-%% 
-% * $\{f[n]\}_n$: インパルス応答 (Impulse response)
+uPhase = 0; %[control:slider:05f3]{"position":[10,11]}
+%[text] Impulse response of the nearest-neighbour (zero-order hold) filter with the phase $\\tau\_0=0$ (\[M\] Example "Nearest-neighbour interpolation")
+%[text]{"align":"center"} $f\[n\]=\\left\\{\\begin{array}{ll} 1& 0\\leq n\\leq M-1 \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] Impulse response of the linear interpolation filter
+%[text]{"align":"center"} $f\[n\]=\\left\\{\\begin{array}{ll} \\frac{1}{M}(M-|n|) & -M+1\\leq n\\leq M-1 \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] When considering the offset
+%[text]{"align":"center"} $f\[n\]=\\left\\{\\begin{array}{ll} \\frac{1}{M}\\left(M-\\left|n-\\frac{1}{2}\\right|\\right) & -M+1\\leq n\\leq M \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] Note that these filters are non-causal.
+%[text] - $\\mathsf{f}=\\left(f\[n\]\\right)\_n$: impulse response \
+% Filter selection
+ftype = "Nearest neighbor"; %[control:dropdown:8e2a]{"position":[9,27]}
+offset = false; % Set TRUE for even M, FALSE for odd M to make the handmade bilinear interpolation similar to IMRESIZE %[control:dropdown:116e]{"position":[10,15]}
 
-% Filter seletion
-ftype = "Nearest neighbor";
-offset = false; % Set TRUE for even M, FALSE for odd M to make the handmade bilinear interpolation similar to IMRESIZE
-
-% Impulse response of interpolation filter
+% Impulse response of the interpolation filter
 if strcmp(ftype,'Nearest neighbor')
     f = ones(1,uFactor);
     offset = false;
@@ -66,54 +35,37 @@ elseif strcmp(ftype, 'Bilinear interpolation')
 else
     error('Invalid ftype')
 end
-%% フィルタ特性の表示
-% (Display of filter characteristics)
-
+%%
+%[text] ## Display of the filter characteristics
+%[text] The red dotted line is the ideal anti-imaging filter $F\_\\mathrm{I}(\\mathrm{e}^{\\mathrm{j}\\omega})$ with the gain $M$ and the cut-off $\\pi/M$.
 % Impulse response
-figure(1)
+fig1 = figure;
 impz(f)
 ax = gca;
 ax.XLim = [-1 length(f)];
 ax.YLim = [-0.2 1.2];
 % Frequency response
-figure(2)
+fig2 = figure;
 freqz(f)
 ax = gca;
-hold on
-line([0 1/uFactor 1/uFactor],[20*log10(uFactor) 20*log10(uFactor) ax.YLim(1)],...
+hold(ax, 'on')
+line(ax, [0 1/uFactor 1/uFactor],[20*log10(uFactor) 20*log10(uFactor) ax.YLim(1)],...
     'LineStyle',':','LineWidth',2,'Color','red');
-hold off
-% 画像への適用
-% (Application to images)
-% 
-% $$v[\mathbf{m}]=\sum_{\mathbf{k}\in\mathbb{Z}^2}u[\mathbf{Mk}]f[\mathbf{m}-\mathbf{Mk}]$$
-% 
-% 最近傍補間フィルタのインパルス応答 (Impulse response of nearest-neighbor filter)
-% 
-% $$f[\mathbf{n}]=\left\{\begin{array}{ll} 1 & \mathbf{n}\in \mathcal{N}(\mathbf{M})\\ 
-% 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% 双一次補間フィルタのインパルス応答 (Impulse response of bilinear interpolation filter)
-% 
-% $$f[\mathbf{n}]=\left\{\begin{array}{ll} \mathrm{prod}\left(\mathbf{1}-\mathrm{abs}\left(\mathbf{M}^{-1}\mathbf{n}\right) 
-% \right)& \mathbf{n}\in \{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1)^2\} 
-% \\ 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% オフセットを考慮した場合
-% 
-% $$f[\mathbf{n}]=\left\{\begin{array}{ll} \mathrm{prod}\left(\mathbf{1}-\mathrm{abs}\left(\mathbf{M}^{-1}\mathbf{n}-\frac{1}{2}\mathbf{1}\right) 
-% \right)& \mathbf{n}\in \{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1]^2\} 
-% \\ 0 & \mathrm{otherwise} \end{array}\right.$$
-% 
-% ただし， $\mathrm{prod}(\cdot)$ は要素の積．非因果性に注意．(where $\mathrm{prod}(\cdot)$ denotes 
-% the product of the array elements. Note that the incausal property.)
-% 
-% Note that if $\mathbf{M}=\mathrm{diag}(M,M)\Rightarrow \mathrm{prod}(\mathbf{1}-\mathrm{abs}(\mathbf{M}^{-1}\mathbf{n}-\alpha\mathbf{1}))=\frac{1}{M^2}(M-|n_1-\alpha|)(M-|n_2-\alpha|)$ 
-% , $\{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1)^2\}=\{-M+1,-M+2,\cdots,M-1\}^2$ 
-% and $\{\mathbf{Mx}\in\mathbb{Z}^2\ |\ \mathbf{x}\in(-1,1]^2\}=\{-M+1,-M+2,\cdots,M\}^2$.
-
+hold(ax, 'off')
+%%
+%[text] ## Application to images
+%[text] Interpolation (transposed convolution, \[M\] Sec. 5.1.2)
+%[text]{"align":"center"} $v\[\\boldsymbol{n}\]=\\sum\_{\\boldsymbol{m}\\in\\mathbb{Z}^2}x\[\\boldsymbol{m}\]f\[\\boldsymbol{n}-\\boldsymbol{M}\\boldsymbol{m}\]$
+%[text] Impulse response of the nearest-neighbour filter
+%[text]{"align":"center"} $f\[\\boldsymbol{n}\]=\\left\\{\\begin{array}{ll} 1 & \\boldsymbol{n}\\in \\mathcal{N}(\\boldsymbol{M})\\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] Impulse response of the bilinear interpolation filter
+%[text]{"align":"center"} $f\[\\boldsymbol{n}\]=\\left\\{\\begin{array}{ll} \\mathrm{prod}\\left(\\mathbf{1}-\\mathrm{abs}\\left(\\boldsymbol{M}^{-1}\\boldsymbol{n}\\right) \\right)& \\boldsymbol{n}\\in \\{\\boldsymbol{M}\\mathbf{r}\\in\\mathbb{Z}^2\\ |\\ \\mathbf{r}\\in(-1,1)^2\\} \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] When considering the offset
+%[text]{"align":"center"} $f\[\\boldsymbol{n}\]=\\left\\{\\begin{array}{ll} \\mathrm{prod}\\left(\\mathbf{1}-\\mathrm{abs}\\left(\\boldsymbol{M}^{-1}\\boldsymbol{n}-\\frac{1}{2}\\mathbf{1}\\right) \\right)& \\boldsymbol{n}\\in \\{\\boldsymbol{M}\\mathbf{r}\\in\\mathbb{Z}^2\\ |\\ \\mathbf{r}\\in(-1,1\]^2\\} \\\\ 0 & \\mathrm{otherwise} \\end{array}\\right.$
+%[text] where $\\mathrm{prod}(\\cdot)$ denotes the product of the array elements.  Note that the filters are non-causal.
+%[text] If $\\boldsymbol{M}=\\mathrm{diag}(M,M)$, then $\\mathrm{prod}(\\mathbf{1}-\\mathrm{abs}(\\boldsymbol{M}^{-1}\\boldsymbol{n}-\\alpha\\mathbf{1}))=\\frac{1}{M^2}(M-|n\_1-\\alpha|)(M-|n\_2-\\alpha|)$, $\\{\\boldsymbol{M}\\mathbf{r}\\in\\mathbb{Z}^2\\ |\\ \\mathbf{r}\\in(-1,1)^2\\}=\\{-M+1,-M+2,\\cdots,M-1\\}^2$ and $\\{\\boldsymbol{M}\\mathbf{r}\\in\\mathbb{Z}^2\\ |\\ \\mathbf{r}\\in(-1,1\]^2\\}=\\{-M+1,-M+2,\\cdots,M\\}^2$.
 % Reading an image
-u = imread('cameraman.tif');
+x = imread('cameraman.tif');
 
 % Generating an interpolation filter
 if strcmp(ftype,'Nearest neighbor')
@@ -130,17 +82,17 @@ elseif strcmp(ftype,'Bilinear interpolation')
 else
     error('Invalid ftype')
 end
-figure(3)
+fig3 = figure;
 stem3(n2,n1,f,'filled')
 axis ij
 ax = gca;
 ax.XLim = ax.XLim + [-1 1];
 ax.YLim = ax.YLim + [-1 1];
-figure(4)
+fig4 = figure;
 freqz2(f)
 axis ij
 %%
-
+%[text] ## Interpolation with zero insertion and filtering
 % Bivariate upsampling function
 upsample2 = @(x,n,phase) ...
     shiftdim(upsample(...
@@ -148,44 +100,58 @@ upsample2 = @(x,n,phase) ...
     n(1),phase(1)),1),...
     n(2),phase(2)),1);
 
-% Interpolation with upsampling and filtering
-x = padarray(u,[1 1],'replicate','both');
-w = imfilter(upsample2(x,uFactor*[1 1],uPhase*[1 1]),f,'conv');
+% Interpolation with upsampling and filtering (the phase must be less than M)
+uPhase = mod(uPhase,uFactor);
+xp = padarray(x,[1 1],'replicate','both');
+w = imfilter(upsample2(xp,uFactor*[1 1],uPhase*[1 1]),f,'conv');
 s = ceil(uFactor/2);
-v = w(s+1:s+uFactor*size(u,1),s+1:s+uFactor*size(u,2));
+v = w(s+1:s+uFactor*size(x,1),s+1:s+uFactor*size(x,2));
 
 % Interpolation with IMRESIZE
 if strcmp(ftype,'Nearest neighbor')
-    y = imresize(u,uFactor,'nearest');
+    y = imresize(x,uFactor,'nearest');
 elseif strcmp(ftype, 'Bilinear interpolation')
-    y = imresize(u,uFactor,'bilinear');
+    y = imresize(x,uFactor,'bilinear');
 else
     error('Invalid ftype')
 end
-
-% 画像表示
-% (Display image)
-% 
-% 原画像 (Original)
-
-figure(5)
-imshow(u)
+%%
+%[text] ## Display of the images
+%[text] Original
+fig5 = figure;
+imshow(x, 'Parent', axes(fig5))
 title('Original')
-%% 
-% 拡大画像 (Interpolated image)
-
-% Definition of MSE
-mymse = @(x,y) sum((x-y).^2,'all')/numel(x);
+%[text] Interpolated images
+% Definition of MSE (computed in double precision)
+mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
 
 % Display results
-figure(6)
-imshow(v)
+fig6 = figure;
+imshow(v, 'Parent', axes(fig6))
 title('Interpolation w/o IMRESIZE')
-figure(7)
-imshow(y)
+fig7 = figure;
+imshow(y, 'Parent', axes(fig7))
 title('Interpolation w/ IMRESIZE')
-figure(8)
-imshow(imabsdiff(v,y))
-title(['Absolute difference (MSE = ' num2str(mymse(v,y)) ')'])
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+fig8 = figure;
+imshow(imabsdiff(v,y), 'Parent', axes(fig8))
+title("Absolute difference (MSE = " + mymse(v,y) + ")")
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:6af5]
+%   data: {"defaultValue":2,"label":"uFactor","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:05f3]
+%   data: {"defaultValue":0,"label":"uPhase","max":7,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:dropdown:8e2a]
+%   data: {"defaultValue":"\"Nearest neighbor\"","itemLabels":["Nearest neighbor","Bilinear interpolation"],"items":["\"Nearest neighbor\"","\"Bilinear interpolation\""],"label":"Filter type","run":"SectionToEnd"}
+%---
+%[control:dropdown:116e]
+%   data: {"defaultValue":"false","itemLabels":["true","false"],"items":["true","false"],"label":"Offset","run":"SectionToEnd"}
+%---

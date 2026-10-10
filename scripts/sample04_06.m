@@ -1,278 +1,171 @@
-%% Sample 4-6
-%% 線形シフト不変システム
-% 循環畳み込み行列
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Linear shift-invariant systems
-% Circular convolution matrix
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% 単変量循環畳み込み
-% (Univariate circular convolution)
-% 
-% 
-% 
-% 有限インパルス応答(FIR)$\{h[n]\in\mathbb{R}\}_{n\in{\Omega_\mathrm{h}}\subset\mathbb{Z}}$を有する線形シフト不変システム 
-% $T(\cdot)$を仮定する． (Let us assume a linear shift-invariant system $T(\cdot)$ with 
-% a finite impulse response (FIR) $\{h[n]\in\mathbb{R}\}_{n\in{\Omega_\mathrm{h}}\subset\mathbb{Z}}$.)
-% 
-% 配列 $\{u[n]\in\mathbb{R}\}_{n\in{\Omega_\mathrm{u}}\subset\mathbb{Z}}$に対する周期拡張後の$T(\cdot)$ 
-% の応答 $\{v[n]\in\mathbb{R}\}_{n\in{\Omega_\mathrm{v}}\subset\mathbb{Z}}$は周期 $Q\in\mathbb{N}$ 
-% を法とする単変量循環畳み込み (The response $\{v[n]\in\mathbb{R}\}_{n\in{\Omega_\mathrm{v}}\subset\mathbb{Z}}$ 
-% of  $T(\cdot)$  to a sequence $\{u[n]\in\mathbb{R}\}_{n\in{\Omega_\mathrm{u}}\subset\mathbb{Z}}$ 
-% after periodic extension can be represented by univariate circular convolution 
-% with period $Q$ as ) 
-% 
-% $$\{v[n]\}_n =T\left(\{u[n]\}_n\right) = \sum_{k\in\Omega_\mathrm{h}}h[k]\{u\left[(\!(n-k)\!)_Q\right]\}_n.$$
-% 
-% により表現できる．ただし，(where) 
-% 
-% $$(\!(n)\!)_Q = n - Q\left\lfloor Q^{-1}n\right\rfloor.$$
-% 
-% は， ${Q}$を法とする ${n}$ の剰余である．( denotes the ${n}$ modulo ${Q}$.) 
-% 
-% 
-% 信号の生成
-% (Signal generation)
-
-% Generating an input sequence u[n] of finite support region
-Q = 6; 
-ugen = "(1:Q)";
-u = eval(ugen)
-% インパルス応答の設定
-% (Setting the impulse response)
-
-% Setting the shift amount 
+%[text] # Sample 4-6: Circular convolution matrix
+%[text] Advanced Topics in Image Processing, Lecture 4 "Linear Shift-Invariant Systems"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Univariate circular convolution
+%[text] Assume a linear shift-invariant system $\\mathsf{T}(\\cdot)$ with a finite impulse response (FIR) $(h\[n\])\_{n\\in\\mathcal{N}\_\\mathrm{h}}$, $\\mathcal{N}\_\\mathrm{h}\\subset\\mathbb{Z}$.
+%[text] With periodic extension, the response $(y\[n\])\_n$ of $\\mathsf{T}(\\cdot)$ to a sequence $(x\[n\])\_n$ is the univariate circular convolution with period $N\\in\\mathbb{N}$
+%[text]{"align":"center"} $(y\[n\])\_n =\\mathsf{T}\\left((x\[n\])\_n\\right) = \\sum\_{m\\in\\mathcal{N}\_\\mathrm{h}}h\[m\]\\left(x\\left\[(\\!(n-m)\\!)\_N\\right\]\\right)\_n,$
+%[text] where
+%[text]{"align":"center"} $(\\!(n)\\!)\_N = n - N\\left\\lfloor N^{-1}n\\right\\rfloor$
+%[text] denotes $n$ modulo $N$.
+%[text] ### Signal generation
+% Input sequence x[n] with a finite region of support
+N = 6; %[control:slider:75f6]{"position":[5,6]}
+xgen = "ramp"; %[control:dropdown:6784]{"position":[8,14]}
+switch xgen
+    case "ramp"
+        x = 1:N
+    otherwise
+        x = randn(1,N)
+end
+%[text] ### Impulse response
 h = [1 0 -1];
-% 写像の定義
-% (Definition of a map)
-
-% Definition of map T as a modulo-Q circular convolution with h[n]
-mapT = @(x) cconv(x,h,Q);
-% 写像の結果
-% (Result of mapping)
-
-% Mapping with the circular convolution T(.)
-v = mapT(u)
-% 単変量循環畳み込みの行列表現
-% (Matrix representation of the univariate circular convolution)
-% 
-% 
-% 
-% 単変量循環畳み込み演算も (The univariate circular convolution can also be represented 
-% as a matrix as)
-% 
-% $$\mathbf{v}=\mathbf{Tu},$$
-% 
-% のように行列表現できる． 
-% 
-% インパルス応答 $\{h[n]\}_n$ のサポート領域 $\Omega_\mathrm{h}=\{0,1,2\}$が，入力信号$\{u[n]\}_n$のサポート領域$\Omega_\mathrm{u}=\{0,1,2,3,4,5\}$ 
-% よりも短く周期 $Q=|\Omega_\mathrm{u}|$ と設定されているとき，出力信号$\{v[n]\}_n$のサポート領域も$\Omega_\mathrm{v}=\Omega_\mathrm{u}$となり，(If 
-% the support region $\Omega_\mathrm{h}=\{0,1,2\}$ of the impulse response $\{h[n]\}_n$ 
-% is shorter than the support region $\Omega_\mathrm{u}=\{0,1,2,3,4,5\}$ of the 
-% input signal $\{u[n]\}_n$ and  the period is set as $Q=|\Omega_\mathrm{u}|$, 
-% then the support region of the output signal $\{v[n]\}_n$ becomes also $\Omega_\mathrm{v}=\Omega_\mathrm{u}$, 
-% and we have )
-% 
-% 
-% 
-% $$\mathbf{v}=\mathrm{vec}\left(\{v[{n}]\}_{n}\right)=\left(\begin{array}{c}v[0]\\v[1]\\v[2]\\v[3]\\v[4]\\v[5]\end{array}\right), 
-% \mathbf{u}=\mathrm{vec}\left(\{u[{n}]\}_{n}\right)=\left(\begin{array}{c}u[0]\\u[1]\\u[2]\\u[3]\\u[4]\\u[5]\end{array}\right)$$
-% 
-% $$\mathbf{T}=\left(\begin{array}{cccccc}h[0] & 0  & 0 & 0 & h[2] & h[1] \\h[1] 
-% & h[0]  & 0 & 0 & 0 & h[2] \\h[2] & h[1]  & h[0] & 0 & 0 & 0 \\0 & h[2] & h[1]  
-% & h[0] & 0 & 0 \\0 & 0 & h[2] & h[1]  & h[0] & 0 \\0 & 0 & 0 & h[2] & h[1]  
-% & h[0]  \end{array}\right).$$
-% 
-% 
-% 
-% と表現できる．
-% 
-% 
-% 単変量循環畳み込みの行列生成
-% (Matrix generation of univariate circular convolution)
-
-% Find the matrix representation of the univariate circular convolution
-T = zeros(length(u));
-for idx = 1:length(u)
-    % Generating a standard basis vector
-    e = zeros(size(u),'like',u);
+%[text] ### Definition of the map
+% Map T as the circular convolution with h[n] (period N)
+mapT = @(u) cconv(u,h,N);
+%[text] ### Result of the mapping
+y = mapT(x)
+%%
+%[text] ## Matrix representation of the univariate circular convolution
+%[text] The univariate circular convolution is also represented by a matrix as
+%[text]{"align":"center"} $\\mathbf{y}=\\mathbf{T}\\mathbf{x}.$
+%[text] When the support $\\mathcal{N}\_\\mathrm{h}=\\{0,1,2\\}$ of the impulse response $(h\[n\])\_n$ is shorter than the support $\\Omega\_\\mathsf{x}=\\{0,1,2,3,4,5\\}$
+%[text] of the input $(x\[n\])\_n$ and the period is $N=|\\Omega\_\\mathsf{x}|$, the output $(y\[n\])\_n$ has the support $\\Omega\_\\mathsf{y}=\\Omega\_\\mathsf{x}$, and
+%[text]{"align":"center"} $\\mathbf{y}=\\mathrm{vec}\\left((y\[n\])\_n\\right)=\\begin{pmatrix}y\[0\]\\\\y\[1\]\\\\y\[2\]\\\\y\[3\]\\\\y\[4\]\\\\y\[5\]\\end{pmatrix},\\quad \\mathbf{x}=\\mathrm{vec}\\left((x\[n\])\_n\\right)=\\begin{pmatrix}x\[0\]\\\\x\[1\]\\\\x\[2\]\\\\x\[3\]\\\\x\[4\]\\\\x\[5\]\\end{pmatrix},$
+%[text]{"align":"center"} $\\mathbf{T}=\\begin{pmatrix}h\[0\] & 0 & 0 & 0 & h\[2\] & h\[1\] \\\\ h\[1\] & h\[0\] & 0 & 0 & 0 & h\[2\] \\\\ h\[2\] & h\[1\] & h\[0\] & 0 & 0 & 0 \\\\ 0 & h\[2\] & h\[1\] & h\[0\] & 0 & 0 \\\\ 0 & 0 & h\[2\] & h\[1\] & h\[0\] & 0 \\\\ 0 & 0 & 0 & h\[2\] & h\[1\] & h\[0\]\\end{pmatrix}.$
+%[text] ### Generation of the univariate circular convolution matrix
+T = zeros(length(x));
+for idx = 1:length(x)
+    % Standard basis vector
+    e = zeros(size(x),'like',x);
     e(idx) = 1;
     % Response to the standard basis vector
-    T(:,idx) = mapT(e); 
+    T(:,idx) = mapT(e);
 end
 % Matrix representation of the univariate circular convolution
 T
-% 行列演算による単変量循環畳み込み
-% (Univariate circular convolution by matrix operation)
-% 
-% 循環畳み込みも可換図に沿って (Circular convolution can also be computed as)
-% 
-% $$\{v[{n}]\}_{n}=\mathrm{vec}_{\Omega_\mathrm{v}}^{-1}\left(\mathbf{v}\right)=\mathrm{vec}_{\Omega_\mathrm{v}}^{-1}\left(\mathbf{Tu}\right)=\mathrm{vec}_{\Omega_\mathrm{v}}^{-1}\circ\mathbf{T}\mathrm{vec}_{\Omega_\mathrm{u}}\left(\{u[n]\}_n\right)$$
-% 
-% のように行列演算が可能である．すなわち，(along the commutative diagram. That is, we have)
-% 
-% $$T=\mathrm{vec}_{\Omega_\mathrm{v}}^{-1}\circ\mathbf{T}\mathrm{vec}_{\Omega_\mathrm{u}}.$$
-% 
-% と表現できる．
-
-% Column vectorization of sequence u[n]
-vecu = u(:);
-
+%%
+%[text] ## Univariate circular convolution by a matrix operation
+%[text] Along the commutative diagram, the circular convolution is computed as
+%[text]{"align":"center"} $(y\[n\])\_n=\\mathrm{vec}\_{\\Omega\_\\mathsf{y}}^{-1}\\left(\\mathbf{y}\\right)=\\mathrm{vec}\_{\\Omega\_\\mathsf{y}}^{-1}\\left(\\mathbf{T}\\mathbf{x}\\right)=\\mathrm{vec}\_{\\Omega\_\\mathsf{y}}^{-1}\\circ\\mathbf{T}\\,\\mathrm{vec}\_{\\Omega\_\\mathsf{x}}\\left((x\[n\])\_n\\right),$
+%[text] that is,
+%[text]{"align":"center"} $\\mathsf{T}=\\mathrm{vec}\_{\\Omega\_\\mathsf{y}}^{-1}\\circ\\mathbf{T}\\,\\mathrm{vec}\_{\\Omega\_\\mathsf{x}}.$
+% Column vectorization of x[n]
+vecx = x(:);
 % Matrix operation
-vecv = T*vecu;
-
-% Reshaping the result into the row sequnece
-recv = reshape(vecv,[1 Q])
-% 行列演算による単変量循環畳み込みの評価
-% (Evaluation of univariate circular convolution by matrix operation)
-
-% Comparizon between mapping and matrix operation
-mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
-mymse(v,recv)
-% 2変量循環畳み込み
-% (Bivariate circular convolution)
-% 
-% 
-% 
-% 有限インパルス応答(FIR)インパルス応答 $\{h[\mathbf{n}]\}_\mathbf{n}$ を有する線形シフト不変システム $T(\cdot)$を仮定する．(Assume 
-% a linear shift-invariant system T with a bivariate finite impulse response (FIR) 
-% $\{h[\mathbf{n}]\in\mathbb{R}\}_{\mathbf{n}\in{\Omega_\mathrm{h}}\subset\mathbb{Z}^2}$.)  
-% 
-% 配列$\{u[\mathbf{n}]\}_\mathbf{n}$に対する周期拡張後の$T(\cdot)$ の応答$\{v[\mathbf{n}]\}_\mathbf{n}$は周期 
-% $\mathbf{Q}\in\mathbb{Z}^{2\times 2} $($\det\mathbf{Q}\neq 0$) を法とする2変量循環畳み込み
-% 
-% $$\{v[\mathbf{n}]\}_\mathbf{n} =T\left(\{u[\mathbf{n}]\}_\mathbf{n}\right) 
-% = \sum_{\mathbf{k}\in\Omega_\mathrm{h}}h[\mathbf{k}]\{u\left[(\!(\mathbf{n}-\mathbf{k})\!)_\mathbf{Q}\right]\}_\mathbf{n},$$
-% 
-% により表現できる．(The response $\{v[\mathbf{n}]\}_\mathbf{n}$ of $T(\cdot)$ after 
-% periodic extension to array $\{u[\mathbf{n}]\}_\mathbf{n}$ can be represented 
-% by bivariate circular convolution with period $\mathbf{Q}$,) ただし，$\mathbf{Q}\in\mathbb{Z}^{2\times2}(\det\mathbf{Q}\neq 
-% 0)$は周期行列,  $\{v[\mathbf{n}]\in\mathbb{K}\}_{\mathbf{n}\in\Omega\subset\mathbb{Z}^2}$は出力配列，(where  
-% $\mathbf{Q}\in\mathbb{Z}^{2\times2}(\det\mathbf{Q}\neq 0)$ is the period matrix,  
-% $\{v[\mathbf{n}]\in\mathbb{K}\}_{\mathbf{n}\in\Omega\subset\mathbb{Z}^2}$ is 
-% the destination array and)
-% 
-% $$(\!(\mathbf{n})\!)_\mathbf{Q} = \mathbf{n} - \mathbf{Q}\left\lfloor \mathbf{Q}^{-1}\mathbf{n}\right\rfloor$$
-% 
-% は， $\mathbf{Q}$を法とする $\mathbf{n}$ の剰余である．( denotes the $\mathbf{n}$ modulo 
-% $\mathbf{Q}$.) 
-% 
-% 
-% 信号の生成
-% (Signal generation)
-
-% Generating an input array u[n1,n2] of finite support region
-N1 = 2; % # of rows
-N2 = 3; % # of columns
-ugen = "reshape((0:N1*N2-1),[N1 N2])";
-u = eval(ugen)
-% インパルス応答の設定
-% (Setting the impulse response)
-
+vecy = T*vecx;
+% Reshape the result into a row sequence
+recy = reshape(vecy,[1 N])
+%[text] ### Evaluation of the univariate circular convolution by the matrix operation
+% Comparison between the map and the matrix operation
+mymse = @(a,b) mean((double(a)-double(b)).^2,'all');
+mymse(y,recy)
+%%
+%[text] ## Bivariate circular convolution
+%[text] Assume a linear shift-invariant system $\\mathsf{T}(\\cdot)$ with a bivariate FIR $(h\[\\boldsymbol{n}\])\_{\\boldsymbol{n}\\in\\mathcal{N}\_\\mathrm{h}}$, $\\mathcal{N}\_\\mathrm{h}\\subset\\mathbb{Z}^2$.
+%[text] With periodic extension, the response $(y\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ of $\\mathsf{T}(\\cdot)$ to an array $(x\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ is the bivariate circular convolution
+%[text] with the periodic structure matrix $\\boldsymbol{N}\\in\\mathbb{Z}^{2\\times 2}$ ($\\det\\boldsymbol{N}\\neq 0$)
+%[text]{"align":"center"} $(y\[\\boldsymbol{n}\])\_{\\boldsymbol{n}} =\\mathsf{T}\\left((x\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}\\right) = \\sum\_{\\boldsymbol{m}\\in\\mathcal{N}\_\\mathrm{h}}h\[\\boldsymbol{m}\]\\left(x\\left\[(\\!(\\boldsymbol{n}-\\boldsymbol{m})\\!)\_{\\boldsymbol{N}}\\right\]\\right)\_{\\boldsymbol{n}},$
+%[text] where
+%[text]{"align":"center"} $(\\!(\\boldsymbol{n})\\!)\_{\\boldsymbol{N}} = \\boldsymbol{n} - \\boldsymbol{N}\\left\\lfloor \\boldsymbol{N}^{-1}\\boldsymbol{n}\\right\\rfloor$
+%[text] denotes $\\boldsymbol{n}$ modulo $\\boldsymbol{N}$.  Each term is a circular shift of $\\mathsf{x}$ by $\\boldsymbol{m}$ weighted by $h\[\\boldsymbol{m}\]$
+%[text] (see the local function `cconv2` at the end).
+%[text] ### Signal generation
+% Input array x[n1,n2] with a finite region of support
+N1 = 2; % # of rows %[control:slider:1cd8]{"position":[6,7]}
+N2 = 3; % # of columns %[control:slider:5f9f]{"position":[6,7]}
+xgen = "ramp"; %[control:dropdown:9b11]{"position":[8,14]}
+switch xgen
+    case "ramp"
+        x = reshape(0:N1*N2-1,[N1 N2])
+    otherwise
+        x = randn(N1,N2)
+end
+%[text] ### Impulse response
 h = [1 -1 ; 1 -1]
-figure(1)
+figure
 stem3(h,'filled')
 axis ij
 title('Impulse response')
-% 写像の定義
-% (Definition of a map)
-
-% Definition of map T as a circular convolution with h[n]
-mapT = @(x) imfilter(x,h,'conv','circ');
-% 写像の結果
-% (Result of mapping)
-
-% Mapping with the circular shift T(.)
-v = mapT(u)
-% 2変量循環畳み込みの行列表現
-% (Matrix representation of the bivariate circular convolution)
-% 
-% 
-% 
-% 2変量循環畳み込み演算も (The bivariate circular convolution can also be represented as 
-% a matrix as)
-% 
-% $$\mathbf{v}=\mathbf{Tu},$$
-% 
-% のように行列表現できる． 
-% 
-% インパルス応答 $\{h[\mathbf{n}]\}_\mathbf{n}$ のサポート領域 $\Omega_\mathrm{h}=\{0,1\}\times 
-% \{0,1\}$が，入力信号$\{u[\mathbf{n}]\}_\mathbf{n}$のサポート領域$\Omega_\mathrm{u}=\{0,1\}\times 
-% \{0,1,2\}$ よりも狭く周期行列が $\mathbf{Q}=\left(\begin{array}{cc}N_1 & 0 \\ 0 & N_2\end{array}\right)=\left(\begin{array}{cc}2 
-% & 0 \\ 0 & 3\end{array}\right)$ と設定されているとき，出力信号$\{v[\mathbf{n}]\}_\mathbf{n}$のサポート領域も$\Omega_\mathrm{v}=\Omega_\mathrm{u}$となり，(If 
-% the support region $\Omega_\mathrm{h}=\{0,1\}\times \{0,1\}$ of the impulse 
-% response $\{h[\mathbf{n}]\}_\mathbf{n}$ is narrower than the support region 
-% $\Omega_\mathrm{u}=\{0,1\}\times \{0,1,2\}$ of the input signal $\{u[\mathbf{n}]\}_\mathbf{n}$ 
-% and  the period is set as $\mathbf{Q}=\left(\begin{array}{cc}N_1 & 0 \\ 0 & 
-% N_2\end{array}\right)=\left(\begin{array}{cc}2 & 0 \\ 0 & 3\end{array}\right)$, 
-% then the support region of the output signal $\{v[\mathbf{n}]\}_\mathbf{n}$ 
-% becomes also $\Omega_\mathrm{v}=\Omega_\mathrm{u}$, and we have )
-% 
-% $$\mathbf{v}=\mathrm{vec}\left(\{v[\mathbf{n}]\}_\mathbf{n}\right)=\left(\begin{array}{c}v[0,0]\\v[1,0]\\v[0,1]\\v[1,1]\\\vdots\\v[1,2]\end{array}\right), 
-% \mathbf{u}=\mathrm{vec}\left(\{u[\mathbf{n}]\}_\mathbf{n}\right)=\left(\begin{array}{c}u[0,0]\\u[1,0]\\u[0,1]\\u[1,1]\\\vdots\\u[1,2]\end{array}\right)$$
-% 
-% $$\mathbf{T}=\left(\begin{array}{cccccc}h[1,1] & h[0,1]  & h[1,0] & h[0,0] 
-% & 0 & 0 \\h[0,1] & h[1,1]  & h[0,0] & h[1,0] & 0 & 0 \\0 & 0 &h[1,1] & h[0,1]  
-% & h[1,0] & h[0,0]  \\0 & 0 &h[0,1] & h[1,1]  & h[0,0] & h[1,0]  \\h[1,0] & h[0,0] 
-% & 0 & 0 &h[1,1] & h[0,1]  \\h[0,0] & h[1,0] & 0 & 0 &h[0,1] & h[1,1]  \end{array}\right).$$
-% 
-% 
-% 
-% と表現できる．
-% 
-% 
-% 2変量循環畳み込みの行列生成
-% (Bivariate circular convolution matrix generation)
-
-% Find the matrix representation of the circular convolution
-T = zeros(numel(u));
-for idx = 1:numel(u)
-    % Generating a standard basis vector
-    e = zeros(size(u),'like',u);
+%[text] ### Definition of the map
+% Map T as the circular convolution with h[n] (N = diag(N1,N2))
+mapT = @(u) cconv2(u,h);
+%[text] ### Result of the mapping
+y = mapT(x)
+%[text] `imfilter` with the option `'conv'` rotates the kernel by $180^\\circ$ and puts the origin at the element
+%[text] `floor((size(h)+1)/2)` of the rotated kernel, i.e., at `h(2,2)` ($h\[1,1\]$) for the $2\\times 2$ kernel.
+%[text] With `'circular'`, its output is therefore $\\mathsf{y}$ circularly shifted by $(-1,-1)$.
+yimf = imfilter(x,h,'conv','circular')
+mymse(yimf,circshift(y,[-1 -1]))
+%%
+%[text] ## Matrix representation of the bivariate circular convolution
+%[text] The bivariate circular convolution is also represented by a matrix as
+%[text]{"align":"center"} $\\mathbf{y}=\\mathbf{T}\\mathbf{x}.$
+%[text] When the support $\\mathcal{N}\_\\mathrm{h}=\\{0,1\\}\\times \\{0,1\\}$ of the impulse response $(h\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ is narrower than the support
+%[text] $\\Omega\_\\mathsf{x}=\\{0,1\\}\\times \\{0,1,2\\}$ of the input $(x\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ and the periodic structure matrix is
+%[text] $\\boldsymbol{N}=\\begin{bmatrix}N\_1 & 0 \\\\ 0 & N\_2\\end{bmatrix}=\\begin{bmatrix}2 & 0 \\\\ 0 & 3\\end{bmatrix}$, the output $(y\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ has the support $\\Omega\_\\mathsf{y}=\\Omega\_\\mathsf{x}$, and
+%[text]{"align":"center"} $\\mathbf{y}=\\mathrm{vec}\\left((y\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}\\right)=\\begin{pmatrix}y\[0,0\]\\\\y\[1,0\]\\\\y\[0,1\]\\\\y\[1,1\]\\\\y\[0,2\]\\\\y\[1,2\]\\end{pmatrix},\\quad \\mathbf{x}=\\mathrm{vec}\\left((x\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}\\right)=\\begin{pmatrix}x\[0,0\]\\\\x\[1,0\]\\\\x\[0,1\]\\\\x\[1,1\]\\\\x\[0,2\]\\\\x\[1,2\]\\end{pmatrix},$
+%[text]{"align":"center"} $\\mathbf{T}=\\begin{pmatrix}h\[0,0\] & h\[1,0\] & 0 & 0 & h\[0,1\] & h\[1,1\] \\\\ h\[1,0\] & h\[0,0\] & 0 & 0 & h\[1,1\] & h\[0,1\] \\\\ h\[0,1\] & h\[1,1\] & h\[0,0\] & h\[1,0\] & 0 & 0 \\\\ h\[1,1\] & h\[0,1\] & h\[1,0\] & h\[0,0\] & 0 & 0 \\\\ 0 & 0 & h\[0,1\] & h\[1,1\] & h\[0,0\] & h\[1,0\] \\\\ 0 & 0 & h\[1,1\] & h\[0,1\] & h\[1,0\] & h\[0,0\]\\end{pmatrix}.$
+%[text] ### Generation of the bivariate circular convolution matrix
+T = zeros(numel(x),numel(x));
+for idx = 1:numel(x)
+    % Standard basis array
+    e = zeros(size(x),'like',x);
     e(idx) = 1;
-    % Response to the standard basis vector
-    T(:,idx) = reshape(mapT(e),[size(T,1) 1]); 
+    % Response to the standard basis array
+    T(:,idx) = reshape(mapT(e),[size(T,1) 1]);
 end
-% Matrix representation of the convolution
+% Matrix representation of the circular convolution
 T
-% 行列演算による2変量循環畳み込み
-% (Bivariate circular convolution by matrix operation)
-% 
-% 2変量循環畳み込みも可換図に沿って (Bivariate circular convolution can also be computed as)
-% 
-% $$\{v[\mathbf{n}]\}_\mathbf{n}=\mathrm{vec}_{\Omega_\mathrm{v}}^{-1}\left(\mathbf{v}\right)=\mathrm{vec}_{\Omega_\mathrm{v}}^{-1}\left(\mathbf{Tu}\right)=\mathrm{vec}_{\Omega_\mathrm{v}}^{-1}\circ\mathbf{T}\mathrm{vec}_{\Omega_\mathrm{u}}\left(\{u[\mathbf{n}]\}_\mathbf{n}\right)$$
-% 
-% のように行列演算が可能である．すなわち，(along the commutative diagram. That is, we have)
-% 
-% $$T=\mathrm{vec}_{\Omega_\mathrm{v}}^{-1}\circ\mathbf{T}\mathrm{vec}_{\Omega_\mathrm{u}}.$$
-% 
-% と表現できる．
-
-% Column vectorization of sequence u[n]
-vecu = u(:);
-
+%%
+%[text] ## Bivariate circular convolution by a matrix operation
+%[text] Along the commutative diagram, the circular convolution is computed as
+%[text]{"align":"center"} $(y\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}=\\mathrm{vec}\_{\\Omega\_\\mathsf{y}}^{-1}\\left(\\mathbf{y}\\right)=\\mathrm{vec}\_{\\Omega\_\\mathsf{y}}^{-1}\\left(\\mathbf{T}\\mathbf{x}\\right)=\\mathrm{vec}\_{\\Omega\_\\mathsf{y}}^{-1}\\circ\\mathbf{T}\\,\\mathrm{vec}\_{\\Omega\_\\mathsf{x}}\\left((x\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}\\right),$
+%[text] that is,
+%[text]{"align":"center"} $\\mathsf{T}=\\mathrm{vec}\_{\\Omega\_\\mathsf{y}}^{-1}\\circ\\mathbf{T}\\,\\mathrm{vec}\_{\\Omega\_\\mathsf{x}}.$
+% Column vectorization of x[n]
+vecx = x(:);
 % Matrix operation
-vecv = T*vecu;
+vecy = T*vecx;
+% Reshape the result into the output array
+recy = reshape(vecy,[N1 N2])
+%[text] ### Evaluation of the bivariate circular convolution by the matrix operation
+% Comparison between the map and the matrix operation
+mymse(y,recy)
+%%
+%[text] ## Local function
+%[text] Bivariate circular convolution with $\\boldsymbol{N}=\\mathrm{diag}(N\_1,N\_2)$ given by the size of `x`:
+%[text] $\\mathsf{y}=\\sum\_{\\boldsymbol{m}}h\[\\boldsymbol{m}\]\\left(x\[(\\!(\\boldsymbol{n}-\\boldsymbol{m})\\!)\_{\\boldsymbol{N}}\]\\right)\_{\\boldsymbol{n}}$, where `circshift(x,m)` gives $\\left(x\[(\\!(\\boldsymbol{n}-\\boldsymbol{m})\\!)\_{\\boldsymbol{N}}\]\\right)\_{\\boldsymbol{n}}$.
+function y = cconv2(x,h)
+y = zeros(size(x),'like',x);
+for m2 = 0:size(h,2)-1
+    for m1 = 0:size(h,1)-1
+        y = y + h(m1+1,m2+1)*circshift(x,[m1 m2]);
+    end
+end
+end
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
 
-% Reshaping the result into the row sequnece
-recv = reshape(vecv,[N1 N2])
-% 行列演算による2変量循環畳み込みの評価
-% (Evaluation of bivariate circular convolution by matrix operation)
-
-% Comparizon between mapping and matrix operation
-mymse(v,recv)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:75f6]
+%   data: {"defaultValue":6,"label":"N","max":16,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:dropdown:6784]
+%   data: {"defaultValue":"\"ramp\"","itemLabels":["1:N","randn(1,N)"],"items":["\"ramp\"","\"random\""],"label":"Input","run":"SectionToEnd"}
+%---
+%[control:slider:1cd8]
+%   data: {"defaultValue":2,"label":"N1","max":6,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:5f9f]
+%   data: {"defaultValue":3,"label":"N2","max":6,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:dropdown:9b11]
+%   data: {"defaultValue":"\"ramp\"","itemLabels":["reshape(0:N1*N2-1,[N1 N2])","randn(N1,N2)"],"items":["\"ramp\"","\"random\""],"label":"Input","run":"SectionToEnd"}
+%---

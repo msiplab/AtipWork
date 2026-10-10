@@ -1,222 +1,127 @@
-%% Sample 4-2
-%% 線形シフト不変システム
-% 相関と畳み込み
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Linear shift-invariant systems
-% Correlation and convolution
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% 入力信号 $\{u[n]\}_n$ 
-% (Input signal $\{u[n]\}_n$)
-
-% Input x[n]
-u = [1 2 3];
-% フィルタカーネル $\{w[n]\}_n$ 
-% (Filter kernel $\{w[n]\}_n$)
-
-% Filter kernel w[n]
-w = [-1 0 1];
-% 相互相関$\{x[n]\}_n$ 
-% (Cross-correlation $\{x[n]\}_n$)
-% 
-% 相互相関 (Cross-correlation) 
-% 
-% $$\{x[n]\}_n=\sum_{k=-\infty}^{\infty}u[k]\{w[n+k]\}_n$$
-
-% Output x[n]
-x = xcorr(u,w);
-ndiff = length(u)-length(w);
+%[text] # Sample 4-2: Correlation and convolution
+%[text] Advanced Topics in Image Processing, Lecture 4 "Linear Shift-Invariant Systems"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Input signal $(x\[n\])\_n$
+x = [1 2 3];
+%%
+%[text] ## Filter kernel $(f\[n\])\_n$
+f = [-1 0 1];
+%%
+%[text] ## Cross-correlation $(y\_\\mathrm{c}\[n\])\_n$
+%[text]{"align":"center"} $(y\_\\mathrm{c}\[n\])\_n=\\left(\\sum\_{m=-\\infty}^{\\infty}f\[m\]x\[n+m\]\\right)\_n$
+yc = xcorr(x,f);
+ndiff = length(x)-length(f);
 % Extract the significant subsequence
 if ndiff <= 0
-    x = x(1:end+ndiff)
+    yc = yc(1:end+ndiff)
 else
-    x = x(ndiff+1:end)
+    yc = yc(ndiff+1:end)
 end
-% 線形シフト不変システムの出力応答$\{v[n]\}_n$ 
-% (The linear shift-invariant system response $\{v[n]\}_n$)
-% 
-% 畳み込み演算 (Convolution)
-% 
-% $$\{v[n]\}_n=\{h[n]\}_n \ast \{u[n]\}_n = \sum_{k=-\infty}^{\infty}u[k]\{h[n-k]\}_n$$
-% 
-% フィルタカーネル $\{w[n]\}_n$の反転 (Reversing the filter kernel  $\{w[n]\}_n$.)
-% 
-% $$\{h[n]\}_n=\{w[-n]\}_n$$
-
-% Flip the elements in w[n]
-h = flip(w)
-%% 
-% $\{h[n]\}_n$をインパルス応答とした畳み込み演算． (A convolutional operation with $\{h[n]\}_n$ 
-% as the impulse response.)
-
-% Output y[n]
-v = conv(h,u)
-% 入出力のプロット
-% (Plot of the input and output)
-
-% Lengths of u, h, x and v
-nu = length(u);
-nw = length(w);
+%%
+%[text] ## Output $(y\[n\])\_n$ of the linear shift-invariant system
+%[text] Convolution
+%[text]{"align":"center"} $(y\[n\])\_n=(h\[n\])\_n \\ast (x\[n\])\_n = \\sum\_{m=-\\infty}^{\\infty}x\[m\](h\[n-m\])\_n$
+%[text] Reverse the filter kernel $(f\[n\])\_n$:
+%[text]{"align":"center"} $(h\[n\])\_n=(f\[-n\])\_n$
+h = flip(f)
+%[text] Convolution with $(h\[n\])\_n$ as the impulse response
+y = conv(h,x)
+%%
+%[text] ## Plot of the input and output
 nx = length(x);
-nv = length(v);
+nf = length(f);
+nc = length(yc);
+ny = length(y);
 
-figure(1)
-amax = max(max(abs(u)),max(abs(x)));
-%% u[n]
-subplot(4,1,1)
-stem(0:nu-1,u,'filled')
-axis([0 nx -amax amax])
-xlabel('n')
-ylabel('u[n]')
-
-%% w[n]
-subplot(4,1,2)
-stem(0:nw-1,w,'filled')
-axis([0 nx -amax amax])
-xlabel('n')
-ylabel('w[n]')
-
-%% x[n]
-subplot(4,1,3)
+amax = max(max(abs(x)),max(abs(yc)));
+figure
+tiledlayout(4,1)
+% x[n]
+nexttile
 stem(0:nx-1,x,'filled')
-axis([0 nx -amax amax])
+axis([0 nc -amax amax])
 xlabel('n')
 ylabel('x[n]')
-
-%% v[n]
-subplot(4,1,4)
-stem(0:nv-1,v,'filled')
-axis([0 nx -amax amax])
+% f[n]
+nexttile
+stem(0:nf-1,f,'filled')
+axis([0 nc -amax amax])
 xlabel('n')
-ylabel('v[n]')
-% 平均自乗誤差(MSE)による評価
-% (Evaluation in terms of the mean squared errors (MSE))
-% 
-% $$\mathrm{MSE}(\{x[n]\}_n,\{v[n]\}_n) \colon =\frac{1}{\left|\Omega\right|}\sum_{n\in\Omega}\left|x[n]-v[n]\right|^2,$$
-% 
-% ただし， $\Omega$は添え字集合， $|\Omega|$ は添え字の数．(where $\Omega$ denotes the index set 
-% and $|\Omega|$ means the cardinality.)
-
-% Comparison between x and v
-mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
-mymse(x,v)
-% 2変量フィルタリングと畳み込み
-% (Bivariate filtering and convolution)
-% 
-% インパルス信号 (Impulse signal)
-% 
-% $$\delta[\mathbf{n}] = \left\{\begin{array}{ll} 1 & \mathbf{n}=\mathbf{0} 
-% \\ 0 & \mathrm{otherwise}\end{array}\right.$$
-
-% Bivariate impulse signal
+ylabel('f[n]')
+% yc[n]
+nexttile
+stem(0:nc-1,yc,'filled')
+axis([0 nc -amax amax])
+xlabel('n')
+ylabel('y_c[n]')
+% y[n]
+nexttile
+stem(0:ny-1,y,'filled')
+axis([0 nc -amax amax])
+xlabel('n')
+ylabel('y[n]')
+%%
+%[text] ## Evaluation by the mean squared error (MSE)
+%[text]{"align":"center"} $\\mathrm{MSE}((y\_\\mathrm{c}\[n\])\_n,(y\[n\])\_n) \\coloneqq \\frac{1}{\\left|\\Omega\\right|}\\sum\_{n\\in\\Omega}\\left|y\_\\mathrm{c}\[n\]-y\[n\]\\right|^2,$
+%[text] where $\\Omega$ denotes the index set and $|\\Omega|$ its cardinality.
+mymse = @(a,b) mean((double(a)-double(b)).^2,'all');
+mymse(yc,y)
+%%
+%[text] ## Bivariate filtering and convolution
+%[text] Unit impulse
+%[text]{"align":"center"} $\\delta\[\\boldsymbol{n}\] = \\left\\{\\begin{array}{ll} 1 & \\boldsymbol{n}=\\mathbf{0} \\\\ 0 & \\mathrm{otherwise}\\end{array}\\right.$
+% Bivariate unit impulse
 D = 1
-%% 
-% フィルタカーネル $\{f[\mathbf{n}]\}_{\mathbf{n}}$の設定 (Setting of filter kernel $\{f[\mathbf{n}]\}_{\mathbf{n}}$)
-
-% Definition of filter kernel f[n]
+%[text] Filter kernel $(f\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$
 f = reshape(1:9,[3 3])
-%% 
-% 関数IMFILTERのインパルス応答はフィルタカーネル$\{f[\mathbf{n}]\}_{\mathbf{n}}$の各軸反転となる．
-% 
-% (The impulse response of function IMFILTER is an inversion of each axis of 
-% the filter kernel $\{f[\mathbf{n}]\}_{\mathbf{n}}$.)
-% 
-% 'full' オプションはクリッピングをせずに出力する．(The 'full' option outputs without clipping.)
-
-% Impulse response of IMFILTER
-imfilter(D,f,'full') 
-%% 
-% フィルタカーネル$\{f[\mathbf{n}]\}_{\mathbf{n}}$を各軸反転 (Flip the filter kernel $\{f[\mathbf{n}]\}_{\mathbf{n}}$ 
-% on each axis.)
-
-% Flipping filer kernel f[n]
+%[text] The impulse response of `imfilter` is the filter kernel $(f\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ flipped on each axis.
+%[text] The option `'full'` returns the output without clipping.
+% Impulse response of imfilter
+imfilter(D,f,'full')
+%[text] Flip the filter kernel $(f\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ on each axis.
 h = rot90(f,2)
-%% 
-% 関数IMFILTERの'conv'オプションは2番目の引数をインパルス応答$\{h[\mathbf{n}]\}_{\mathbf{n}}$として畳み込みを行う．
-% 
-% (The 'conv' option of function IMFILTER performs convolution with the second 
-% argument as an impulse response.)
-
-% IMFILTER with the options 'conv' and 'full'
+%[text] The option `'conv'` of `imfilter` performs convolution with the second argument as the impulse response $(h\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$.
+% imfilter with the options 'conv' and 'full'
 imfilter(D,h,'conv','full')
-%% 
-% オプション'full'のみの結果と同じことが確かめられる．(It can be verified that the result is the same 
-% as for the option 'full' only.)
-% 
-% 関数IMFILTERの'conv'と'full'オプションは関数CONV2と同等の機能をもつ．(The 'conv' and 'full' options 
-% of the function IMFILTER have the same functions as those of the function CONV2.)
-
+%[text] The result is the same as with the option `'full'` only.
+%[text] `imfilter` with `'conv'` and `'full'` is equivalent to `conv2`.
 conv2(D,h)
-% *画像フィルタリングの例*
-% (Example of image filtering)
-% 
-% 
-% 
-% サンプル画像の読み込み (Reading a sample image)
-
-% Reading image 'cameraman.tif' as double type.
+%%
+%[text] ## Example of image filtering
+%[text] Read a sample image as type double.
 I = im2double(imread('cameraman.tif'));
-figure(2)
-subplot(2,2,1)
+figure
+tiledlayout(2,2)
+nexttile
 imshow(I)
 title('(a) Original')
-%% 
-% 水平Prewittカーネルの生成
-% 
-% (Generate a horizontal Prewitt kernel)
-
-% Generate the horizontal Prewitt kernel
+%[text] Horizontal Prewitt kernel
 f = fspecial('prewitt').'
-%% 
-% オプションなしIMFILTER 実行
-% 
-% (IMFILTER without any option)
-
-% IMFILTER w/o any option
+%[text] `imfilter` without options
 J = imfilter(I,f);
-subplot(2,2,2)
+nexttile
 imshow(J+.5)
-title('(b) Prewitt w/o any option ')
-%% 
-% 'corr'オプション付きIMFILTER 実行
-% 
-% (IMFILTER without the option 'corr')
-
-% IMFILTER w the option 'corr' (Correlation mode)
+title('(b) Prewitt without options')
+%[text] `imfilter` with the option `'corr'`
 K = imfilter(I,f,'corr');
-subplot(2,2,3)
+nexttile
 imshow(K+.5)
-title(sprintf('(c) Prewitt w "corr" (MSE w (b): %4.2f)',mymse(J,K)))
-%% 
-% フィルタカーネル$\{f[\mathbf{n}]\}_{\mathbf{n}}$を各軸反転 (Flip the filter kernel $\{f[\mathbf{n}]\}_{\mathbf{n}}$ 
-% on each axis.)
-
-% Flipping filer kernel f[n]
+title(sprintf('(c) Prewitt with "corr" (MSE to (b): %4.2f)',mymse(J,K)))
+%[text] Flip the filter kernel $(f\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ on each axis.
 h = rot90(f,2)
-%% 
-% 'conv'オプション付きIMFILTER 実行
-% 
-% (IMFILTER without the option 'conv')
-
-% IMFILTER w the option 'conv' (Convolution mode)
+%[text] `imfilter` with the option `'conv'`
 L = imfilter(I,h,'conv');
-subplot(2,2,4)
+nexttile
 imshow(L+.5)
-title(sprintf('(d) Prewitt w "conv" (MSE w (b): %4.2f)',mymse(J,L)))
-%% 
-% (b),(c),(d)の結果はすべて同じ．(The results in (b), (c), and (d) are all the same.)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+title(sprintf('(d) Prewitt with "conv" (MSE to (b): %4.2f)',mymse(J,L)))
+%[text] The results (b), (c) and (d) are all the same.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

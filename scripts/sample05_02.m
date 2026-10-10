@@ -1,175 +1,137 @@
-%% Sample 5-2
-%% 周波数解析
-% 単変量循環畳み込み
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Fourier analysis
-% Univariate circular convolution
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% 入力信号 $\{u[n]\}_n$ 
-% (Input signal $\{u[n]\}_n$)
-
-% Input x[n]
-u = [1 2 3];
-% 線形シフト不変システムのインパルス応答 $\{h[n]\}_n$ 
-% (Impulse response of a linear shift-invariant system $\{h[n]\}_n$)
-
-% Impulse response h[n]
+%[text] # Sample 5-2: Univariate circular convolution
+%[text] Advanced Topics in Image Processing, Lecture 5 "Fourier Analysis"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Input signal $(x\[n\])\_n$
+x = [1 2 3];
+%%
+%[text] ## Impulse response $(h\[n\])\_n$ of a linear shift-invariant system
 h = [1 1 1]/3;
-% 周期 $N$ の循環畳み込みの出力応答$\{v[n]\}_n$ 
-% (Output response $\{v[n]\}_n$ of circular convolution with period $N$ )
-% 
-% 循環畳み込み演算 (Circular convolution)
-% 
-% $$\{v[n]\}_n=\{h[n]\}_n \bigcirc \{u[n]\}_n = \sum_{k=-\infty}^{\infty}u[k]\{h[(\!(n-k)\!)_N]\}_n$$
-
+%%
+%[text] ## Output $(y\[n\])\_n$ of the circular convolution with period $N$
+%[text]{"align":"center"} $(y\[n\])\_n = \\left(\\sum\_{m=0}^{N-1}h\[m\]x\[(\\!(n-m)\\!)\_N\]\\right)\_n$
 % Setting the period N
-nZeroPadding =0;
-nPeriod = max(length(u),length(h)) + nZeroPadding;
+nZeroPadding = 0; %[control:slider:1d3c]{"position":[16,17]}
+nPeriod = max(length(x),length(h)) + nZeroPadding;
 
-% Output v[n]
-v = cconv(h,u,nPeriod);
-% 畳み込み演算との比較
-% (Comparison with convolution)
+% Output y[n]
+y = cconv(h,x,nPeriod);
+%%
+%[text] ## Comparison with the linear convolution
+% Linear convolution
+yl = conv(h,x);
 
-% Normal convolution
-w = conv(h,u);
-
-% Lengths of u, h, x and v
-nu = length(u);
+% Lengths of x, h, y and yl
+nx = length(x);
 nh = length(h);
-nv = length(v);
-nw = length(w);
+ny = length(y);
+nl = length(yl);
 
-% Display sequences
-figure(1)
-nx = max(length(v),length(w));
-amax = max(max(abs(u)),max(abs(v)));
-% u[n]
-subplot(4,1,1)
-stem(0:nu-1,u,'filled')
-axis([0 nx -amax amax])
+% Display the sequences
+figure
+tiledlayout(4,1)
+nmax = max(ny,nl);
+amax = max(max(abs(x)),max(abs(y)));
+% x[n]
+nexttile
+stem(0:nx-1,x,'filled')
+axis([0 nmax -amax amax])
 xlabel('n')
-ylabel('u[n]')
+ylabel('x[n]')
 title('Input')
 % h[n]
-subplot(4,1,2)
+nexttile
 stem(0:nh-1,h,'filled')
-axis([0 nx -amax amax])
+axis([0 nmax -amax amax])
 xlabel('n')
 ylabel('h[n]')
 title('Impulse response')
-% v[n]
-subplot(4,1,3)
-stem(0:nv-1,v,'filled')
-axis([0 nx -amax amax])
+% y[n]
+nexttile
+stem(0:ny-1,y,'filled')
+axis([0 nmax -amax amax])
 xlabel('n')
-ylabel('v[n]')
+ylabel('y[n]')
 title('Circular convolution')
-% w[n]
-subplot(4,1,4)
-stem(0:nw-1,w)
-axis([0 nx -amax amax])
+% yl[n]
+nexttile
+stem(0:nl-1,yl)
+axis([0 nmax -amax amax])
 xlabel('n')
-ylabel('w[n]')
-title('Normal convolution')
-% 通常の畳み込みと循環畳み込みが一致する条件
-% (The condition that normal convolution and circular convolution match)
-% 
-% $$L_\mathrm{v}=L_\mathrm{h}+L_\mathrm{u}-1\leq N$$
-% 
-% ただし、(where)
-%% 
-% * $L_\mathrm{v}$: 出力の長さ (Output length)
-% * $L_\mathrm{h}$: インパルス応答の長さ (Length of impulse response)
-% * $L_\mathrm{u}$: 入力の長さ (Input length)
-
+ylabel('y_l[n]')
+title('Linear convolution')
+%[text] ### Condition for the linear and circular convolutions to agree
+%[text]{"align":"center"} $L\_\\mathrm{y}=L\_\\mathrm{h}+L\_\\mathrm{x}-1\\leq N$
+%[text] where
+%[text] - $L\_\\mathrm{y}$: output length
+%[text] - $L\_\\mathrm{h}$: length of the impulse response
+%[text] - $L\_\\mathrm{x}$: input length \
 % Adjusting the lengths
-mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
-if nv > nw
-    wc = [w(:); zeros(nv-nw,1)];
-    vc = v(:);
+mymse = @(a,b) mean((double(a)-double(b)).^2,'all');
+if ny > nl
+    ylc = [yl(:); zeros(ny-nl,1)];
+    yc = y(:);
 else
-    vc = [v(:); zeros(nw-nv,1)];
-    wc = w(:);
+    yc = [y(:); zeros(nl-ny,1)];
+    ylc = yl(:);
 end
 % Check the condition
-if (nw <= nPeriod)
-    msg = 'TRUE';
+if nl <= nPeriod
+    msg = "TRUE";
 else
-    msg = 'FALSE (Increse # of zeros for padding)';
+    msg = "FALSE (increase the number of zeros for padding)";
 end
-fprintf('Condition for CCONV to match CONV: \n\t %s', msg)
+fprintf("Condition for CCONV to match CONV: %s\n", msg)
 % MSE
-fprintf('MSE: %f', mymse(vc,wc))
-% 入力信号 $\{u[n]\}_n$ のDFT
-% (DFT of input signal $\{u[n]\}_n$)
-% 
-% $$U[k]=\sum_{n=0}^{N-1} u[n] W_{N}^{n k}, k\in\{0,1,2,\cdots,N-1\}$$
-% 
-% ただし，(where)
-% 
-% $$W_N=e^{-\j\frac{2\pi}{N}}$$
-
-% DFT of u[n]
-U = fft(u,nPeriod);
-% フィルタ $\{h[n]\}_n$ のDFT
-% (DFT of impulse response $\{h[n]\}_n$)
-% 
-% $$H[k]=\sum_{n=0}^{N-1} h[n] W_{N}^{n k}, k\in\{0,1,2,\cdots,N-1\}$$
-
-% DFT of h[n]
+fprintf("MSE: %f\n", mymse(yc,ylc))
+%%
+%[text] ## DFT of the input signal $(x\[n\])\_n$
+%[text]{"align":"center"} $X\[k\]=\\sum\_{n=0}^{N-1} x\[n\] W\_{N}^{k n},\\ k\\in\\{0,1,2,\\ldots,N-1\\}$
+%[text] where
+%[text]{"align":"center"} $W\_N=\\mathrm{e}^{-\\mathrm{j}\\frac{2\\pi}{N}}$
+X = fft(x,nPeriod);
+%%
+%[text] ## DFT of the impulse response $(h\[n\])\_n$
+%[text]{"align":"center"} $H\[k\]=\\sum\_{n=0}^{N-1} h\[n\] W\_{N}^{k n},\\ k\\in\\{0,1,2,\\ldots,N-1\\}$
 H = fft(h,nPeriod);
-% 出力信号 $\{v[n]\}_n$ のDFT
-% (DFT of output signal $\{v[n]\}_n$)
-% 
-% $$V[k]=\sum_{n=0}^{N-1} v[n] W_{N}^{n k}, k\in\{0,1,2,\cdots,N-1\}$$
-
-% Frequency response of v[n]
-V = fft(v,nPeriod);
-% DFTの表示
-% (Display of DFTs)
-
-% DFT index
+%%
+%[text] ## DFT of the output signal $(y\[n\])\_n$
+%[text]{"align":"center"} $Y\[k\]=\\sum\_{n=0}^{N-1} y\[n\] W\_{N}^{k n},\\ k\\in\\{0,1,2,\\ldots,N-1\\}$
+Y = fft(y,nPeriod);
+%%
+%[text] ## Display of the DFTs
 k = 0:nPeriod-1;
-
-% Display of DFTs
-figure(2)
-subplot(3,1,1)
-stem(abs(U),'filled')
+figure
+tiledlayout(3,1)
+nexttile
+stem(k,abs(X),'filled')
 xlabel('k')
-ylabel('|U[k]|')
-subplot(3,1,2)
+ylabel('|X[k]|')
+nexttile
 stem(k,abs(H),'filled')
 xlabel('k')
 ylabel('|H[k]|')
-subplot(3,1,3)
-stem(k,abs(V),'filled')
+nexttile
+stem(k,abs(Y),'filled')
 xlabel('k')
-ylabel('|V[k]|')
-% DFT積
-% (DFT product)
-% 
-% $$V[k]=H[k]U[k],\ k\in\{0,1,2,\cdots,N-1\}$$
-% 
-% 循環畳み込みとの比較 (Comparison with circular convolution)
+ylabel('|Y[k]|')
+%%
+%[text] ## DFT product
+%[text]{"align":"center"} $Y\[k\]=H\[k\]X\[k\],\\ k\\in\\{0,1,2,\\ldots,N-1\\}$
+%[text] Comparison with the circular convolution
+% IDFT of the DFT product
+yd = ifft(H.*X);
+% MSE with the result of cconv
+fprintf("MSE: %f\n", mymse(y,yd))
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
 
-% IDFT of DFT product
-y = ifft(H.*U);
-% MSE with the cconv result 'v'
-fprintf('MSE: %f', mymse(v,y))
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:1d3c]
+%   data: {"defaultValue":0,"label":"nZeroPadding","max":16,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---

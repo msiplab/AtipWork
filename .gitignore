@@ -1,5 +1,17 @@
+# MATLAB autosave and cache
+*.asv
 *.db
-tmp/*.jpg
-tmp/*.tif
-tmp/*.png
-work/jetty*
+slprj/
+
+# Outputs of the scripts (figures, LaTeX snippets, trained models)
+results/
+
+# Images downloaded by atip.download_img (Kodak Lossless True Color Image Suite)
+data/kodim*.png
+
+# SaivDr toolbox unzipped by msip.saivdr_setup
+code/SaivDr*
+SaivDr*/
+
+# Temporary files
+tmp/

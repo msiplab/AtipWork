@@ -1,100 +1,80 @@
-%% Sample 3-3
-%% 平滑化／先鋭化処理
-% 勾配フィルタ 
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Image smoothing/sharpening
-% Gradient filter
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% サンプル画像の準備
-% (Preparation of sample image)
-
-close
-% Reading original image
+%[text] # Sample 3-3: Gradient filter
+%[text] Advanced Topics in Image Processing, Lecture 3 "Image Smoothing and Sharpening"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation of sample image
+% Read the original image
 I = im2double(imread('cameraman.tif'));
-figure(1)
+figure
 imshow(I)
 title('Original')
-% フィルタカーネルの選択
-% (Selecting the filter kernel)
-%% 
-% * Sobel
-% * Prewitt
-
-ftype = 'Sobel';
-% 勾配フィルタ
-% (Gradient filter)
-% 
-% $$\nabla x=\left(\begin{array}{c}\frac{\partial x}{\partial p_\mathrm{v}}\\\frac{\partial 
-% x}{\partial p_\mathrm{h}}\end{array}\right)$$
-
-% Gradient flter
+%%
+%[text] ## Selecting the filter kernel
+%[text] - Sobel
+%[text] - Prewitt \
+ftype = 'Sobel'; %[control:dropdown:2fb0]{"position":[9,16]}
+%%
+%[text] ## Gradient filter
+%[text] The vertical and horizontal first-order differences give the gradient vector
+%[text] (\[M\] Section 3.2.2)
+%[text]{"align":"center"} $\\vec{y}\[\\boldsymbol{n}\]=\\begin{pmatrix}x\_\\mathrm{v}\[\\boldsymbol{n}\] \\\\ x\_\\mathrm{h}\[\\boldsymbol{n}\]\\end{pmatrix}$
+%[text] `imgradientxy` returns the horizontal difference `Gh` ($x\_\\mathrm{h}$) and the vertical difference `Gv`
+%[text] ($x\_\\mathrm{v}$, positive downward).
+% Gradient filter
 [Gh,Gv] = imgradientxy(I,ftype);
 
-% Show result in the horizontal direction
-figure(2)
-subplot(1,2,1)
+% Show the results with the bias 1/2
+figure
+tiledlayout(1,2)
+nexttile
 imshow(Gh+.5)
-title([ftype ' horizontal filter'])
-% Show result in the vertical direction
-subplot(1,2,2)
+title(ftype + " horizontal filter")
+nexttile
 imshow(Gv+.5)
-title([ftype ' vertical filter'])
-% 勾配の可視化
-% (Visualization of gradient)
-% 
-% $$\nabla x=\left(\begin{array}{c}\frac{\partial x}{\partial p_\mathrm{v}}\\\frac{\partial 
-% x}{\partial p_\mathrm{h}}\end{array}\right)$$
-
-% Gradient
-figure(3)
+title(ftype + " vertical filter")
+%%
+%[text] ## Visualization of the gradient
+figure
 quiver(Gh,Gv)
 title('Gradient')
-axis equal
-axis off
-axis ij
-% 勾配の大きさと方向
-% (Magnitude and direction of gradient)
-% 
-% $$\left|\nabla x\right|=\sqrt{\left(\frac{\partial x}{\partial p_\mathrm{v}}\right)^2+\left(\frac{\partial 
-% x}{\partial p_\mathrm{h}}\right)^2}$$
-% 
-% $$\angle\nabla x=\tan^{-1}\frac{\left(\frac{\partial x}{\partial p_\mathrm{v}}\right)}{\left(\frac{\partial 
-% x}{\partial p_\mathrm{h}}\right)}$$
-
-% Magnitude and direction of the gradient image
+axis equal off ij
+%%
+%[text] ## Magnitude and direction of the gradient
+%[text]{"align":"center"} $y\_\\mathrm{mag}\[\\boldsymbol{n}\]=\\sqrt{x\_\\mathrm{v}^2\[\\boldsymbol{n}\]+x\_\\mathrm{h}^2\[\\boldsymbol{n}\]}$
+%[text]{"align":"center"} $y\_\\mathrm{ang}\[\\boldsymbol{n}\]=\\mathrm{atan2}\\left(x\_\\mathrm{v}\[\\boldsymbol{n}\],x\_\\mathrm{h}\[\\boldsymbol{n}\]\\right)$
+%[text] `imgradient` returns the direction `Gd` in degrees, measured counterclockwise from the horizontal axis,
+%[text] i.e. $\\mathrm{atan2}(-x\_\\mathrm{v},x\_\\mathrm{h})$ in $\[-180,180\]$.
+% Magnitude and direction of the gradient
 [Gm,Gd] = imgradient(Gh,Gv);
 
-% Show result of magnitude
-figure(4)
+% Show the magnitude
+figure
 imshow(Gm)
 title('Magnitude of gradient')
 %%
-% Show result of direction
-figure(5)
+% Show the direction (unit vectors; the y-axis of the image points downward)
+figure
 quiver(cosd(Gd),-sind(Gd))
 title('Direction of gradient')
-axis equal
-axis off
-axis ij
-% エッジ検出
-% (Edge detection)
-
+axis equal off ij
+%%
+%[text] ## Edge detection
 % Edge detection
 E = edge(I,ftype);
 
-% Show result 
-figure(6)
+% Show the result
+figure
 imshow(E)
-title(['Edge detection with ' ftype])
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+title("Edge detection with " + ftype)
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:dropdown:2fb0]
+%   data: {"defaultValue":"'Sobel'","itemLabels":["Sobel","Prewitt"],"items":["'Sobel'","'Prewitt'"],"label":"Kernel","run":"SectionToEnd"}
+%---

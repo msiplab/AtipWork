@@ -1,130 +1,76 @@
-%% Sample 8-1
-%% 離散コサイン変換
-% 画像変換の効果
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Discrete cosine transform
-% Effect of image transforms
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% 原画像の読込と表示
-% (Read and display an image)
-
-V = rgb2gray(imread('data/barbaraFaceRgb.tif'));
-figure(1)
+%[text] # Sample 8-1: Effect of image transforms
+%[text] Advanced Topics in Image Processing, Lecture 8 "Discrete Cosine Transforms"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Read and display an image
+[datfolder,~] = atip.prjfolders();
+V = rgb2gray(imread(fullfile(datfolder,"barbaraFaceRgb.tif")));
+figure
 imshow(V)
-title('Original picture')
-% 2次元ベクトル集合の抽出
-% (Extraction of a set of 2-D vectors)
-% 
-% 水平方向のペアを抽出しデータ行列を生成 (Extract horizontal pairs and generates data matrix)
-%% 
-% * 画素配列(pixel array)
-%% 
-% $$\mathbf{V} = \left(\begin{array}{lllll} v_{0,0} & v_{0,1} & v_{0,2} & \cdots 
-% \\ v_{1,0} & v_{1,1} & v_{1,2} & \cdots \\ \vdots & \vdots & \vdots & \ddots 
-% \end{array}\right)$$
-%% 
-% * データ行列(data matrix)
-%% 
-% $$\mathbf{X} = \left(\mathbf{x}_1,\mathbf{x}_2,,\cdots \right)＝\left(\begin{array}{lllll} 
-% v_{0,0} & v_{0,2} & \cdots & v_{1,0} & \cdots \\ v_{0,1} & v_{0,3} & \cdots 
-% & v_{1,1} & \cdots \end{array}\right)$$
-
+title("Original picture")
+%%
+%[text] ## Extraction of a set of 2-D vectors
+%[text] Horizontal pixel pairs are extracted and arranged as the columns of a data matrix.
+%[text] - Pixel array \
+%[text]  $\\mathbf{V}=\\begin{pmatrix} v\[0,0\] & v\[0,1\] & v\[0,2\] & \\cdots \\\\ v\[1,0\] & v\[1,1\] & v\[1,2\] & \\cdots \\\\ \\vdots & \\vdots & \\vdots & \\ddots \\end{pmatrix}$
+%[text] - Data matrix \
+%[text]  $\\mathbf{X}=\\begin{pmatrix}\\mathbf{x}^{\[1\]} & \\mathbf{x}^{\[2\]} & \\cdots\\end{pmatrix}=\\begin{pmatrix} v\[0,0\] & v\[0,2\] & \\cdots & v\[1,0\] & \\cdots \\\\ v\[0,1\] & v\[0,3\] & \\cdots & v\[1,1\] & \\cdots \\end{pmatrix}$
 nPixels = numel(V);
 setOfX = reshape(V.', 2, nPixels/2);
-%  変換前の散布図
-% (Scatter plot before transform)
-
-figure(2)
-scatter(setOfX(1,:),setOfX(2,:),'.')
+%%
+%[text] ## Scatter plot before the transform
+figure
+scatter(setOfX(1,:), setOfX(2,:), ".")
 axis square
-xlabel('x_0')
-ylabel('x_1')
-title('Scatter plot (before transform)')
-%% 
-% 標本分散共分散行列と相関係数 (Sample covariance matrix and correlation coefficient)
-%% 
-% * 平均ベクトル (mean vector)
-%% 
-% $$\mathbf{\mu}_\mathrm{x} = E[\mathbf{x}]$$
-%% 
-% * 分散共分散行列 (covariance matrix)
-%% 
-% $$\mathbf{\Sigma}_{\mathrm{xx}} = E\left[(\mathbf{x}-\mathbf{\mu}_{\mathrm{x}})(\mathbf{x}-\mathbf{\mu}_{\mathrm{x}})^T\right]$$
-%% 
-% * 相関係数 (correlation coefficient)
-%% 
-% $$\mathbf{R}_{\mathrm{xx}} = \mathbf{\Lambda}_{\mathrm{x}}^{-\frac{1}{2}}\mathbf{\Sigma}_{\mathrm{xx}}\mathbf{\Lambda}_{\mathrm{x}}^{-\frac{1}{2}}$$
-% 
-% $$\mathbf{\Lambda}_{\mathrm{x}} = \left(\begin{array}{ll}\sigma_{\mathrm{x},0}^2 
-% & 0 \\ 0 & \sigma_{\mathrm{x},1}^2\end{array}\right)= \left(\begin{array}{ll}E\left[(x_0-\mu_{\mathrm{x,0}})^2\right] 
-% & 0 \\ 0 & E\left[(x_1-\mu_{\mathrm{x},1})^2\right]\end{array}\right)$$
-
-Sxx = cov(double(setOfX.'))
+xlabel("x_0")
+ylabel("x_1")
+title("Scatter plot (before transform)")
+%[text] Sample covariance matrix and correlation coefficient matrix of $\\mathcal{X}=\\{\\mathbf{x}^{\[i\]}\\}\_{i=1}^S$
+%[text] - Sample mean \
+%[text]  $\\hat{\\boldsymbol{\\mu}}\_\\mathcal{X}=\\frac{1}{S}\\sum\_{i=1}^S\\mathbf{x}^{\[i\]}$
+%[text] - Sample covariance matrix \
+%[text]  $\\hat{\\boldsymbol{\\Sigma}}\_\\mathcal{X}=\\frac{1}{S}\\sum\_{i=1}^S(\\mathbf{x}^{\[i\]}-\\hat{\\boldsymbol{\\mu}}\_\\mathcal{X})(\\mathbf{x}^{\[i\]}-\\hat{\\boldsymbol{\\mu}}\_\\mathcal{X})^\\top$
+%[text] - Correlation coefficient matrix \
+%[text]  $\\mathbf{R}\_\\mathcal{X}=\\mathbf{S}\_\\mathcal{X}^{-1/2}\\hat{\\boldsymbol{\\Sigma}}\_\\mathcal{X}\\mathbf{S}\_\\mathcal{X}^{-1/2}$,
+%[text]  $\\mathbf{S}\_\\mathcal{X}=\\begin{pmatrix}\\sigma\_0^2 & 0 \\\\ 0 & \\sigma\_1^2\\end{pmatrix}$ (diagonal part of $\\hat{\\boldsymbol{\\Sigma}}\_\\mathcal{X}$)
+%[text] `cov(X,1)` normalizes by $S$ as in the reference text (`cov(X)` by $S-1$).
+Sxx = cov(double(setOfX.'), 1)
 Rxx = corrcoef(double(setOfX.'))
-% 信号変換
-% (Signal transform)
-%% 
-% * 回転行列(rotation matrix)
-%% 
-% $$\mathbf{A}_{\theta} = \left(\begin{array}{cc} \cos\theta & -\sin\theta \\ 
-% \sin\theta & \cos\theta \end{array}\right)$$
-%% 
-% * 行列 $\mathbf{A}_\theta$による変換
-%% 
-% $$\mathbf{y} = \mathbf{A}_\theta\mathbf{x}$$
-
-Atheta = @(theta) [cos(theta) -sin(theta) ; sin(theta) cos(theta)];
-theta = -pi/4;
-A = Atheta(theta)
-setOfY = A * double(setOfX);
-% 
-%  変換後の散布図
-% (Scatter plot after transform)
-
-figure(3)
-scatter(setOfY(1,:),setOfY(2,:),'.')
+%%
+%[text] ## Signal transform
+%[text] - Discrete Haar transform (DHT) matrix of the reference text (Sec. 6.2.2) \
+%[text]  $\\mathbf{H}\_2=\\frac{1}{\\sqrt{2}}\\begin{pmatrix} 1 & 1 \\\\ 1 & -1 \\end{pmatrix}$,
+%[text]  symmetric and orthonormal: $\\mathbf{H}\_2^{-1}=\\mathbf{H}\_2^\\top=\\mathbf{H}\_2$
+%[text] - Transform by the matrix $\\mathbf{H}\_2$ \
+%[text]  $\\mathbf{y}^{\[i\]}=\\mathbf{H}\_2\\mathbf{x}^{\[i\]}$
+%[text] $\\mathbf{H}\_2$ rotates the coordinate axes by $\\pi/4$ and flips the second axis ($\\det\\mathbf{H}\_2=-1$).
+H2 = [1 1 ; 1 -1]/sqrt(2)
+setOfY = H2 * double(setOfX);
+%%
+%[text] ## Scatter plot after the transform
+figure
+scatter(setOfY(1,:), setOfY(2,:), ".")
 axis square
-xlabel('y_0')
-ylabel('y_1')
-title('Scatter plot (after transform)')
-%% 
-% 標本分散共分散行列と相関係数 (Sample covariance matrix and correlation coefficient)
-%% 
-% * 平均ベクトル (mean vector)
-%% 
-% $$\mathbf{\mu}_\mathrm{y} = E[\mathbf{y}]$$
-%% 
-% * 分散共分散行列 (covariance matrix)
-%% 
-% $$\mathbf{\Sigma}_{\mathrm{yy}} = E\left[(\mathbf{y}-\mathbf{\mu}_{\mathrm{y}})(\mathbf{y}-\mathbf{\mu}_{\mathrm{y}})^T\right]=\mathbf{A}_\theta\mathbf{\Sigma}_\mathrm{xx}\mathbf{A}_\theta^{T}$$
-%% 
-% * 相関係数 (correlation coefficient)
-%% 
-% $$\mathbf{R}_{\mathrm{yy}} = \mathbf{\Lambda}_{\mathrm{y}}^{-\frac{1}{2}}\mathbf{\Sigma}_{\mathrm{yy}}\mathbf{\Lambda}_{\mathrm{y}}^{-\frac{1}{2}}$$
-% 
-% $$\mathbf{\Lambda}_{\mathrm{y}} = \left(\begin{array}{ll}\sigma_{\mathrm{y},0}^2 
-% & 0 \\ 0 & \sigma_{\mathrm{y},1}^2\end{array}\right)= \left(\begin{array}{ll}E\left[(y_0-\mu_{\mathrm{y,0}})^2\right] 
-% & 0 \\ 0 & E\left[(y_1-\mu_{\mathrm{y},1})^2\right]\end{array}\right)$$
+xlabel("y_0")
+ylabel("y_1")
+title("Scatter plot (after transform)")
+%[text] Sample covariance matrix and correlation coefficient matrix of $\\mathcal{Y}=\\{\\mathbf{y}^{\[i\]}\\}\_{i=1}^S$
+%[text] - Sample mean \
+%[text]  $\\hat{\\boldsymbol{\\mu}}\_\\mathcal{Y}=\\mathbf{H}\_2\\hat{\\boldsymbol{\\mu}}\_\\mathcal{X}$
+%[text] - Sample covariance matrix \
+%[text]  $\\hat{\\boldsymbol{\\Sigma}}\_\\mathcal{Y}=\\frac{1}{S}\\sum\_{i=1}^S(\\mathbf{y}^{\[i\]}-\\hat{\\boldsymbol{\\mu}}\_\\mathcal{Y})(\\mathbf{y}^{\[i\]}-\\hat{\\boldsymbol{\\mu}}\_\\mathcal{Y})^\\top=\\mathbf{H}\_2\\hat{\\boldsymbol{\\Sigma}}\_\\mathcal{X}\\mathbf{H}\_2^\\top$
+%[text] - Correlation coefficient matrix \
+%[text]  $\\mathbf{R}\_\\mathcal{Y}=\\mathbf{S}\_\\mathcal{Y}^{-1/2}\\hat{\\boldsymbol{\\Sigma}}\_\\mathcal{Y}\\mathbf{S}\_\\mathcal{Y}^{-1/2}$
+Syy = cov(setOfY.', 1)
+Ryy = corrcoef(setOfY.')
+%[text] The off-diagonal components of the sample covariance matrix and of the correlation coefficient matrix
+%[text] become smaller after the transform.  That is, the correlation becomes lower.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
 
-Syy = cov(double(setOfY.'))
-Ryy = corrcoef(double(setOfY.'))
-%% 
-% 変換後の分散共分散行列と相関係数の非対角成分が変換前よりも小さい。すなわち、相関が低い。(The non-diagonal components of 
-% the sample covariance matrix and correlation coefficient after the transform 
-% is smaller than before. That is, the correlation becomes lower.)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

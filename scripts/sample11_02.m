@@ -1,65 +1,43 @@
-%% Sample 11-2
-%% 画像ノイズ除去
-% ノイズの変換
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Image denoising
-% Transform of noise
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-clear
-close all
-import msip.download_img
-msip.download_img
-% パラメータ設定
-% (Parameter settings)
-%% 
-% * sgm: ノイズ標準偏差 $\sigma_w$ (Standard deviation of noise)
-% * nlevels: ウェーブレット段数 (Wavelet levels)
-
+%[text] # Sample 11-2: Transform of noise
+%[text] Advanced Topics in Image Processing, Lecture 11 "Image Denoising"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation
+[datfolder,~] = atip.prjfolders();
+atip.download_img(false)
+%%
+%[text] ## Parameter settings
+%[text] - sgmuint8: standard deviation of the noise $\\sigma\_\\mathrm{w}$ (in the scale of 8-bit integers)
+%[text] - nlevels: number of wavelet levels \
 % Parameter settings
-sgmuint8 = 30; 
+sgmuint8 = 30;  %[control:slider:2bd1]{"position":[12,14]}
 sgm = sgmuint8/255;
-nlevels = 3; 
-%% 画像の読込
-% (Read image)
-
-u = im2double(imread('./data/kodim23.png'));
-if size(u,3) == 3
-    u = rgb2gray(u);
+nlevels = 3;  %[control:slider:730c]{"position":[11,12]}
+%%
+%[text] ## Read image
+x = im2double(imread(fullfile(datfolder,"kodim23.png")));
+if size(x,3) == 3
+    x = rgb2gray(x);
 end
-%% 分析処理
-% (Analysis process)
-% 
-% 直交ウェーブレット変換Symlet を利用．(Uses Symlet, which is an orthogonal wavelet transform.)
-
-% Preperation of filters for wavelets
+%%
+%[text] ## Analysis process
+%[text] An orthonormal wavelet transform (Symlet) is used.  Without the Wavelet Toolbox, the filters
+%[text] stored in the data folder and `msip.ezwavedec2`/`msip.ezwaverec2` are used instead.
+% Preparation of the wavelet filters
 iswtb = license('checkout','wavelet_toolbox');
 if iswtb % Functions in Wavelet Toolbox are used
-    dwtmode('per')
-    wname = "sym4";
+    dwtmode('per','nodisp')
+    wname = "sym4"; %[control:dropdown:41ea]{"position":[13,19]}
     [h0,h1,f0,f1] = wfilters(wname);
-    %save(['./data/' char(wname) '.mat'],'h0','h1','f0','f1')
 else
     import msip.ezwavedec2
     import msip.ezwaverec2
-    S = load('./data/sym4.mat');
+    S = load(fullfile(datfolder,"sym4.mat"));
     h0 = S.h0;
     h1 = S.h1;
     f0 = S.f0;
     f1 = S.f1;
-    clear H  F
     % Analysis bivariate filters
     H.h00 = h0(:)*h0(:).';
     H.h01 = h0(:)*h1(:).';
@@ -71,69 +49,50 @@ else
     F.f10 = f1(:)*f0(:).';
     F.f11 = f1(:)*f1(:).';
 end
-%% 
-% 分析処理 (Analysis process)
-
+%[text] Analysis process
 if iswtb
-    [coefs,scales] = wavedec2(u,nlevels,h0,h1);
+    [coefs,scales] = wavedec2(x,nlevels,h0,h1);
     % Reconstruction to check PR
-    r = waverec2(coefs,scales,f0,f1);
+    xr = waverec2(coefs,scales,f0,f1);
 else
-    [coefs,scales] = ezwavedec2(u,nlevels,H);
-    % Reconstruction to check PR%
-    r = ezwaverec2(coefs,scales,F);
+    [coefs,scales] = ezwavedec2(x,nlevels,H);
+    % Reconstruction to check PR
+    xr = ezwaverec2(coefs,scales,F);
 end
-assert(norm(u-r,"fro")^2/numel(u)<1e-18,'Perfect reconstruction is violated.')
-%% 
-% 変換係数の配列化 (Alighment of coefficients)
-
-uc = aligncoefs(coefs,scales);
-%% 観測画像
-% (Observation image)
-
-v = imnoise(u,'gaussian',0,sgm^2);
-%% 
-% 分析処理 (Analysis process)
-
+assert(norm(x-xr,"fro")^2/numel(x)<1e-18,'Perfect reconstruction is violated.')
+%[text] Alignment of the coefficients
+xc = aligncoefs(coefs,scales);
+%%
+%[text] ## Observation image
+v = imnoise(x,'gaussian',0,sgm^2);
+%[text] Analysis process
 if iswtb
     [coefs,scales] = wavedec2(v,nlevels,h0,h1);
 else
     [coefs,scales] = ezwavedec2(v,nlevels,H);
 end
-
-%% 変換係数の配列化
-pos = 0;
-dim = scales(1,:);
-%% 
-% 変換係数の配列化 (Alighment of coefficients)
-
+%[text] Alignment of the coefficients
 vc = aligncoefs(coefs,scales);
-% 画像表示
-% (Image show)
-
-figure
-imshow(u);
-title('Original image u')
-figure
-imshow(abs(uc))
-title('Transform Coefs. of u')
-figure
-imshow(v)
-title(sprintf('Noisy image v：PSNR = %5.2f [dB]',psnr(u,v)))
-figure
-imshow(abs(vc))
-title('Transform Coefs. of v')
-% 関数定義
-% (Definition of function)
-% 
-% 変換係数の配列化 (Alighment of coefficients)
-
+%%
+%[text] ## Image show
+fig = figure;
+tl = tiledlayout(fig,2,2,"TileSpacing","compact");
+imshow(x,"Parent",nexttile(tl))
+title("Original image $\mathbf{x}$","Interpreter","latex")
+imshow(abs(xc),"Parent",nexttile(tl))
+title("Transform coefficients of $\mathbf{x}$","Interpreter","latex")
+imshow(v,"Parent",nexttile(tl))
+title("Noisy image $\mathbf{v}$: PSNR = " + sprintf("%5.2f",psnr(v,x)) + " dB","Interpreter","latex")
+imshow(abs(vc),"Parent",nexttile(tl))
+title("Transform coefficients of $\mathbf{v}$","Interpreter","latex")
+%%
+%[text] ## Definition of the function
+%[text] Alignment of the coefficients (octave-band arrangement)
 function c00 = aligncoefs(coefs,scales)
 nlevels = size(scales,1)-2;
-pos = 0;
 dim = scales(1,:);
 nel = prod(dim);
-c00 = reshape(coefs(pos+1:pos+nel),dim)/(2^nlevels);
+c00 = reshape(coefs(1:nel),dim)/(2^nlevels);
 pos = nel;
 for ilv = 1:nlevels
     dim = scales(ilv+1,:);
@@ -151,5 +110,19 @@ for ilv = 1:nlevels
     c00 = [ c00 c01; c10 c11 ];
 end
 end
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:2bd1]
+%   data: {"defaultValue":30,"label":"sgmuint8","max":50,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":10}
+%---
+%[control:slider:730c]
+%   data: {"defaultValue":3,"label":"nlevels","max":5,"min":1,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:dropdown:41ea]
+%   data: {"defaultValue":"\"sym4\"","itemLabels":["haar","db2","sym4"],"items":["\"haar\"","\"db2\"","\"sym4\""],"label":"wname","run":"Section"}
+%---

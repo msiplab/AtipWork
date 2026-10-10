@@ -1,90 +1,114 @@
-# 「画像処理特論」サンプルMファイル
-[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=msiplab/AtipWork)
+[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=msiplab/AtipWork&project=AtipWork.prj)
 
-本リポジトリには、画像処理特論の実習課題で利用するMファイル群と画像データが保存されています。
+# AtipWork
 
-今回提供するMファイル郡は以下の環境で動作の確認を行いました。
+Sample codes of "Advanced Topics in Image Processing" (画像処理特論), Niigata University.
 
-- OS
-  - Windows 11
-  - Linux 
+The notation follows the reference text
+[MsipText](https://github.com/msiplab/MsipText)
+(S. Muramatsu, *Fundamentals and Developments of Multidimensional Signal and Image Processing*, Corona Publishing),
+whose MATLAB examples are in [MsipWorkM](https://github.com/msiplab/MsipWorkM).
 
-- MATLAB
-  - R2023a
+## Folders
 
-- ツールボックス
-  - Signal Processing Toolbox
-  - Image Processing Toolbox 
+```
+AtipWork/
+├── AtipWork.prj        MATLAB project (sets the path automatically)
+├── scripts/            sample codes for students: sampleNN_MM.m (lecture NN, item MM)
+├── code/matlab/
+│   ├── +atip/          common utilities (project folders, images, LaTeX snippets)
+│   ├── +msip/          algorithm helpers (undecimated Haar DWT, polyphase matrix, ...)
+│   └── atip_secNN_*.m  live scripts that make the figures and numbers of the slides
+├── data/               image data (msipimg01-08.tif of the reference text and others)
+├── results/            outputs of the scripts (not under Git)
+├── python/             Google Colab notebooks (sparse modeling exercises)
+└── legacy/             old code kept for reference (not on the path; may use removed functions)
+```
 
----
-## 利用方法
+## Requirements
 
-- MATLAB を起動後、cd コマンドなどを利用して、展開したフォルダ（ディレクトリ）に移動して下さい。
+- MATLAB **R2025a or later** (the live scripts are saved in the plain-text Live Code format `.m`).
+  Verified with R2026b.
+- Image Processing Toolbox, Signal Processing Toolbox
+- Optional, depending on the lecture:
+  - Wavelet Toolbox (lectures 9 and 11; a fallback is used if it is absent)
+  - Optimization Toolbox (`linprog`, lecture 10)
+  - Statistics and Machine Learning Toolbox (`rica`, lecture 13)
+  - Deep Learning Toolbox (lecture 13) and [SaivDr](https://github.com/msiplab/SaivDr) (downloaded by `msip.saivdr_setup`)
+- Students of Niigata University can use MATLAB under the
+  [Campus-Wide License](https://www.cais.niigata-u.ac.jp/service/software/matlab/).
+  MATLAB Online needs no installation: use the button at the top of this page.
 
-      >> cd AtipWork
+## Usage
 
-  この時点で、ls コマンドを実行すると
+Open the project.  The path is set automatically.
 
-      >> ls
-      
-      +msip         .git          Appendix      data          main_mlx2m.m  tmp           
-      .             .gitignore    LICENSE       livescripts   scripts       work          
-      ..            2019before    README.md     main_m2mlx.m  setpath.m            
-      
-      >> 
+```matlab
+openProject('AtipWork.prj')
+```
 
-  と表示されると思います。
+Download the exercise images once (Kodak Lossless True Color Image Suite).
 
-- MATLAB のコマンドウィンドウ上で setpath スクリプトを実行して下さい。
+```matlab
+atip.download_img
+```
 
-      >> setpath
-　
-　setpath スクリプトは、本実習を行う前に毎回実行してください。
- 
-- テクスト第4章で利用する 'calcio.avi'ファイルは、mkCalcioAvi スクリプトにより作成できます。
-　（setpath スクリプトがあるディレクトリにて）
+Then open and run the sample of each lecture, e.g.
 
-      >> mkCalcioAvi
+```matlab
+edit sample04_02     % Lecture 4, sample 2: correlation and convolution
+sample04_02
+```
 
-  上記コマンドを実行後、ls コマンドで 'calcio.avi'ファイルが data ディレクトリ内に作成されていることを確認してください。
+- `sampleNN_MM.m` corresponds to lecture NN.  The list is on the "Sample codes" slide of each lecture.
+- Input data are read from `data/` and outputs are written to `results/`.
+  Use `[datfolder,resfolder] = atip.prjfolders();` for the locations.
 
-      >> ls data/calcio.avi
+| Lecture | Title | Samples |
+|---|---|---|
+| 01 | Digital Image Representation | `sample01_01`–`05` |
+| 02 | Input and Output of Images | `sample02_01`–`05` |
+| 03 | Image Smoothing and Sharpening | `sample03_01`–`05` |
+| 04 | Linear Shift-Invariant Systems | `sample04_01`–`06` |
+| 05 | Fourier Analysis | `sample05_01`–`06` |
+| 06 | Sampling | `sample06_01`–`06` |
+| 07 | Geometric Image Processing | `sample07_01`–`06` |
+| 08 | Discrete Cosine Transforms | `sample08_01`–`06` |
+| 09 | Discrete Wavelet Transforms | `sample09_01`–`06` |
+| 10 | Redundant Transforms | `sample10_01`–`06` |
+| 11 | Image Denoising | `sample11_01`–`06` |
+| 12 | Image Restoration | `sample12_01`–`06` |
+| 13 | Dictionary Learning | `sample13_01`–`06` |
 
-      calcio.avi  
+## Link with the slides
 
-　これで準備完了です。（作成は一度だけでOKです。）
+The live scripts `code/matlab/atip_secNN_<topic>.m` write the figures `atip-NN-*.png` and
+the numbers `atip-NN-*.tex` of lecture NN to `results/`.
+The slide repository (AtipSlides) imports them with `tools/sync-results.ps1`
+and refers to them with `\includegraphics` and `\atipsnippet{}`.
 
-- Mファイルを実行するには、ファイル名から .m の拡張子を除いてコマンド入力してください。例えば、practice03_1.m の実行の際は、setpath スクリプトがあるディレクトリにて、
+| Function | Role |
+|---|---|
+| `atip.prjfolders()` | locations of `data/` and `results/` |
+| `atip.msipimg(idx,sz,mode)` | sample image `msipimg##.tif` of the reference text |
+| `atip.download_img()` | download the Kodak images to `data/` |
+| `atip.savetex(name, content)` | write a LaTeX snippet `results/<name>.tex` |
+| `atip.arr2tex(X, fmt)` | format a matrix as `a & b \\ c & d` |
+| `atip.fmtint(v)` | format an integer with `{,}` every three digits |
 
-      >> practice03_1
-      >>
+Scripts may be run one after another in the same workspace, so do not use
+variable names that shadow built-in functions (`det`, `edge`, `psnr`, ...).
 
-  と入力して下さい。
+## References
 
-- Mファイルを編集するには、edit コマンドを利用してください。
-  例えば、practice03_1.m を編集する場合は、
+- S. Muramatsu, *Fundamentals and Developments of Multidimensional Signal and Image Processing
+  — Modeling, Approximation, Restoration and Learning —* (in Japanese), Corona Publishing (manuscript).
+- S. Muramatsu, "Analysis and synthesis systems in image restoration" (in Japanese),
+  J. IEICE, vol. 106, no. 1, pp. 2–9, Jan. 2023.
+- S. Muramatsu, "Redundant transforms and their application to image restoration" (in Japanese),
+  J. Imaging Society of Japan, vol. 53, no. 4, pp. 290–300, 2014.
 
-      >> edit practice03_1
-      >>
+## Links
 
-  と入力して下さい。
-
-以上
-
-## リンク
-
-- [MATLAB Academy](https://matlabacademy.mathworks.com/jp)
+- [MATLAB Academy](https://matlabacademy.mathworks.com/)
 - [MATLAB Grader](https://grader.mathworks.com/)
-
-## 参考文献
-- 村松正吾，「[MATLABによる画像＆映像信号処理](http://www.cqpub.co.jp/hanbai/books/30/30941.htm)」，CQ出版社，2007年
-- 村松正吾，「[冗長変換とその画像復元応用](https://www.jstage.jst.go.jp/article/isj/53/4/53_290/_article/-char/ja/)」，日本画像学会誌，Vol. 53 (2014) No. 4 p. 290-300
-- 村松正吾，「[MATLABによる映像処理システム開発](https://www.jstage.jst.go.jp/article/itej/65/11/65_1571/_article/-char/ja/)」，映像情報メディア学会誌，65 巻 (2011) 11 号 p. 1571-1574
-- 村松正吾，「[画像復元における分析・合成システム](https://app.journal.ieice.org/trial/106_1/k106_1_2/index.html)」，電子情報通信学会誌，Vol.106 No.1pp.2-9，2023年1月号
-
----
-2018年4月9日 村松正吾 作成
-2019年4月8日 更新
-2019年4月17日 更新
-2020年4月19日 更新
-2023年4月6日 更新

@@ -1,32 +1,35 @@
-%% Sample 1-5
-%% 画像データの表現
-% 画像の読み込みと表示 
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Digital image representation
-% Image read and show
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a 
-% 画像の読み込み
-% (Image read)
-
+%[text] # Sample 1-5: Image read and show
+%[text] Advanced Topics in Image Processing, Lecture 1 "Digital Image Representation"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Image read
+%[text] `imread` returns an RGB colour image as a 3-D array of size $N_1\\times N_2\\times 3$ (type `uint8`).
+%[text] The element $x[n_\\mathrm{v},n_\\mathrm{h},n_\\mathrm{c}]$ of the reference text is `P(nv+1,nh+1,nc+1)`,
+%[text] because MATLAB indices start from 1.
 P = imread('peppers.png');
-% 画像の情報
-% (Information of image)
-
 whos P
-% 画像の表示
-% (Image show)
-
-figure(1)
+%%
+%[text] ## Image show
+figure
 imshow(P)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+title('peppers.png')
+%%
+%[text] ## Colour component images
+%[text] $x[:,:,n_\\mathrm{c}]$ with $n_\\mathrm{c}\\in\\{0,1,2\\}$ are the R, G and B component images.
+figure
+tiledlayout(1,3,"TileSpacing","compact")
+names = ["R","G","B"];
+for nc = 0:2
+    nexttile
+    imshow(P(:,:,nc+1))
+    title(names(nc+1) + " component")
+end
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

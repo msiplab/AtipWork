@@ -1,117 +1,101 @@
-%% Sample 11-1
-%% 画像ノイズ除去
-% 加法性白色ガウスノイズ
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Image denoising
-% Additive whitel Gaussian noise
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
+%[text] # Sample 11-1: Additive white Gaussian noise
+%[text] Advanced Topics in Image Processing, Lecture 11 "Image Denoising"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation
+[datfolder,~] = atip.prjfolders();
+atip.download_img(false)
+%%
+%[text] ## Image generation
+%[text] - $\\mathbf{x}\\in\\mathbb{R}^N$: original image \
+% Original image x
+x = 0.75*ones(128);
+x(24:128-24,24:128-24) = 0.5;
+x(48:128-48,48:128-48) = 0.25;
 
-clear 
-close all
-import msip.download_img
-msip.download_img
-%% 画像生成
-% (Image generation)
-%% 
-% * $\mathbf{u}\in\mathbb{R}^N$: 原画像 (Original image)
-
-% Original image u
-u = 0.75*ones(128);
-u(24:128-24,24:128-24) = 0.5;
-u(48:128-48,48:128-48) = 0.25;
-
-figure
-imshow(u)
-title('Original')
-figure
-imhist(u)
-title('Histogram of original')
-set(gca,'YLim',[0 12000])
-% 白色ガウスノイズ
-% (White Gaussian noise)
-% 
-% ノイズはガウス分布(正規分布)に従う乱数と仮定．(Noise is assumed to be a random number drawn from 
-% a Gaussian distribution (normal distribution).)
-%% 
-% * $\mathbf{w}\sim\mathrm{Norm}(\mathbf{w}|\mathbf{\mu}_w,\mathbf{\Sigma}_w)$: 
-% ノイズ (Noise)
-% * $\mathrm{Norm}(\mathbf{x}|\mathbf{\mu},\mathbf{\Sigma})=\frac{1}{\sqrt{2 
-% \pi |\mathbf{\Sigma}|}} \exp \left(-\frac{1}{2 }(\mathbf{x}-\mathbf{\mu})^T\mathbf{\Sigma}^{-1}(\mathbf{x}-\mathbf{\mu})\right), 
-% \quad \mathbf{x} \in \mathbb{R}^{N}$
-%% 
-% 白色とは零平均 (zero mean) かつ 独立同一分布 i.i.d. (independently and identical distribution)を意味する．(White 
-% means zero mean and i.i.d. (independent and identical distribution)).
-%% 
-% * $\mathbf{\mu}_w=\mathbf{0}$
-% * $\mathbf{\Sigma}_w = \sigma_w^2\mathbf{I}$
-
-% Gaussain parameters
+fig1 = figure;
+imshow(x,"Parent",axes(fig1))
+title("Original")
+fig2 = figure;
+ax = axes(fig2);
+imhist(x)
+title(ax,"Histogram of the original")
+ax.YLim = [0 12000];
+%%
+%[text] ## White Gaussian noise
+%[text] The noise is assumed to be random numbers drawn from a Gaussian (normal) distribution.
+%[text] - $\\mathbf{w}\\sim\\mathcal{N}(\\mathbf{w};\\boldsymbol{\\mu}\_\\mathrm{w},\\boldsymbol{\\Sigma}\_\\mathrm{w})$: noise
+%[text] - $\\mathcal{N}(\\mathbf{w};\\boldsymbol{\\mu},\\boldsymbol{\\Sigma})=\\frac{1}{\\sqrt{(2\\pi)^N|\\boldsymbol{\\Sigma}|}} \\exp \\left(-\\frac{1}{2}(\\mathbf{w}-\\boldsymbol{\\mu})^\\top\\boldsymbol{\\Sigma}^{-1}(\\mathbf{w}-\\boldsymbol{\\mu})\\right), \\quad \\mathbf{w} \\in \\mathbb{R}^{N}$ \
+%[text] "White" means zero mean and independent and identically distributed (i.i.d.) components:
+%[text] - $\\boldsymbol{\\mu}\_\\mathrm{w}=\\mathbf{0}$
+%[text] - $\\boldsymbol{\\Sigma}\_\\mathrm{w} = \\sigma\_\\mathrm{w}^2\\mathbf{I}$ \
+%[text] Change the exponent of $\\sigma\_\\mathrm{w}^2$ with the slider.
+% Gaussian parameters
 muw = 0;
-sgmw2 = 10^-3;
+sgmw2 = 10^-3; %[control:slider:559c]{"position":[12,14]}
 sgmw  = sqrt(sgmw2);
 
 % Gaussian distribution
-x = linspace(-4*sgmw,4*sgmw,1001);
-wpdf = normpdf(x,muw,sgmw);
-figure
-h = plot(x,wpdf);
-xlabel('w')
-title('Gaussian distribution') 
-grid on
-%% 
-% 擬似乱数生成 (Pseudo-random number generation)
-
+wgrid = linspace(-4*sgmw,4*sgmw,1001);
+wpdf = normpdf(wgrid,muw,sgmw);
+fig3 = figure;
+ax = axes(fig3);
+plot(ax,wgrid,wpdf)
+xlabel(ax,"$w$","Interpreter","latex")
+title(ax,"Gaussian distribution")
+grid(ax,"on")
+%[text] Pseudo-random number generation
 % Additive white Gaussian noise
-w = sqrt(sgmw2)*randn(size(u));
-figure
-histogram(w(:))
-title('Histogram of Gaussian noise')
-set(gca,'XLim',[-4*sgmw 4*sgmw])
-% 観測画像
-% (Observed image)
-% 
-% 加法性白色ガウスノイズによる劣化のシミュレーション (Simulation of degradation by additive White Gaussian 
-% noise)
-%% 
-% * $\mathbf{v}=\mathbf{u}+\mathbf{w}\in\mathbb{R}^N$: 観測画像 (Observed image)
-
+w = sgmw*randn(size(x));
+fig4 = figure;
+ax = axes(fig4);
+histogram(ax,w(:))
+title(ax,"Histogram of the Gaussian noise")
+ax.XLim = [-4*sgmw 4*sgmw];
+%%
+%[text] ## Observed image
+%[text] Simulation of the degradation by additive white Gaussian noise
+%[text] - $\\mathbf{v}=\\mathbf{x}+\\mathbf{w}\\in\\mathbb{R}^N$: observed image \
 % Noisy observation
-v = u + w;
-figure
-imshow(v)
-title('Observation')
-figure
+v = x + w;
+fig5 = figure;
+imshow(v,"Parent",axes(fig5))
+title("Observation")
+fig6 = figure;
+ax = axes(fig6);
 imhist(v)
-title('Histogram of observation')
-set(gca,'YLim',[0 600])
-% ノイズ画像生成
-% (Generation of noisy image)
-% 
-% IMNOISE関数を利用できる．(IMNOISE function can be used.)
-% 
-% 加法性白色ガウスノイズ(AWGN)を与える例．(Example of giving additive white Gaussian noise(AWGN).)
+title(ax,"Histogram of the observation")
+ax.YLim = [0 600];
+%%
+%[text] ## Generation of a noisy image
+%[text] The function `imnoise` can be used.  Example of adding additive white Gaussian noise (AWGN):
+X = rgb2gray(imread(fullfile(datfolder,"kodim23.png")));
+V = imnoise(X,"gaussian",muw,sgmw2);
+fig7 = figure;
+tl = tiledlayout(fig7,2,2,"TileSpacing","compact");
+imshow(X,"Parent",nexttile(tl))
+title("Original")
+imshow(V,"Parent",nexttile(tl))
+title("Noisy")
+[cnt,bins] = imhist(X);
+ax = nexttile(tl);
+bar(ax,bins,cnt,1,"EdgeColor","none")
+xlim(ax,[0 255])
+title(ax,"Histogram of the original")
+[cnt,bins] = imhist(V);
+ax = nexttile(tl);
+bar(ax,bins,cnt,1,"EdgeColor","none")
+xlim(ax,[0 255])
+title(ax,"Histogram of the noisy image")
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
 
-I = rgb2gray(imread('./data/kodim23.png'));
-J = imnoise(I,'gaussian',muw,sgmw2);
-figure
-imshow(I)
-figure
-imhist(I)
-figure
-imshow(J)
-figure
-imhist(J)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:559c]
+%   data: {"defaultValue":-3,"label":"log10(sgmw2)","max":0,"min":-4,"run":"SectionToEnd","runOn":"ValueChanging","step":0.1}
+%---

@@ -1,244 +1,152 @@
-%% Sample 5-6
-%% 周波数解析
-% 多変量循環畳み込み
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Fourier analysis
-% Multivariate circular convolution
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% サンプル画像$\{u[\mathbf{n}]\}_\mathbf{n}$の準備
-% (Preparation of sample image $\{u[\mathbf{n}]\}_\mathbf{n}$)
-
-% Reading original image
-u = im2double(imread('cameraman.tif'));
-figure(1)
-imshow(u)
+%[text] # Sample 5-6: Multivariate circular convolution
+%[text] Advanced Topics in Image Processing, Lecture 5 "Fourier Analysis"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation of a sample image $(x\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$
+x = im2double(imread('cameraman.tif'));
+figure
+imshow(x)
 title('Original')
-% 線形シフト不変システムのインパルス応答 $\{h[\mathbf{n}]\}_\mathbf{n}$ 
-% (Impulse response of a linear shift-invariant system $\{h[\mathbf{n}]\}_\mathbf{n}$
-
-% Impulse response h[n]
-hsize1 = 3;
-hsize2 = 3;
-sigma = 1;
-ftype = "log";
+%%
+%[text] ## Impulse response $(h\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ of a linear shift-invariant system
+hsize1 = 3; %[control:slider:123e]{"position":[10,11]}
+hsize2 = 3; %[control:slider:1057]{"position":[10,11]}
+sigma = 1; %[control:slider:5c7f]{"position":[9,10]}
+ftype = "log"; %[control:dropdown:1049]{"position":[9,14]}
 h = rot90(fspecial(ftype,[hsize1 hsize2],sigma),2);
-figure(2)
-[n1,n2] = meshgrid(-floor((hsize2-1)/2):ceil((hsize2-1)/2),-floor((hsize1-1)/2):ceil((hsize1-1)/2));
-stem3(n1,n2,h,'filled')
+figure
+[n2,n1] = meshgrid(-floor((hsize2-1)/2):ceil((hsize2-1)/2),-floor((hsize1-1)/2):ceil((hsize1-1)/2));
+stem3(n2,n1,h,'filled')
 xlabel('n_2')
 ylabel('n_1')
 axis ij
-title(['Impulse response of ' char(ftype) ' filter'])
-% 周期行列 $\mathbf{Q}$ の循環畳み込みの出力応答$\{v[\mathbf{n}]\}_\mathbf{n}$ 
-% (Output response $\{v[\mathbf{n}]\}_\mathbf{n}$ of circular convolution with 
-% period $\mathbf{Q}$ )
-% 
-% 循環畳み込み演算 (Circular convolution)
-% 
-% $$\{v[\mathbf{n}]\}_\mathbf{n}=\{h[\mathbf{n}]\}_\mathbf{n} \bigcirc  \{u[\mathbf{n}]\}_\mathbf{n} 
-% = \sum_{\mathbf{k}\in\Omega\subset\mathbb{Z}^2}u[\mathbf{k}]\{h[(\!(\mathbf{n}-\mathbf{k})\!)_\mathbf{Q}]\}_\mathbf{n}$$
-
-% Setting the period N
-nPeriod1 =258;
-nPeriod2 =258;
+title("Impulse response of " + ftype + " filter")
+%%
+%[text] ## Output $(y\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$ of the circular convolution with the periodic structure matrix $\\boldsymbol{N}$
+%[text]{"align":"center"} $(y\[\\boldsymbol{n}\])\_{\\boldsymbol{n}} = \\left(\\sum\_{\\boldsymbol{m}\\in\\mathcal{N}\_\\mathrm{h}}h\[\\boldsymbol{m}\]x\[(\\!(\\boldsymbol{n}-\\boldsymbol{m})\\!)\_{\\boldsymbol{N}}\]\\right)\_{\\boldsymbol{n}}$
+% Setting the period
+nPeriod1 = 258; %[control:slider:0e79]{"position":[12,15]}
+nPeriod2 = 258; %[control:slider:3037]{"position":[12,15]}
 nPeriod = [nPeriod1 nPeriod2];
-nZeroPadding = [nPeriod1 nPeriod2] - size(u);
+nZeroPadding = nPeriod - size(x);
 
 % Zero padding
-uzpd = padarray(u,nZeroPadding,0,'post');
-figure(3)
-imshow(uzpd)
+xzpd = padarray(x,nZeroPadding,0,'post');
+figure
+imshow(xzpd)
+title('Zero-padded input')
 
-% Output v[n]
-v = imfilter(uzpd,h,'conv','circ');
-% 畳み込み演算との比較
-% (Comparison with convolution)
+% Output y[n]
+y = imfilter(xzpd,h,'conv','circular');
+%%
+%[text] ## Comparison with the linear convolution
+yl = imfilter(x,h,'conv','full');
 
-% Normal convolution
-w = imfilter(u,h,'conv','full');
-
-% v[n]
-figure(4)
-imshow(v+(min(v(:))<0)/2)
+figure
+imshow(y+(min(y(:))<0)/2)
 title('Circular convolution')
-% w[n]
-figure(5)
-imshow(w+(min(w(:))<0)/2)
-title('Normal convolution')
-% 通常の畳み込みと循環畳み込みが一致する条件
-% (The condition that normal convolution and circular convolution match)
-% 
-% $$\exists \mathbf{m}\in\mathbb{Z}^D\ \mathrm{s.t.}\ \{  \mathbf{n}+\mathbf{m}|\mathbf{n} 
-% \in \Omega_\mathrm{v}\}\subseteq  \mathcal{N}(\mathbf{Q})$$
-% 
-% $$\Omega_\mathrm{v}=\{\mathbf{n}+\mathbf{k}|\mathbf{n}\in\Omega_\mathrm{u},\mathbf{k}\in\Omega_\mathrm{h}\}$$
-% 
-% ただし、(where)
-%% 
-% * $\Omega_\mathrm{v}$: 出力のサポート領域 (Output support region)
-% * $\Omega_\mathrm{h}$: インパルス応答のサポート領域 (Support region of impulse response)
-% * $\Omega_\mathrm{u}$: 入力のサポート領域 (Input support region)
-%% 
-% 以下では周期行列 $\mathbf{Q}$ を対角行列 (In the following, the periodic matrix  $\mathbf{Q}$ 
-% is set to a diagonal matrix)
-% 
-% $$\mathbf{Q}=\left(\begin{array}{cc}N_1 & 0 \\0 & N_2 \end{array}\right)$$ 
-% 
-% に設定する．すなわち，(That is,)
-% 
-% $$\mathcal{N}(\mathbf{Q})=\mathcal{N}(\mathbf{Q}^T)=\{0,1,2,\cdots,N_1-1\}\times\{0,1,2,\cdots,N_2-1\}$$
-% 
-% $$N=\left|\mathcal{N}(\mathbf{Q})\right|=\left|\det(\mathbf{Q})\right|=N_1N_2$$
-% 
-% ただし，$\Omega_\mathrm{u}\subseteq\mathcal{N}(\mathbf{Q})$ を仮定する．( and $\Omega_\mathrm{u}\subseteq\mathcal{N}(\mathbf{Q})$ 
-% is assumed.)
-% 
-% 【Example】もし，(If)
-% 
-% $$\Omega_\mathrm{u}=\{0,1,2,\cdots,L_{\mathrm{u}1}-1\}\times\{0,1,2,\cdots,L_{\mathrm{u}2}-1\}$$
-% 
-% $$\Omega_\mathrm{h}=\{-1,0,1\}\times\{-1,0,1\}$$
-% 
-% ならば，(then,)
-% 
-% $$\Omega_\mathrm{v}=\{-1,0,1,2,\cdots,L_{\mathrm{u}1}\}\times\{-1,0,1,2,\cdots,L_{\mathrm{u}2}\}.$$
-% 
-% よって，(Therefore, from)
-% 
-% $$\left\{  \mathbf{n}+(1,1)^T\vert \mathbf{n} \in\Omega_\mathrm{v}\}=\{0,1,2,\cdots,L_{\mathrm{u}1}+1\}\times\{0,1,2,\cdots,L_{\mathrm{u}2}+1\},$$
-% 
-% より，
-% 
-% $$N_1\geq L_{\mathrm{u}1}+2,\ N_2\geq L_{\mathrm{u}2}+2,$$
-% 
-% ならば，通常と畳み込みと循環畳み込みの結果が一致する．(then, the results of normal, convolution and circular 
-% convolution are consistent.)
-
+figure
+imshow(yl+(min(yl(:))<0)/2)
+title('Linear convolution')
+%[text] ### Condition for the linear and circular convolutions to agree
+%[text]{"align":"center"} $\\exists \\boldsymbol{c}\\in\\mathbb{Z}^D\\ \\mathrm{s.t.}\\ \\Omega\_\\mathsf{y}\\subseteq\\boldsymbol{c}+\\mathcal{N}(\\boldsymbol{N}),\\quad \\Omega\_\\mathsf{y}=\\{\\boldsymbol{n}+\\boldsymbol{m}\\mid\\boldsymbol{n}\\in\\Omega\_\\mathsf{x},\\boldsymbol{m}\\in\\mathcal{N}\_\\mathrm{h}\\}$
+%[text] where
+%[text] - $\\Omega\_\\mathsf{y}$: region of support of the output
+%[text] - $\\mathcal{N}\_\\mathrm{h}$: region of support of the impulse response
+%[text] - $\\Omega\_\\mathsf{x}$: region of support of the input \
+%[text] In the following, the periodic structure matrix is the diagonal matrix
+%[text]{"align":"center"} $\\boldsymbol{N}=\\begin{bmatrix}N\_1 & 0 \\\\ 0 & N\_2 \\end{bmatrix},$
+%[text] that is,
+%[text]{"align":"center"} $\\mathcal{N}(\\boldsymbol{N})=\\mathcal{N}(\\boldsymbol{N}^\\top)=\\{0,1,\\ldots,N\_1-1\\}\\times\\{0,1,\\ldots,N\_2-1\\},\\quad \\left|\\det(\\boldsymbol{N})\\right|=N\_1N\_2,$
+%[text] and $\\Omega\_\\mathsf{x}\\subseteq\\mathcal{N}(\\boldsymbol{N})$ is assumed.
+%[text] Example: if
+%[text]{"align":"center"} $\\Omega\_\\mathsf{x}=\\{0,1,\\ldots,L\_{\\mathrm{x}1}-1\\}\\times\\{0,1,\\ldots,L\_{\\mathrm{x}2}-1\\},\\quad \\mathcal{N}\_\\mathrm{h}=\\{-1,0,1\\}\\times\\{-1,0,1\\},$
+%[text] then
+%[text]{"align":"center"} $\\Omega\_\\mathsf{y}=\\{-1,0,1,\\ldots,L\_{\\mathrm{x}1}\\}\\times\\{-1,0,1,\\ldots,L\_{\\mathrm{x}2}\\}.$
+%[text] Therefore, from
+%[text]{"align":"center"} $\\{\\boldsymbol{n}+(1,1)^\\top\\mid \\boldsymbol{n} \\in\\Omega\_\\mathsf{y}\\}=\\{0,1,\\ldots,L\_{\\mathrm{x}1}+1\\}\\times\\{0,1,\\ldots,L\_{\\mathrm{x}2}+1\\},$
+%[text] the linear and circular convolutions agree if
+%[text]{"align":"center"} $N\_1\\geq L\_{\\mathrm{x}1}+2,\\ N\_2\\geq L\_{\\mathrm{x}2}+2.$
 % Adjusting the sizes for evaluation
-dsz = size(v)-size(w);
+dsz = size(y)-size(yl);
 if dsz(1) > 0
-    vc = v;
-    wc = padarray(w,[dsz(1) 0],0,'post');
+    yc = y;
+    ylc = padarray(yl,[dsz(1) 0],0,'post');
 else
-    wc = w;
-    vc = padarray(v,[-dsz(1) 0],0,'post');
+    ylc = yl;
+    yc = padarray(y,[-dsz(1) 0],0,'post');
 end
 if dsz(2) > 0
-    wc = padarray(wc,[0 dsz(2)],0,'post');
+    ylc = padarray(ylc,[0 dsz(2)],0,'post');
 else
-    vc = padarray(vc,[0 -dsz(2)],0,'post');
+    yc = padarray(yc,[0 -dsz(2)],0,'post');
 end
 % Compensate the circular shift
-wc = circshift(wc,-ceil((size(h)-1)/2));
+ylc = circshift(ylc,-ceil((size(h)-1)/2));
 
 % Sizes and MSE
-mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
-fprintf('Period:         N1  = %d, N2  = %d',nPeriod1,nPeriod2);
-fprintf('Size of image:  Lu1 = %d, Lu2 = %d',size(u,1),size(u,2));
-fprintf('Size of filter: Lh1 = %d, Lh2 = %d',size(h,1),size(h,2));
-fprintf('MSE: %f', mymse(vc,wc))
-% 入力信号 $\{u[\mathbf{n}]\}_\mathbf{n}$ のDFT
-% (DFT of input signal $\{u[\mathbf{n}]\}_\mathbf{n}$)
-% 
-% $$U[\mathbf{k}]=\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})} u[\mathbf{n}] 
-% e^{-\j 2\pi\mathbf{k}^T\mathbf{Q}^{-1}\mathbf{n}},\ \mathbf{k}\in\mathcal{N}(\mathbf{Q}^T)$$
-
-% DFT of u[n]
-U = fftn(u,nPeriod);
-% フィルタ $\{h[\mathbf{n}]\}_\mathbf{n}$ のDFT
-% (DFT of impulse response $\{h[\mathbf{n}]\}_\mathbf{n}$)
-% 
-% $$H[\mathbf{k}]=\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})} h[\mathbf{n}] 
-% e^{-\j 2\pi\mathbf{k}^T\mathbf{Q}^{-1}\mathbf{n}},\ \mathbf{k}\in\mathcal{N}(\mathbf{Q}^T)$$
-
-% DFT of h[n]
+mymse = @(a,b) mean((double(a)-double(b)).^2,'all');
+fprintf("Period:         N1  = %d, N2  = %d\n",nPeriod1,nPeriod2);
+fprintf("Size of image:  Lx1 = %d, Lx2 = %d\n",size(x,1),size(x,2));
+fprintf("Size of filter: Lh1 = %d, Lh2 = %d\n",size(h,1),size(h,2));
+fprintf("MSE: %f\n", mymse(yc,ylc))
+%%
+%[text] ## DFT of the input signal $(x\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$
+%[text]{"align":"center"} $X\[\\boldsymbol{k}\]=\\sum\_{\\boldsymbol{n}\\in\\mathcal{N}(\\boldsymbol{N})} x\[\\boldsymbol{n}\] \\mathrm{e}^{-\\mathrm{j}\\boldsymbol{k}^\\top(2\\pi\\boldsymbol{N}^{-1})\\boldsymbol{n}},\\ \\boldsymbol{k}\\in\\mathcal{N}(\\boldsymbol{N}^\\top)$
+X = fftn(x,nPeriod);
+%%
+%[text] ## DFT of the impulse response $(h\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$
+%[text]{"align":"center"} $H\[\\boldsymbol{k}\]=\\sum\_{\\boldsymbol{n}\\in\\mathcal{N}(\\boldsymbol{N})} h\[\\boldsymbol{n}\] \\mathrm{e}^{-\\mathrm{j}\\boldsymbol{k}^\\top(2\\pi\\boldsymbol{N}^{-1})\\boldsymbol{n}},\\ \\boldsymbol{k}\\in\\mathcal{N}(\\boldsymbol{N}^\\top)$
 H = fftn(h,nPeriod);
-% 出力信号 $\{v[\mathbf{n}]\}_\mathbf{n}$ のDFT
-% (DFT of output signal $\{v[\mathbf{n}]\}_\mathbf{n}$)
-% 
-% $$V[\mathbf{k}]=\sum_{\mathbf{n}\in\mathcal{N}(\mathbf{Q})} v[\mathbf{n}] 
-% e^{-\j 2\pi\mathbf{k}^T\mathbf{Q}^{-1}\mathbf{n}},\ \mathbf{k}\in\mathcal{N}(\mathbf{Q}^T)$$
-
-% Frequency response of v[n]
-V = fftn(v,nPeriod);
-% DFT積
-% (DFT product)
-% 
-% $$V[\mathbf{k}]=H[\mathbf{k}]U[\mathbf{k}],\ \mathbf{k}\in\mathcal{N}(\mathbf{Q})$$
-% 
-% 循環畳み込みとの比較 (Comparison with circular convolution)
-
-% IDFT of DFT product
-y = ifftn(H.*U);
-% Compensate the circular shift
-y = circshift(y,-ceil((size(h)-1)/2));
-% MSE with the cconv result 'v'
-fprintf('MSE: %f', mymse(v,y))
-% 循環畳み込みのスペクトルノルム
-% (Spectral norm of the circular convolution)
-% 
-% $$\|\mathbf{T}\|_2=\sigma_1(\mathbf{T})=\max_{\mathbf{k}\in\mathcal{N}(\mathbf{Q}^T)}\left|H[\mathbf{k}]\right|$$
-% 
-% ただし，(where)
-%% 
-% * $\sigma_1(\mathbf{T})$:  $\mathbf{T}$の最大特異値．(Maximum singular value of $\mathbf{T}$)
-
-% Definition of map T as a circular convolution with h[n]
-mapT = @(x) imfilter(x,h,'conv','circ');
-% 2変量循環畳み込みの行列表現
-% (Matrix representation of the bivariate circular convolution)
-
+%%
+%[text] ## DFT of the output signal $(y\[\\boldsymbol{n}\])\_{\\boldsymbol{n}}$
+%[text]{"align":"center"} $Y\[\\boldsymbol{k}\]=\\sum\_{\\boldsymbol{n}\\in\\mathcal{N}(\\boldsymbol{N})} y\[\\boldsymbol{n}\] \\mathrm{e}^{-\\mathrm{j}\\boldsymbol{k}^\\top(2\\pi\\boldsymbol{N}^{-1})\\boldsymbol{n}},\\ \\boldsymbol{k}\\in\\mathcal{N}(\\boldsymbol{N}^\\top)$
+Y = fftn(y,nPeriod);
+%%
+%[text] ## DFT product
+%[text]{"align":"center"} $Y\[\\boldsymbol{k}\]=H\[\\boldsymbol{k}\]X\[\\boldsymbol{k}\],\\ \\boldsymbol{k}\\in\\mathcal{N}(\\boldsymbol{N}^\\top)$
+%[text] Comparison with the circular convolution
+% IDFT of the DFT product
+yd = ifftn(H.*X);
+% Compensate the circular shift (imfilter puts the origin at the kernel centre)
+yd = circshift(yd,-ceil((size(h)-1)/2));
+% MSE with the result of imfilter
+fprintf("MSE: %f\n", mymse(y,yd))
+%%
+%[text] ## Spectral norm of the circular convolution
+%[text]{"align":"center"} $\\|\\mathsf{T}\\|\_\\mathrm{S}=\\sigma\_0(\\mathbf{T})=\\max\_{\\boldsymbol{k}\\in\\mathcal{N}(\\boldsymbol{N}^\\top)}\\left|H\[\\boldsymbol{k}\]\\right|$
+%[text] where $\\sigma\_0(\\mathbf{T})$ is the largest singular value of the matrix representation $\\mathbf{T}$.
+% Map T as the circular convolution with h[n]
+mapT = @(u) imfilter(u,h,'conv','circular');
+%[text] ### Matrix representation of the bivariate circular convolution
 % Redefining the period
-N1 =8;
-N2 =8;
+N1 = 8; %[control:slider:9945]{"position":[6,7]}
+N2 = 8; %[control:slider:6cc3]{"position":[6,7]}
 
-% Find the matrix representation of the circular convolution
-N  = N1*N2;
-T = zeros(N);
+% Matrix representation of the circular convolution
+N = N1*N2;
+T = zeros(N,N);
 for idx = 1:N
-    % Generating a standard basis vector
+    % Standard basis array
     e = zeros(N1,N2);
     e(idx) = 1;
-    % Response to the standard basis vector
-    T(:,idx) = reshape(mapT(e),[N 1]); 
+    % Response to the standard basis array
+    T(:,idx) = reshape(mapT(e),[N 1]);
 end
-% Matrix representation of the circular convolution
 T
-% スペクトルノルム
-% (Spectral norm)
-
-% Function NORM evaluates the operator norm for a matrix
-opnorm = norm(T,2) 
-% 最大特異値
-% (Maximum singular value)
-
-sigma1 = max(svd(T))
-% 最大振幅応答
-% (Maximum magnitude response)
-
+%[text] ### Spectral norm
+% The function norm evaluates the spectral norm (operator 2-norm) of a matrix
+spnorm = norm(T,2)
+%[text] ### Largest singular value
+sigma0 = max(svd(T))
+%[text] ### Maximum magnitude response
 H = fftn(h,[N1 N2]);
 maxmgn = max(abs(H(:)))
-% 関数NORMに関する注意
-% (Notes on the Function NORM)
-% 
-% 行列に関するノルムを評価する際には引数の渡し方、オプションの指定に注意すること．(When evaluating the entorywise norm 
-% of a matrix, pay attention to the way of passing the arguments and options.)
-
-% Froubenius norm 
+%%
+%[text] ## Notes on the function `norm`
+%[text] For matrices, pay attention to how the arguments and options are passed.
+% Frobenius norm
 norm(T,'fro')
 
 % Entrywise 2-norm, which is identical to the Frobenius norm
@@ -249,5 +157,35 @@ norm(T,1)
 
 % Entrywise 1-norm
 norm(T(:),1)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:123e]
+%   data: {"defaultValue":3,"label":"hsize1","max":9,"min":1,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:1057]
+%   data: {"defaultValue":3,"label":"hsize2","max":9,"min":1,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:5c7f]
+%   data: {"defaultValue":1,"label":"sigma","max":8,"min":0.5,"run":"SectionToEnd","runOn":"ValueChanging","step":0.5}
+%---
+%[control:dropdown:1049]
+%   data: {"defaultValue":"\"log\"","itemLabels":["gaussian","log"],"items":["\"gaussian\"","\"log\""],"label":"ftype","run":"SectionToEnd"}
+%---
+%[control:slider:0e79]
+%   data: {"defaultValue":258,"label":"N_1","max":512,"min":256,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:3037]
+%   data: {"defaultValue":258,"label":"N_2","max":512,"min":256,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:9945]
+%   data: {"defaultValue":8,"label":"N1","max":32,"min":8,"run":"SectionToEnd","runOn":"ValueChanging","step":8}
+%---
+%[control:slider:6cc3]
+%   data: {"defaultValue":8,"label":"N2","max":32,"min":8,"run":"SectionToEnd","runOn":"ValueChanging","step":8}
+%---

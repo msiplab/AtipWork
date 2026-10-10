@@ -1,72 +1,60 @@
-%% Sample 5-3
-%% 周波数解析
-% 2変量信号の周波数
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Fourier analysis
-% Frequency of bivariate signals
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% 二変量余弦波の定義
-% (Definition of bivariate cosine wave)
-% 
-% $$\cos(\mathbf{\Omega}^T\mathbf{p})=\cos(\Omega_1 p_1 + \Omega_2 p_2)$$
-% 
-% ただし，(where)
-% 
-% $$\mathbf{\Omega} = \left(\begin{array}{c} \Omega_1 \\ \Omega_2 \end{array}\right)\in\mathbb{R}^2$$
-% 
-% $$\mathbf{p} = \left(\begin{array}{c} p_1 \\ p_2 \end{array}\right)\in\mathbb{R}^2$$
-% 二変量角周波数の設定
-% (Bivariate angular frequency setting)
-
+%[text] # Sample 5-3: Frequency of bivariate signals
+%[text] Advanced Topics in Image Processing, Lecture 5 "Fourier Analysis"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Definition of a bivariate cosine wave
+%[text]{"align":"center"} $u(\\boldsymbol{q})=\\cos(\\boldsymbol{\\nu}^\\top\\boldsymbol{q})=\\cos(\\nu\_\\mathrm{v} q\_\\mathrm{v} + \\nu\_\\mathrm{h} q\_\\mathrm{h})$
+%[text] where
+%[text]{"align":"center"} $\\boldsymbol{\\nu} = \\begin{pmatrix} \\nu\_\\mathrm{v} \\\\ \\nu\_\\mathrm{h} \\end{pmatrix}\\in\\mathbb{R}^2,\\quad \\boldsymbol{q} = \\begin{pmatrix} q\_\\mathrm{v} \\\\ q\_\\mathrm{h} \\end{pmatrix}\\in\\mathbb{R}^2$
+%[text] are the angular-frequency vector and the coordinate vector (vertical, horizontal).
+%%
+%[text] ## Setting of the bivariate angular frequency
 % Vertical angular frequency
-f1 = 1;
-Omega1 = 2*pi*f1;
-% Horizontal angular frequnecy
-f2 = 2;
-Omega2 = 2*pi*f2;
+f1 = 1; %[control:slider:33c4]{"position":[6,7]}
+nuv = 2*pi*f1;
+% Horizontal angular frequency
+f2 = 2; %[control:slider:0ef9]{"position":[6,7]}
+nuh = 2*pi*f2;
 
-% Definition of sampling points
-[p2,p1] = meshgrid(-0.5:0.01:0.5,-0.5:0.01:0.5);
+% Sampling points
+[qh,qv] = meshgrid(-0.5:0.01:0.5,-0.5:0.01:0.5);
 
-% Definition of a bivariate cosine wave
-x = cos(Omega1*p1 + Omega2*p2);
-% 二変量余弦波の表示
-% (Bivariate cosine wave display)
-
-% Display of a bivariate cosine wave
-surf(p2,p1,x)
-xlabel('p_2')
-ylabel('p_1')
-zlabel('cos({\bf\Omega}^T{\bfp})')
-title(['{\bf \Omega} =(' num2str(Omega1/pi) '\pi,' num2str(Omega2/pi) '\pi)^T'])
+% Bivariate cosine wave
+u = cos(nuv*qv + nuh*qh);
+%%
+%[text] ## Display of the bivariate cosine wave
+figure
+surf(qh,qv,u)
+xlabel('q_h')
+ylabel('q_v')
+zlabel('cos(\nu^Tq)')
+title("\nu = (" + nuv/pi + "\pi, " + nuh/pi + "\pi)^T")
 colormap gray
 shading interp
 axis([-0.5 0.5 -0.5 0.5 -2 2])
 axis ij
 axis vis3d
-% 表示を回転
-% (Rotate the display)
-
+%[text] ### Rotating the display
+%[text] Remove the block comment to rotate the view.
 %{
 stepAngle = 2;
-for iAngle=1:stepAngle:360
+for iAngle = 1:stepAngle:360
     camorbit(0,stepAngle,'camera');
     drawnow
 end
 %}
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:33c4]
+%   data: {"defaultValue":1,"label":"nu_v/(2pi)","max":6,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:0ef9]
+%   data: {"defaultValue":2,"label":"nu_h/(2pi)","max":6,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---

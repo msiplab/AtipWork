@@ -1,39 +1,18 @@
-%% Sample 4-3
-%% 線形シフト不変システム
-% 可分離フィルタ
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Linear shift-invariant systems
-% Separable filter
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% インパルス応答の生成
-% (Generation of impulse response)
-
-ftype = "average";
+%[text] # Sample 4-3: Separable filter
+%[text] Advanced Topics in Image Processing, Lecture 4 "Linear Shift-Invariant Systems"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Generation of an impulse response
+ftype = "average"; %[control:dropdown:2281]{"position":[9,18]}
 h = rot90(fspecial(ftype),2)
-figure(1)
+figure
 stem3(h,'filled')
 axis ij
-title(['Impulse response of ' char(ftype) ' filter'])
-% 可分離性の確認
-% (Checking the separability)
-% 関数ISFILTERSEPARABLEによる可分離性の確認
-% (Checking the separability using the function ISFILTERSEPARABLE)
-
-% Check if h[n] is separable
+title("Impulse response of " + ftype + " filter")
+%%
+%[text] ## Checking the separability
+%[text] ### Checking the separability with the function `isfilterseparable`
 [isSeparable, hCol, hRow] = isfilterseparable(h);
 
 % Display the result
@@ -43,139 +22,114 @@ if isSeparable
     disp(hCol)
     disp('hrow: ')
     disp(hRow)
-    figure(2)
+    figure
+    tiledlayout(1,2)
+    nexttile
     stem3(hCol,'filled')
     axis ij
     title('hcol')
-    figure(3)
+    nexttile
     stem3(hRow,'filled')
     axis ij
     title('hrow')
 else
     disp('h[n] is not separable.')
 end
-% 関数RANKによる可分離性の確認と特異値分解(SVD)
-% (Checking the separability using the function RANK and singular value decomposition 
-% (SVD).)
-% 
-% 
-% 
-% 2変量のインパルス応答の可分離性は，行列 $\mathbf{H}$としてみたときの階数（非ゼロ特異値の数） $\mathrm{rank}(\mathbf{H})$ 
-% によって確認できる．(The separability of the bivariate impulse response can be checked 
-% by the rank (number of non-zero singular values) $\mathrm{rank}(\mathbf{H})$ 
-% when viewed as a matrix $\mathbf{H}$.
-% 
-% 階数 $\mathrm{rank}(\mathbf{H})$ が１ならば可分離であり，それ以上であれば非可分である．(If the rank $\mathrm{rank}(\mathbf{H})$ 
-% is 1, it is separable; if it is higher, it is non-separable.)
-% 
-% インパルス応答の単変量への分解は特異値分解(SVD)によって実現できる．(The decomposition of the impulse response 
-% into univariates can be achieved by singular value decomposition (SVD).)
-% 
-% $$\mathbf{H} = \left(\sqrt{\sigma_1}\mathbf{u}\right)\left(\sqrt{\sigma_1}\mathbf{v}\right)^T,$$
-% 
-% ここで $\sigma_1$は行列 $\mathbf{H}$の唯一の特異値， $\mathbf{u}$と $\mathbf{v}$ はそれぞれ左特異ベクトルと右特異ベクトルである．(where 
-% $\sigma_1$ is the only singular value of the matrix, and $\mathbf{u}$ and $\mathbf{v}$ 
-% are the left and right singular vectors, respectively.)
-
-% Check if h[n] is separable
-isRankUnique = (rank(h) == 1);
+%%
+%[text] ### Checking the separability with the function `rank` and the singular value decomposition (SVD)
+%[text] The separability of a bivariate impulse response can be checked by the rank $\\mathrm{rank}(\\mathbf{H})$
+%[text] (number of non-zero singular values) of the matrix $\\mathbf{H}$ of its coefficients.
+%[text] If $\\mathrm{rank}(\\mathbf{H})=1$, it is separable; if it is larger, it is non-separable.
+%[text] The decomposition into univariate impulse responses is given by the SVD
+%[text]{"align":"center"} $\\mathbf{H} = \\left(\\sqrt{\\sigma\_0}\\mathbf{u}\_0\\right)\\left(\\sqrt{\\sigma\_0}\\mathbf{v}\_0\\right)^\\top,$
+%[text] where $\\sigma\_0$ is the largest (only non-zero) singular value of $\\mathbf{H}$, and $\\mathbf{u}\_0$ and $\\mathbf{v}\_0$ are
+%[text] the left and right singular vectors, respectively.
+isRankOne = (rank(h) == 1);
 
 % Display the result
-if isRankUnique
+if isRankOne
     [U,S,V] = svd(h,'econ');
     disp('h[n] is separable.')
-    disp('sigma1^(1/2)u: ')
+    disp('sigma0^(1/2)u0: ')
     disp(sqrt(S(1,1))*U(:,1))
-    disp('sigma1^(1/2)v^T: ')
+    disp('sigma0^(1/2)v0^T: ')
     disp(sqrt(S(1,1))*V(:,1).')
 else
     disp('h[n] is not separable.')
-    disp(['Rank of h is ' num2str(rank(h)) '.'])
+    disp("Rank of h is " + rank(h) + ".")
 end
-% 2変量線形シフト不変システムとしてのインパルス応答の確認
-% (Confirmation of impulse response as a bivariate linear shift-invariant system)
-
-% Bivariate impulse signal
-mymse = @(x,y) mean((double(x)-double(y)).^2,'all');
+%%
+%[text] ## Impulse response of the separable system as a bivariate linear shift-invariant system
+mymse = @(a,b) mean((double(a)-double(b)).^2,'all');
 if isSeparable
-    D = 1;
+    D = 1;     % bivariate unit impulse
     hsep = imfilter(imfilter(D,...
         hCol,'conv','full'),...
         hRow,'conv','full')
     % Evaluation
-    disp(['MSE: ' num2str(mymse(h,hsep))] )
-    figure(4)
+    disp("MSE: " + mymse(h,hsep))
+    figure
     stem3(hsep,'filled')
     axis ij
-    title(['As a separate system (MSE: ' mymse(h,hsep) ')'])
+    title("As a separable system (MSE: " + mymse(h,hsep) + ")")
 end
-% クロネッカーテンソル積による2変量インパルス応答
-% (Bivariate Impulse Response by Kronecker Tensor Product)
-% 
-% 
-% 
-% 可分離フィルタはクロネッカーテンソル積でも表現できる．
-% 
-% (The separable filter can also be represented as a Kronecker tensor product.)
-% 
-% $$\mathbf{H} = \mathbf{h}_\mathrm{col}\otimes\mathbf{h}_\mathrm{row},$$
-
-% Bivariate impulse signal
+%%
+%[text] ## Bivariate impulse response by the Kronecker tensor product
+%[text] A separable filter can also be represented by the Kronecker tensor product
+%[text]{"align":"center"} $\\mathbf{H} = \\mathbf{h}\_\\mathrm{col}\\otimes\\mathbf{h}\_\\mathrm{row}.$
 if isSeparable
-    D = 1;
     hkron = kron(hCol,hRow)
     % Evaluation
-    disp(['MSE: ' num2str(mymse(h,hkron))] )
+    disp("MSE: " + mymse(h,hkron))
 end
-% 分離処理による画像フィルタリング
-% (Image filtering by separate processing)
-% 
-% 
-% 
-% サンプル画像の読み込み (Reading a sample image)
-
-% Reading image 'cameraman.tif' as double type.
+%%
+%[text] ## Image filtering by separable processing
+%[text] Read a sample image as type double.
 I = im2double(imread('cameraman.tif'));
-figure(5)
-subplot(2,2,1)
+figure
+tiledlayout(2,2)
+nexttile(1)
 imshow(I)
 title('(a) Original')
-%% 
-% IMFILTER による通常処理 (Normal processing by IMFILTER)
-
-% IMFILTER w normal process
+%[text] Normal processing by `imfilter`
 J = imfilter(I,h);
 if min(J(:)) < 0
     J = J + .5;
 end
-subplot(2,2,3)
+nexttile(3)
 imshow(J)
-title('(c) Normal ')
-%% 
-% IMFILTERによる分離処理 (Separate processing by IMFILTER)
-
+title('(c) Normal')
+%[text] Separable processing by `imfilter`
 if isSeparable
-    % IMFILTER w separate process
     K = imfilter(imfilter(I,hCol),hRow);
-    if min(J(:)) < 0
+    if min(K(:)) < 0
         K = K + .5;
     end
-    subplot(2,2,4)
+    nexttile(4)
     imshow(K)
-    title('(d) Separate ')
-    
-    % Evaluation 
+    title('(d) Separable')
+
+    % Evaluation
     L = imabsdiff(J,K);
-    subplot(2,2,2)
+    nexttile(2)
     imshow(L)
-    title(['(b) Abs. Diff. (MSE: ' num2str(mymse(K,J)) ')'])
+    title("(b) Abs. diff. (MSE: " + mymse(K,J) + ")")
 else
-    subplot(2,2,2)
-    imshow(checker_board(2,8))
-    title(['(b) ' char(ftype) ' filter is non-separable.'])
-    subplot(2,2,4)
-    imshow(checker_board(2,8))
-    title(['(d) ' char(ftype) ' filter is non-separable.'])
+    nexttile(2)
+    imshow(checkerboard(16,4,4) > 0.5)
+    title("(b) " + ftype + " filter is non-separable.")
+    nexttile(4)
+    imshow(checkerboard(16,4,4) > 0.5)
+    title("(d) " + ftype + " filter is non-separable.")
 end
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:dropdown:2281]
+%   data: {"defaultValue":"\"average\"","itemLabels":["average","disk","gaussian","log","laplacian","unsharp","prewitt","sobel"],"items":["\"average\"","\"disk\"","\"gaussian\"","\"log\"","\"laplacian\"","\"unsharp\"","\"prewitt\"","\"sobel\""],"label":"Filter type","run":"SectionToEnd"}
+%---

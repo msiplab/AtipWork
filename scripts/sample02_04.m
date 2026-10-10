@@ -1,69 +1,61 @@
-%% Sample 2-4
-%% 画像データの入出力
-% ヒストグラム均等化 
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Input and output of images
-% Histogram equalization
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% サンプル画像の準備
-% (Preparation of sample image)
-% 
-% 本サンプルで利用する画像データを収めたdata フォルダにパスをとおす。
-% 
-% Create a path to the data folder that contains images used in this sample.
-
-addpath('./data')
-close
-% Reading original image
-I = im2double(rgb2gray(imread('firenzeRgb.jpg')));
-figure(1)
+%[text] # Sample 2-4: Histogram equalization
+%[text] Advanced Topics in Image Processing, Lecture 2 "Input and Output of Images"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation of sample image
+datfolder = atip.prjfolders();
+% Read the original image
+I = im2double(rgb2gray(imread(fullfile(datfolder,'firenzeRgb.jpg'))));
+figure
 imshow(I)
 title('Original')
-figure(2)
+figure
 imhist(I)
-% ヒストグラム均等化前の加工
-% (Process before histogram equalization)
-% 
-% $$v=T_1(x)= x^\gamma $$
-% 
-% $$y=T_2(v)= \frac{1}{2}(\mathrm{sign}(2v-1)|2v-1|^{10^{-\alpha}}+1)$$
-
-% Definition of process
-gamma = 1
-alpha = 0
+%%
+%[text] ## Process before histogram equalization
+%[text] A power-law transform followed by contrast stretching changes the histogram of the input
+%[text] (\[M\] Section 2.1.4).
+%[text]{"align":"center"} $v=\\phi\_1(x)= x^\\gamma$
+%[text]{"align":"center"} $y=\\phi\_2(v)= \\frac{1}{2}\\left(\\mathrm{sign}(2v-1)|2v-1|^{10^{-\\alpha}}+1\\right)$
+% Definition of the process
+gamma = 1 %[control:slider:036c]{"position":[9,10]}
+alpha = 0 %[control:slider:37e1]{"position":[9,10]}
 T1 = @(x) x.^gamma;
 T2 = @(v) 0.5*(sign(2.0*v-1.0).*abs(2*v-1.0).^(10^(-alpha))+1.0);
 Tp = @(x) T2(T1(x));
-figure(3)
+figure
 fplot(Tp,[0,1])
 axis square
 grid on
 % Preprocessing for histogram equalization
 J = Tp(I);
-figure(4)
+figure
 imshow(J)
 title('Preprocessed image for histogram equalization')
-figure(5)
+figure
 imhist(J)
-% ヒストグラム均等化
-% (Histgram equalization)
-
-% Power law conversion with IMADUST function
+%%
+%[text] ## Histogram equalization
+%[text] The lookup table $y=\\phi(x)=\\left\\lfloor (L-1)\\sum\_{v=0}^{x}p\_v\\right\\rceil$ is designed from the
+%[text] normalized histogram $p\_x$ (\[M\] Section 2.2.2).  `histeq` gives a similar result automatically.
 K = histeq(J);
-figure(6)
+figure
 imshow(K)
 title('Result of histogram equalization')
-figure(7)
+figure
 imhist(K)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:036c]
+%   data: {"defaultValue":1,"label":"gamma","max":4,"min":0,"run":"SectionToEnd","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:37e1]
+%   data: {"defaultValue":0,"label":"alpha","max":4,"min":-4,"run":"SectionToEnd","runOn":"ValueChanging","step":0.1}
+%---

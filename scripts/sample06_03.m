@@ -1,68 +1,39 @@
-%% Sample 6-3
-%% 標本化
-% 二変量ダウンサンプリング
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Sampling
-% Bivariate downsampling
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% 可分離間引き行列の設定
-% (Setting a separable downsampling factor)
-%% 
-% * $\mathbf{M}$: 間引き行列 (downsampling factor)
-%% 
-% 可分離の場合 (In the separable case)
-% 
-% $$\mathbf{M}=\left(\begin{array}{cc} M_1 & 0 \\ 0 & M_2 \end{array}\right)\in 
-% \mathbb{Z}^{2\times 2}$$
-
+%[text] # Sample 6-3: Bivariate downsampling
+%[text] Advanced Topics in Image Processing, Lecture 6 "Sampling"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Setting a separable resampling matrix
+%[text] - $\\boldsymbol{M}$: resampling matrix \
+%[text] In the separable case
+%[text]{"align":"center"} $\\boldsymbol{M}=\\begin{bmatrix} M\_1 & 0 \\\\ 0 & M\_2 \\end{bmatrix}\\in \\mathbb{Z}^{2\\times 2}$
 % Vertical downsampling ratio
-verticalDFactor = 2; 
-% Horizontal downsampling factor
-horizontalDFactor = 3; 
-% 入力配列の設定
-% (Setting an input array)
-%% 
-% * $\{u[\mathbf{n}]\}_\mathbf{n}$: 入力配列 (input array)
-
-% Standard deviation 
+verticalDFactor = 2;  %[control:slider:8956]{"position":[19,20]}
+% Horizontal downsampling ratio
+horizontalDFactor = 3;  %[control:slider:8eff]{"position":[21,22]}
+%%
+%[text] ## Setting an input array
+%[text] - $\\mathsf{x}=\\left(x\[\\boldsymbol{m}\]\\right)\_{\\boldsymbol{m}}$: input array (bivariate Gaussian function) \
+% Standard deviation
 sigma = 2;
 % Array size
-sizeU = 31;
+sizeX = 31;
 
-% Generate an array with bivariate Gaussian function
-arrayU = fspecial('gaussian',sizeU,sigma);
-% 入力配列のスペクトル
-% (Spectrum of the input array)
-
-% Spectrum of u[n]
-figure(1)
-freqz2(arrayU)
+% Generate an array with the bivariate Gaussian function
+arrayX = fspecial('gaussian',sizeX,sigma);
+%%
+%[text] ## Spectrum of the input array
+fig1 = figure;
+freqz2(arrayX)
 xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('Before downsampling')
 axis ij
-% 出力配列の計算
-% (Computation of the output array)
-%% 
-% * $\{v[\mathbf{m}]\}_\mathbf{m}$: 出力数列 (output array)
-%% 
-% $$v[\mathbf{m}] = u[\mathbf{Mm}],\ \mathbf{m}\in\mathbb{Z}^2$$
-
-% Definition of bivariate separable downsampling
+%%
+%[text] ## Computation of the output array
+%[text] - $\\mathsf{y}=\\left(y\[\\boldsymbol{n}\]\\right)\_{\\boldsymbol{n}}$: output array \
+%[text]{"align":"center"} $y\[\\boldsymbol{n}\] = x\[\\boldsymbol{M}\\boldsymbol{n}\],\\ \\boldsymbol{n}\\in\\mathbb{Z}^2$
+% Definition of the bivariate separable downsampling
 downsample2 = @(x,n) ...
     shiftdim(downsample(...
     shiftdim(downsample(x,...
@@ -70,77 +41,66 @@ downsample2 = @(x,n) ...
     n(2)),1);
 
 % Bivariate separable downsampling
-arrayV = downsample2(arrayU, [verticalDFactor horizontalDFactor]);
-
-% 出力配列のスペクトル
-% (Spectrum of the output array)
-
-% Spectrum of v[m]
-figure(2)
-freqz2(arrayV)
+arrayY = downsample2(arrayX, [verticalDFactor horizontalDFactor]);
+%%
+%[text] ## Spectrum of the output array
+%[text] The spectrum is stretched and the aliasing components appear (\[M\] Sec. 5.1.1).
+fig2 = figure;
+freqz2(arrayY)
 xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('After downsampling')
 axis ij
-% 非可分間引き行列の設定
-% (Setting a non-separable downsampling factor)
-%% 
-% * $\mathbf{M}$: 間引き行列 (downsampling factor)
-%% 
-% 一般的な場合 (In the general case)
-% 
-% $$\mathbf{M}=\left(\begin{array}{cc} \mathbf{m}_{1} & \mathbf{m}_{2} \end{array}\right)\in 
-% \mathbb{Z}^{2\times 2}$$
-
-% Downsampling factor
+%%
+%[text] ## Setting a non-separable resampling matrix
+%[text] - $\\boldsymbol{M}$: resampling matrix \
+%[text] In the general case
+%[text]{"align":"center"} $\\boldsymbol{M}=\\begin{bmatrix} \\boldsymbol{m}\_{1} & \\boldsymbol{m}\_{2} \\end{bmatrix}\\in \\mathbb{Z}^{2\\times 2}$
+% Resampling matrix
 downMtx = [ 1 1 ; -1 1 ];
-% 入力配列の設定
-% (Setting an input array)
-
+%%
+%[text] ## Setting an input array
 % Covariance matrix
 covMtx  = [2 0 ; 0 1/2];
 % Array size
-sizeU = 31;
+sizeX = 31;
 
-% Generate an array with bivariate Gaussian function
-arrayU = mygaussian2(sizeU,covMtx);
+% Generate an array with the bivariate Gaussian function
+arrayX = mygaussian2(sizeX,covMtx);
 
-% Spectrum of u[n]
-figure(3)
-freqz2(arrayU)
+% Spectrum of x[m]
+fig3 = figure;
+freqz2(arrayX)
 xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('Before downsampling')
 axis ij
-% 出力配列の計算
-% (Computation of the output array)
-
+%%
+%[text] ## Computation of the output array
 % Bivariate non-separable downsampling
-arrayV = mydownsample2(arrayU,downMtx);
+arrayY = mydownsample2(arrayX,downMtx);
 
-% Spectrum of v[m]
-figure(4)
-freqz2(arrayV)
+% Spectrum of y[n]
+fig4 = figure;
+freqz2(arrayY)
 xlabel('\omega_2 (\times\pi rad)')
 ylabel('\omega_1 (\times\pi rad)')
 title('After downsampling')
 axis ij
-% プライベート関数の定義
-% (Definitions of private functions)
-% 
-% 二変量ガウス配列の生成関数　(Generation function of bivariate Gaussian arrays)
-
+%%
+%[text] ## Definitions of local functions
+%[text] Generation of a bivariate Gaussian array
 function x = mygaussian2(sizeX, covMtx)
-% MYGAUSSIAN2
+% MYGAUSSIAN2 Bivariate Gaussian array
 %
 % Inputs
 %
-%   sizeX: size of output array 
+%   sizeX:  size of the output array (odd number)
 %   covMtx: covariance matrix
 %
 % Output
 %
-%   x: array generated by Gauss Func. 
+%   x: array generated by the Gaussian function (sum is 1)
 %
 sizeHalf = floor(sizeX / 2);
 
@@ -148,34 +108,32 @@ if isscalar(covMtx)
     covMtx = covMtx * eye(2);
 end
 
-x = zeros(sizeHalf*2);
+x = zeros(2*sizeHalf+1);
 iRow = 1;
 for n1 = -sizeHalf:sizeHalf
     iCol = 1;
-    for n0 = -sizeHalf:sizeHalf    
+    for n0 = -sizeHalf:sizeHalf
         p = - 0.5 * [ n0 n1 ] * (covMtx\[ n0 n1 ].');
         x(iRow,iCol) = exp(p);
         iCol = iCol + 1;
     end
     iRow = iRow + 1;
 end
-x = x / sum(sum(x));
+x = x / sum(x,"all");
 
 end % of mygaussian2
-%% 
-% 二変量非可分ダウンサンプリング関数 (bivariate non-separable downsampling function)
-
+%[text] Bivariate non-separable downsampling
 function [outputArray, X, Y] = mydownsample2(inputArray,downMtx,phase)
-% MYDOWNSAMPLE2
+% MYDOWNSAMPLE2 Bivariate downsampling with a resampling matrix
 %
 % Inputs
 %
 %   inputArray: input array
-%   downMtx:    downsampling matrix
+%   downMtx:    resampling matrix
 %   phase:      downsampling phase
 %
 % Outputs
-% 
+%
 %   outputArray: output array
 %   X          : horizontal sampling points
 %   Y          : vertical sampling points
@@ -186,12 +144,12 @@ else
     phase = phase(:);
 end
 
-% Size of input array
+% Size of the input array
 nRowsInputArray = size(inputArray,1);
 nColsInputArray = size(inputArray,2);
 nCompInputArray = size(inputArray,3);
 
-% Calculation of the support region after downsampling
+% Support region after downsampling
 vertexPoints(:,1) = [ 0 0 ].';
 vertexPoints(:,2) = downMtx \ [ 0 nColsInputArray-1 ].';
 vertexPoints(:,3) = downMtx \ [ nRowsInputArray-1 0 ].';
@@ -203,7 +161,8 @@ maxPoint = ceil(max(vertexPoints,[],2));
 phase = phase - downMtx * floor(downMtx \ phase);
 
 % Downsampling
-clear arrayY
+outputArray = zeros(maxPoint(1)-minPoint(1)+1, maxPoint(2)-minPoint(2)+1, ...
+    nCompInputArray, 'like', inputArray);
 iRow = 1;
 for m0 = minPoint(1):maxPoint(1)
     iCol = 1;
@@ -213,12 +172,9 @@ for m0 = minPoint(1):maxPoint(1)
         n1 = originalPoint(2) + phase(2);
         if n0 >= 0 && n0 < nRowsInputArray  && ...
                 n1 >= 0 && n1< nColsInputArray
-            outputArray(iRow, iCol, :) = inputArray(n0 + 1, n1 + 1, :);           
-        else
-            outputArray(iRow, iCol, :) = zeros(1,nCompInputArray,...
-                'like',inputArray);
+            outputArray(iRow, iCol, :) = inputArray(n0 + 1, n1 + 1, :);
         end
-       iCol = iCol + 1;
+        iCol = iCol + 1;
     end
     iRow = iRow + 1;
 end
@@ -227,5 +183,16 @@ Y = minPoint(1):maxPoint(1);
 X = minPoint(2):maxPoint(2);
 
 end % of mydownsample2
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:8956]
+%   data: {"defaultValue":2,"label":"verticalDFactor","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:8eff]
+%   data: {"defaultValue":3,"label":"horizontalDFactor","max":8,"min":2,"run":"SectionToEnd","runOn":"ValueChanging","step":1}
+%---

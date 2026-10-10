@@ -1,161 +1,154 @@
-%% Sample 3-1
-%% 平滑化／先鋭化処理
-% 内積とノルム 
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Image smoothing/sharpening
-% Inner product and norm
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-close all
-% $N$次元ベクトルの内積
-% (Inner product of $N$-dimensional vectors)
-% 
-% $$\langle \mathbf{u},\mathbf{v}\rangle=\sum_{i=0}^{N-1}u_{i}v_{i}$$
-% 
-% ただし， $u_i, v_i$はベクトル $\mathbf{u}, \mathbf{v}\in\mathbb{R}^{N}$ の $i$-番目要素 
-% $[\mathbf{u}]_i,$$[\mathbf{v}]_i$。
-% 
-% (where $u_i, v_i$ are the $i$-th element of vector $\mathbf{u}, \mathbf{v}\in\mathbb{R}^{N}$ 
-% , i.e.,  $[\mathbf{u}]_i,$$[\mathbf{v}]_i$, respectively.)
-
-% Generate an two-dimensional vector u 
-u1 = -1;
-u2 = 1;
+%[text] # Sample 3-1: Inner product and norm
+%[text] Advanced Topics in Image Processing, Lecture 3 "Image Smoothing and Sharpening"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Inner product of $N$-dimensional vectors
+%[text]{"align":"center"} $\\langle \\mathbf{u},\\mathbf{v}\\rangle=\\sum\_{i=0}^{N-1}u\_{i}v\_{i}$
+%[text] where $u\_i, v\_i$ are the $i$-th elements $\[\\mathbf{u}\]\_i$, $\[\\mathbf{v}\]\_i$ of the vectors
+%[text] $\\mathbf{u}, \\mathbf{v}\\in\\mathbb{R}^{N}$ (\[M\] Definition "Inner product of multidimensional arrays", Section 1.2.1).
+% Two-dimensional vector u
+u1 = -1; %[control:slider:9d7e]{"position":[6,8]}
+u2 = 1; %[control:slider:088b]{"position":[6,7]}
 u = [u1, u2].'
-% Generate an two-dimensional vector v 
-v1 = 1;
-v2 = 1;
+% Two-dimensional vector v
+v1 = 1; %[control:slider:6f14]{"position":[6,7]}
+v2 = 1; %[control:slider:0844]{"position":[6,7]}
 v = [v1, v2].'
 % Inner product of vectors u and v
 innerprod = dot(u,v);
-disp(['<u,v> = ' num2str(innerprod)])
-% Plot vector v with the contour plot of lp-norm
-figure(1)
-plotv([u v],'-')
+disp("<u,v> = " + innerprod)
+% Plot vectors u and v
+figure
+quiver([0 0], [0 0], [u(1) v(1)], [u(2) v(2)], 0, "LineWidth", 1.5)
+text(u(1), u(2), " u"), text(v(1), v(2), " v")
 title('Vectors {\bf u} and {\bf v}')
 xlabel('u_1, v_1')
 ylabel('u_2, v_2')
-colormap('default')
 axis equal
 axis([-3 3 -3 3])
 grid on
-% ベクトルとしてみた$N_1 \times N_2$配列の 内積
-% (Inner product of $N_1 \times N_2$ arrays as vector)
-% 
-% $$\langle\mathbf{u},\mathbf{v}\rangle=\sum_{j=0}^{N_2-1}\sum_{i=0}^{N_1-1}u_{i,j}v_{i,j}$$
-% 
-% ただし， $u_{i,j}, v_{i,j}$はベクトル $\mathbf{u}, \mathbf{v}\in\mathbb{R}^{N_1\times 
-% N_2}$ の $i,j$-番目要素 $[\mathbf{u}]_{i,j},[\mathbf{v}]_{i,j}$。
-% 
-% ( where $u_{i,j}, v_{i,j}$ are the $i,j$-th element of vector $\mathbf{u}, 
-% \mathbf{v}\in\mathbb{R}^{N}$ , i.e.,  $[\mathbf{u}]_{i,j},[\mathbf{v}]_{i,j}$, 
-% respectively.)
-
+%%
+%[text] ## Inner product of $N\_1 \\times N\_2$ arrays as vectors
+%[text]{"align":"center"} $\\langle\\mathsf{u},\\mathsf{v}\\rangle=\\sum\_{n\_2=0}^{N\_2-1}\\sum\_{n\_1=0}^{N\_1-1}u\[n\_1,n\_2\]v\[n\_1,n\_2\]$
+%[text] where $u\[n\_1,n\_2\], v\[n\_1,n\_2\]$ are the elements of the arrays $\\mathsf{u}, \\mathsf{v}\\in\\mathbb{R}^{N\_1\\times N\_2}$.
 % Array dimension
-ndim1 = 2;
-ndim2 = 2;
-% Generate a N1xN2 arrya v with normally distributed random numbers
+ndim1 = 2; %[control:slider:0666]{"position":[9,10]}
+ndim2 = 2; %[control:slider:95d6]{"position":[9,10]}
+% Generate N1xN2 arrays with normally distributed random numbers
 u = randn(ndim1,ndim2)
 v = randn(ndim1,ndim2)
-% Visualization of array u
-figure(2)
-subplot(1,2,1)
+% Visualization of the arrays u and v
+figure
+tiledlayout(1,2)
+nexttile
 imagesc(u)
-title('Array {\bf u}')
+title('Array {\sf u}')
 colormap('gray')
 colorbar
-axis equal
-axis off
-
-% Visualization of array v
-subplot(1,2,2)
+axis equal off
+nexttile
 imagesc(v)
-title('Array {\bf v}')
+title('Array {\sf v}')
 colormap('gray')
 colorbar
-axis equal
-axis off
+axis equal off
 %%
-% Inner product of arrays u and v as vectors
+% Inner product of arrays u and v as vectors (column vectorization u(:))
 innerprod = dot(u(:),v(:));
-disp(['<u,v> = ' num2str(innerprod)])
-% $N$次元ベクトルの $\ell_p$-ノルム
-% ($\ell_p$-norm of a $N$-dimensional vector)
-% 
-% $$\|\mathbf{v}\|_{p}=\left(\sum_{i=0}^{N-1}\left|v_{i}\right|^{p}\right)^{\frac{1}{p}}$$
-% 
-% ただし， $v_i$はベクトル $\mathbf{v}\in\mathbb{R}^{N}$ の $i$-番目要素 $[\mathbf{v}]_i$。
-% 
-% (where $v_i$ stands for the $i$-th element of vector $\mathbf{v}\in\mathbb{R}^{N}$ 
-% , i.e.,  $[\mathbf{v}]_i$.)
-
-% Generate an two-dimensional vector v 
-v1 = 1;
-v2 = 1;
+disp("<u,v> = " + innerprod)
+%%
+%[text] ## $\\ell\_p$-norm of an $N$-dimensional vector
+%[text]{"align":"center"} $\\|\\mathbf{v}\\|\_{p}=\\left(\\sum\_{i=0}^{N-1}\\left|v\_{i}\\right|^{p}\\right)^{\\frac{1}{p}}$
+%[text] where $v\_i$ is the $i$-th element $\[\\mathbf{v}\]\_i$ of the vector $\\mathbf{v}\\in\\mathbb{R}^{N}$ (\[M\] Appendix A.1).
+% Two-dimensional vector v
+v1 = 1; %[control:slider:8fc4]{"position":[6,7]}
+v2 = 1; %[control:slider:91d7]{"position":[6,7]}
 v = [v1, v2].'
-% Setting of parameter p
-p = 1;
+% Parameter p
+p = 1; %[control:slider:5a6a]{"position":[5,6]}
 
 % lp-norm of v
 lpnorm = norm(v,p);
-disp(['||v||_' num2str(p) ' = ' num2str(lpnorm)])
-% Plot vector v with the contour plot of lp-norm
-figure(3)
-plotv(v,'-')
+disp("||v||_" + p + " = " + lpnorm)
+% Plot vector v with the contour plot of the lp-norm
+figure
+quiver(0, 0, v(1), v(2), 0, "LineWidth", 1.5)
 title('Vector {\bf v}')
 xlabel('v_1')
 ylabel('v_2')
-colormap('default')
 axis equal
 axis([-3 3 -3 3])
 grid on
 hold on
-% Contour plot of lp-norm
-fcontour(@(v1,v2) vecnorm([v1(:) v2(:)].',p),[-3 3 -3 3])
+% Contour plot of the lp-norm
+fcontour(@(v1,v2) reshape(vecnorm([v1(:) v2(:)].',p),size(v1)),[-3 3 -3 3])
 colorbar
 hold off
-% ベクトルとしてみた$N_1 \times N_2$配列の $\ell_p$-ノルム
-% ($\ell_p$-norm of a $N_1 \times N_2$ array as a vector)
-% 
-% $$\|\mathbf{v}\|_{p}=\left(\sum_{j=0}^{N_2-1}\sum_{i=0}^{N_1-1}\left|v_{i,j}\right|^{p}\right)^{\frac{1}{p}}$$
-% 
-% ただし， $v_{i,j}$はベクトルとしてみた配列 $\mathbf{v}\in\mathbb{R}^{N_1\times N_2}$ の $i,j$-番目要素 
-% $[\mathbf{v}]_{i,j}$。
-% 
-% (where $v_{i,j}$ stands for the $i,j$-th element of array $\mathbf{v}$ as 
-% a vector, i.e.,  $[\mathbf{v}]_{i,j}$.)
-
+%%
+%[text] ## $\\ell\_p$-norm of an $N\_1 \\times N\_2$ array as a vector
+%[text]{"align":"center"} $\\|\\mathsf{v}\\|\_{p}=\\left(\\sum\_{n\_2=0}^{N\_2-1}\\sum\_{n\_1=0}^{N\_1-1}\\left|v\[n\_1,n\_2\]\\right|^{p}\\right)^{\\frac{1}{p}}$
+%[text] For $p=2$ this is the Frobenius norm of the array as a matrix, which differs from the spectral norm `norm(v)`.
 % Array dimension
-ndim1 = 2;
-ndim2 = 2;
-% Generate a N1xN2 arrya v with normally distributed random numbers
+ndim1 = 2; %[control:slider:9663]{"position":[9,10]}
+ndim2 = 2; %[control:slider:1c4d]{"position":[9,10]}
+% Generate an N1xN2 array with normally distributed random numbers
 v = randn(ndim1,ndim2)
 % Visualization of array v
-figure(4)
+figure
 imagesc(v)
-title('Array {\bf v}')
+title('Array {\sf v}')
 colormap('gray')
 colorbar
-axis equal
-axis off
+axis equal off
 %%
-% Setting of parameter p
-p = 1;
+% Parameter p
+p = 1; %[control:slider:6a04]{"position":[5,6]}
 
-% lp-(element-wise) norm of v
+% lp-norm of v as a vector (element-wise)
 lpnorm = norm(v(:),p);
-disp(['||v||_' num2str(p) ' = ' num2str(lpnorm)])
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+disp("||v||_" + p + " = " + lpnorm)
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:9d7e]
+%   data: {"defaultValue":-1,"label":"u1","max":3,"min":-3,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:088b]
+%   data: {"defaultValue":1,"label":"u2","max":3,"min":-3,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:6f14]
+%   data: {"defaultValue":1,"label":"v1","max":3,"min":-3,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:0844]
+%   data: {"defaultValue":1,"label":"v2","max":3,"min":-3,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:0666]
+%   data: {"defaultValue":2,"label":"ndim1","max":8,"min":1,"run":"Section","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:95d6]
+%   data: {"defaultValue":2,"label":"ndim2","max":8,"min":1,"run":"Section","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:8fc4]
+%   data: {"defaultValue":1,"label":"v1","max":3,"min":-3,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:91d7]
+%   data: {"defaultValue":1,"label":"v2","max":3,"min":-3,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:5a6a]
+%   data: {"defaultValue":1,"label":"p","max":16,"min":1,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:9663]
+%   data: {"defaultValue":2,"label":"ndim1","max":8,"min":1,"run":"Section","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:1c4d]
+%   data: {"defaultValue":2,"label":"ndim2","max":8,"min":1,"run":"Section","runOn":"ValueChanging","step":1}
+%---
+%[control:slider:6a04]
+%   data: {"defaultValue":1,"label":"p","max":16,"min":1,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---

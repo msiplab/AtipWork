@@ -1,35 +1,26 @@
-%% Sample 13-6
-%% 辞書学習
-% 比較実験
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Dictionary learning
-% Comparable experiments 
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
+%[text] # Sample 13-6: Comparison of dictionaries (sparse approximation)
+%[text] Advanced Topics in Image Processing, Lecture 13 "Dictionary Learning"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation
+%[text] SaivDr (NSOLT layers `saivdr.dcnn.*`) is downloaded into the folder `code` of the project by `msip.saivdr_setup`.
+%[text] - nsoltDic: name of a learned NSOLT dictionary (.mat).  It is searched in the results folder and then in the data folder.
+%[text]   Set "" to train a new dictionary (it is saved in the results folder with a time stamp).
+%[text] - isQuick: true for a quick check of the whole script with few iterations (RICA, k-SVD, NSOLT training and IHT).
+%[text]   The default settings take a long time (in particular, k-SVD). \
+[datfolder,resfolder] = atip.prjfolders();
 
-clear 
-close all
+nsoltDic = "nsoltdictionary_20230705164652136"; % Set "" to train a new dictionary.
+isQuick = false;
 
-nsoltDic = "nsoltdictionary_20230621232700260"; % Set "" if you train new dictionary.
-
-isCodegen = false; % コード生成
+isCodegen = false; % code generation %[control:checkbox:8096]{"position":[13,18]}
 msip.saivdr_setup(isCodegen)
-% パラメータ設定
-%% 
-% * ブロックサイズ 
-% * 冗長度
-% * スパース度
-
+%%
+%[text] ## Parameter settings
+%[text] - szBlk: block size
+%[text] - redundancyRatio: redundancy ratio
+%[text] - sparsityRatio: sparsity ratio \
 % Block size
 szBlk = [ 8 8 ];
 
@@ -38,46 +29,41 @@ redundancyRatio = 7/3;
 
 % Sparsity ratio 
 sparsityRatio = 3/64;
-%% 画像の読込
-%% 
-% * $\mathbf{y}\in\mathbb{R}^{N}$
-
-% 原画像の準備
-file_yorg = "./data/yorg.png";
-if ~exist(file_yorg,'file')
-    unzip('http://www.ess.ic.kanagawa-it.ac.jp/std_img/monoimage2/Mono-Image2.zip','./tmp')
-    yfull = imread('./tmp/Mono-Image2/512X512/barbara512.bmp');
+%%
+%[text] ## Read image
+%[text] - $\\mathbf{y}\\in\\mathbb{R}^{N}$ \
+%[text] Note: in this sample, $\\mathbf{y}$ denotes the image (data) and $\\mathbf{x}$ the coefficients
+%[text] (the reference text writes $\\mathbf{x}$ for the data and $\\mathbf{y}$ for the coefficients in Chapter 9).
+%[text] The image is a crop of "barbara512.bmp" (Kanagawa Institute of Technology standard image database), downloaded once into the results folder.
+% Preparation of the original image
+file_yorg = fullfile(resfolder,"sample13_06_yorg.png");
+if ~isfile(file_yorg)
+    tmpfolder = fullfile(resfolder,"tmp");
+    unzip("http://www.ess.ic.kanagawa-it.ac.jp/std_img/monoimage2/Mono-Image2.zip",tmpfolder)
+    yfull = imread(fullfile(tmpfolder,"Mono-Image2","512X512","barbara512.bmp"));
     ycrop = yfull(1:192,end-255:end);
     imwrite(ycrop,file_yorg)
 end
 
-% 原画像の読み込み
+% Read the original image
 yorg = im2double(imread(file_yorg));
 szOrg = size(yorg);
-%% 
-% 画像表示
-
+%[text] Show the image
 figure
 imshow(yorg);
 title('Original image y')
-%% 
-% 零平均化
-
+%[text] Centering
 %ymean = mean(y,"all");
 %y = yorg - ymean;
 meansubtract = @(x) x-mean(x,"all");
 y = meansubtract(yorg);
-%% 離散コサイン変換（DCT）
-% $$[\mathbf{C}_M]_{k,n}=\sqrt{\frac{2}{M}} \alpha_k\cos\frac{k(n+1∕2)\pi}{M},\ 
-% k,n=0,1,\cdots,M-1$$
-% 
-% $$\alpha_k=\left\{\begin{array}{ll} \frac{1}{\sqrt{2}} & k=0 \\1 & k=1,2,\cdots,M-1\end{array}\right.$$
-% 基底画像
-% $$\mathbf{B}_{k,\ell}=\mathbf{C}_M^{-1}\mathbf{E}_{k,\ell}\mathbf{C}_M^{-T},\ 
-% k,\ell=0,1,\cdots,M-1$$
-% 
-% $$\mathbf{E}_{k,\ell}= \mathbf{e}_k\mathbf{e}_\ell^T$$
-
+%%
+%[text] ## Discrete cosine transform (DCT)
+%[text]  $\[\\mathbf{C}\_M\]\_{k,n}=\\sqrt{\\frac{2}{M}} \\alpha\_k\\cos\\frac{k(n+1/2)\\pi}{M},\\ k,n=0,1,\\cdots,M-1$
+%[text]  $\\alpha\_k=\\left\\{\\begin{array}{ll} \\frac{1}{\\sqrt{2}} & k=0 \\\\1 & k=1,2,\\cdots,M-1\\end{array}\\right.$
+%[text] #### Basis images
+%[text]  $\\mathbf{B}\_{k,\\ell}=\\mathbf{C}\_M^{-1}\\mathbf{E}\_{k,\\ell}\\mathbf{C}\_M^{-T},\\ k,\\ell=0,1,\\cdots,M-1$
+%[text]  $\\mathbf{E}\_{k,\\ell}= \\mathbf{e}\_k\\mathbf{e}\_\\ell^T$
 basisImagesDct = zeros(szBlk(1),szBlk(2),prod(szBlk));
 iBasis = 1;
 for iRow=1:szBlk(1)
@@ -88,57 +74,38 @@ for iRow=1:szBlk(1)
         iBasis = iBasis + 1;
     end
 end
-% 基底画像の表示
-
+%[text] #### Show the basis images
 figure
 montage(imresize(basisImagesDct,8,'nearest')+.5,'BorderSize',[2 2])
 title('Basis images of DCT')
-% ブロックDCTによる合成処理とその随伴処理の定義
-
+%[text] #### Synthesis process by the block DCT and its adjoint
 syn_blkdct = @(x) blockproc(x,szBlk,@(block_struct) idct2(block_struct.data));
 adj_blkdct = @(y) blockproc(y,szBlk,@(block_struct) dct2(block_struct.data));
-%% 
-% 随伴関係の確認
-
+%[text] Check of the adjoint relation
 x = adj_blkdct(y);
 v = randn(size(x));
 u = syn_blkdct(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-9)
-%% 主成分分析（PCA）
-% 
-% 問題設定:
-% |直交性と次元削減|
-% 
-% $$\mathbf{\Phi}^\textsf{T} \mathbf{\Phi}=\mathbf{I}_{M}, \forall b, \forall 
-% p,\Vert{\mathbf{x}_b}\Vert_0\le p<M$$
-% 
-% |を制約条件とした最小自乗問題|
-% 
-% $$\{\hat{\mathbf{\Phi}},\{ \hat{\mathbf{x}}_b \}_b\}=\arg\min_{\{\mathbf{\Phi},\{\mathbf{x}_b\}_b\}}\frac{1}{2S}\sum_{b=1}^{S}\|\mathbf{y}_b-\mathbf{\Phi}{\mathbf{x}}_b\|_2^2$$
-% 
-% |を解く．上式は等価的に|
-% 
-% $$\hat{\mathbf{\Phi}}=\arg \max _{\mathbf{\Phi}} \mathrm{tr}\left(\mathbf{\Phi}_{:, 
-% 0:p-1}^\textsf{T}\hat{\mathbf{\Sigma}}_{y} \mathbf{\Phi}_{:,0:p-1}\right)\ \mathrm{ 
-% s.t. }\ \mathbf{\Phi}^\textsf{T} \mathbf{\Phi}=\mathbf{I}_{M}$$
-% 
-% |と表現できる．|ただし， $\widehat{\mathbf{\Sigma}}_{y}$は 観測ベクトル $\{\mathbf{y}_b\}_b$ 
-% （零平均を仮定）の標本分散共分散行列である．
-% 
-% 
-% 解:
-% 固有値分解
-% 
-% $$\widehat{\mathbf{\Phi}}^\textsf{T}\widehat{\mathbf{\Sigma}_y}\widehat{\mathbf{\Phi}}=\mathbf{\Lambda}$$
-% 
-% ただし， $\mathbf{\Lambda}=\mathrm{diag}(\lambda_1,\lambda_2,\cdots,\lambda_M)$． 
-% $\lambda_1\geq\lambda_2\geq\cdots\lambda_M$ は $\widehat{\mathbf{\Sigma}}_{y}$の固有値．
-% 
-% 
-% 画像 $\mathbf{y}$からのデータ行列 $\mathbf{Y}$ の生成 
-% 標本平均ブロックを引く代わりに，予め零平均化したデータで学習
-
-nPatches = 20*prod(szOrg./szBlk); % PCA/RICA/K-SVD 学習用のパッチをランダム抽出
+%%
+%[text] ## Principal component analysis (PCA)
+%[text] 
+%[text] #### Problem setting
+%[text] The least squares problem with the orthonormality and the dimension reduction
+%[text]  $\\mathbf{\\Phi}^\\textsf{T} \\mathbf{\\Phi}=\\mathbf{I}\_{M}, \\forall b, \\forall p,\\Vert{\\mathbf{x}\_b}\\Vert\_0\\le p\<M$
+%[text] as the constraints
+%[text]  $\\{\\hat{\\mathbf{\\Phi}},\\{ \\hat{\\mathbf{x}}\_b \\}\_b\\}=\\arg\\min\_{\\{\\mathbf{\\Phi},\\{\\mathbf{x}\_b\\}\_b\\}}\\frac{1}{2S}\\sum\_{b=1}^{S}\\|\\mathbf{y}\_b-\\mathbf{\\Phi}{\\mathbf{x}}\_b\\|\_2^2$
+%[text] is solved.  It is equivalently expressed as
+%[text]  $\\hat{\\mathbf{\\Phi}}=\\arg \\max \_{\\mathbf{\\Phi}} \\mathrm{tr}\\left(\\mathbf{\\Phi}\_{:, 0:p-1}^\\textsf{T}\\hat{\\mathbf{\\Sigma}}\_{y} \\mathbf{\\Phi}\_{:,0:p-1}\\right)\\ \\mathrm{ s.t. }\\ \\mathbf{\\Phi}^\\textsf{T} \\mathbf{\\Phi}=\\mathbf{I}\_{M}$
+%[text] where $\\widehat{\\mathbf{\\Sigma}}\_{y}$ is the sample covariance matrix of the observation vectors $\\{\\mathbf{y}\_b\\}\_b$ (assumed to be zero mean).
+%[text] 
+%[text] #### Solution
+%[text] Eigendecomposition
+%[text]  $\\widehat{\\mathbf{\\Phi}}^\\textsf{T}\\widehat{\\mathbf{\\Sigma}\_y}\\widehat{\\mathbf{\\Phi}}=\\mathbf{\\Lambda}\n$
+%[text] where $\\mathbf{\\Lambda}=\\mathrm{diag}(\\lambda\_1,\\lambda\_2,\\cdots,\\lambda\_M)$, and $\\lambda\_1\\geq\\lambda\_2\\geq\\cdots\\lambda\_M$ are the eigenvalues of $\\widehat{\\mathbf{\\Sigma}}\_{y}$.
+%[text] 
+%[text] #### Generation of the data matrix $\\mathbf{Y}$ from the image $\\mathbf{y}$
+%[text] Instead of subtracting the sample mean block, the image is centered beforehand.
+nPatches = 20*prod(szOrg./szBlk); % random patches for the training of PCA/RICA/k-SVD
 npos = randsample(prod(szOrg-szBlk),nPatches);
 ybs = zeros(szBlk(1),szBlk(2),nPatches,'like',y);
 szSrchy = szOrg(1)-szBlk(1);
@@ -153,76 +120,52 @@ drawnow
 
 Y = reshape(ybs,prod(szBlk),[]);
 
-%% 
-% 標本分散共分散行列 $\widehat{\mathbf{\Sigma}}_{y}$の計算 
-
+%[text] Calculation of the sample covariance matrix $\\widehat{\\mathbf{\\Sigma}}\_{y}$
 SigmaY = cov(Y.');
-%% 
-% 標本分散共分散行列 $\widehat{\mathbf{\Sigma}}_{y}$の固有値分解 
-
+%[text] Eigendecomposition of the sample covariance matrix $\\widehat{\\mathbf{\\Sigma}}\_{y}$
 [Phi_pca,Lambda] = eig(SigmaY);
-%% 
-% 固有値 $\lambda$ の大きさの降順に列ベクトルをソート (Sorting column vectors in the descending 
-% order of the eigenvalues $\lambda$)
-
+%[text] Sorting the column vectors in the descending order of the eigenvalues $\\lambda$
 [~,idx] = sort(diag(Lambda),'descend');
 Phi_pca = Phi_pca(:,idx);
-%% 
-% 固有ベクトルを基底画像に変換
-
+%[text] Reshape the eigenvectors into basis images
 nBases = prod(szBlk);
 basisImagesPca = zeros(szBlk(1),szBlk(2),nBases);
 for iBasis = 1:nBases
     basisImagesPca(:,:,iBasis) = reshape(Phi_pca(:,iBasis),szBlk(1),szBlk(2));
 end
-% 基底画像の表示（辞書）
-
+%[text] #### Show the basis images (dictionary)
 figure
 montage(imresize(basisImagesPca,8,'nearest')+.5,'BorderSize',[2 2])
 title('Basis images of PCA(KLT)')
-% ブロックPCAによる合成処理とその随伴処理の定義
-
+%[text] #### Synthesis process by the block PCA and its adjoint
 syn_blkpca = @(x) col2im(Phi_pca*x,szBlk,szOrg,"distinct");
 adj_blkpca = @(y) Phi_pca.'*im2col(y,szBlk,"distinct");
-%% 
-% 随伴関係の確認
-
+%[text] Check of the adjoint relation
 x = adj_blkpca(y);
 v = randn(size(x));
 u = syn_blkpca(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-9)
-%% 再構成独立成分分析（RICA）
-% 
-% 問題設定:
-% $$\widehat{\mathbf{\Phi}}=\arg \min _{\mathbf{\Phi}} \frac{1}{2S}\sum_{b=1}^S\|\mathbf{y}_b-\mathbf{\Phi}\mathbf{\Phi}^\textsf{T}\mathbf{y}_b\|_2^2+\frac{\alpha}{S}\sum_{b=1}^{S}\rho(\mathbf{\Phi}^\textsf{T}\mathbf{y}_b)$$
-% 
-% $$=\arg \min _{\mathbf{\Phi}} \frac{(2\alpha)^{-1}}{S}\sum_{b=1}^S\|\mathbf{y}_b-\mathbf{\Phi}\mathbf{\Phi}^\textsf{T}\mathbf{y}_b\|_2^2+\frac{1}{S}\sum_{b=1}^{S}\rho(\mathbf{\Phi}^\textsf{T}\mathbf{y}_b)$$
-% 
-% ただし，  $\{\mathbf{y}_n\}_n\subset\mathbb{R}^{M}$,  $\mathbf{\Phi}=(\mathbf{\phi}_1,\mathbf{\phi}_2,\cdots,\mathbf{\phi}_P)\in\mathbb{R}^{M\times 
-% P}$, $M\geq P$ である．
-% 
-% 
-% 参考文献:
-% Le, Quoc V., Alexandre Karpenko, Jiquan Ngiam, and Andrew Y. Ng. “ICA with 
-% Reconstruction Cost for Efficient Overcomplete Feature Learning.” Advances in 
-% Neural Information Processing Systems. Vol. 24, 2011, pp. 1017–1025. https://papers.nips.cc/paper/4467-ica-with-reconstruction-cost-for-efficient-overcomplete-feature-learning.pdf. 
-% 
-% 
-% 
-% パラメータ設定
-%% 
-% * 繰返し回数 (Number of iterations)
-% * 正則化パラメータ (Regularization parameter)
-
+%%
+%[text] ## Reconstruction independent component analysis (RICA)
+%[text] 
+%[text] #### Problem setting
+%[text]  $\\widehat{\\mathbf{\\Phi}}=\\arg \\min \_{\\mathbf{\\Phi}} \\frac{1}{2S}\\sum\_{b=1}^S\\|\\mathbf{y}\_b-\\mathbf{\\Phi}\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y}\_b\\|\_2^2+\\frac{\\alpha}{S}\\sum\_{b=1}^{S}\\rho(\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y}\_b)\n$
+%[text]  $=\\arg \\min \_{\\mathbf{\\Phi}} \\frac{(2\\alpha)^{-1}}{S}\\sum\_{b=1}^S\\|\\mathbf{y}\_b-\\mathbf{\\Phi}\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y}\_b\\|\_2^2+\\frac{1}{S}\\sum\_{b=1}^{S}\\rho(\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y}\_b)$
+%[text] where $\\{\\mathbf{y}\_n\\}\_n\\subset\\mathbb{R}^{M}$,  $\\mathbf{\\Phi}=(\\mathbf{\\phi}\_1,\\mathbf{\\phi}\_2,\\cdots,\\mathbf{\\phi}\_P)\\in\\mathbb{R}^{M\\times P}$, $M\\leq P$ (redundant).
+%[text] 
+%[text] #### Reference
+%[text] Le, Quoc V., Alexandre Karpenko, Jiquan Ngiam, and Andrew Y. Ng. "ICA with Reconstruction Cost for Efficient Overcomplete Feature Learning." Advances in Neural Information Processing Systems. Vol. 24, 2011, pp. 1017-1025. https://papers.nips.cc/paper/4467-ica-with-reconstruction-cost-for-efficient-overcomplete-feature-learning.pdf. 
+%[text] 
+%[text] Parameter settings
+%[text] - nItersRica: maximum number of iterations
+%[text] - alpha: regularization parameter \
 % Number of iterations
 nItersRica = 1e5; 
+if isQuick, nItersRica = 1e3; end
 % Regularization parameter
 alpha = 2e-3;
-%% 
-% コントラスト関数の例
-% 
-% $$\rho(\mathbf{\Phi}^\textsf{T}\mathbf{y})\colon = \frac{1}{2}\sum_{p=1}^{P}\log\circ\cosh(2\mathbf{\phi}_p^\textsf{T}\mathbf{y})$$
-
+%[text] Example of the contrast function
+%[text]  $\\rho(\\mathbf{\\Phi}^\\textsf{T}\\mathbf{y})\\colon = \\frac{1}{2}\\sum\_{p=1}^{P}\\log\\circ\\cosh(2\\mathbf{\\phi}\_p^\\textsf{T}\\mathbf{y})$
 figure
 fplot(@(x) abs(x),[-5 5],':','LineWidth',2,'DisplayName','|\cdot|')
 hold on
@@ -232,17 +175,12 @@ legend
 grid on
 axis equal
 hold off
-%% 
-% 要素画像の数 
-
+%[text] Number of atomic images
 nDims = prod(szBlk);
 nAtoms = ceil(redundancyRatio*nDims);
-%% 
-% 辞書 $\mathbf{\Phi}$の初期化
-%% 
-% * 二次元離散コサイン変換
-% * ランダム
-
+%[text] Initialization of the dictionary $\\mathbf{\\Phi}$
+%[text] - two-dimensional DCT
+%[text] - random \
 Phi_rica = randn(nDims,nAtoms);
 Phi_rica = Phi_rica/norm(Phi_rica,'fro');
 for iAtom = 1:nDims
@@ -250,9 +188,7 @@ for iAtom = 1:nDims
     delta(iAtom) = 1;
     Phi_rica(:,iAtom) = reshape(idct2(delta),nDims,1);
 end
-%% 
-% 要素ベクトルを要素画像に変換 
-
+%[text] Reshape the atoms into atomic images
 atomicImagesRica = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesRica(:,:,iAtom) = reshape(Phi_rica(:,iAtom),szBlk(1),szBlk(2));
@@ -260,81 +196,59 @@ end
 figure
 montage(imresize(atomicImagesRica,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of initial dictionary (DCT & random)')
-% 再構成 ICA オブジェクトの作成
-% PCAに合わせて予め零平均化したデータで学習
-
+%[text] #### Creation of the reconstruction ICA object
+%[text] Training with the centered data as for PCA
 model = rica(Y.',nAtoms,...
     'IterationLimit',nItersRica,...
     'ContrastFcn','logcosh',...
     'InitialTransformWeight',Phi_rica,...
     'Lambda',1/(2*alpha));
-%% 
-% コスト評価のグラフ 
-
+%[text] Graph of the cost
 info = model.FitInfo;
 figure
 plot(info.Iteration,info.Objective)
 xlabel('Number of iteration')
 ylabel('Cost')
 grid on
-%% 
-% 要素ベクトルを要素画像に変換
-
+%[text] Reshape the atoms into atomic images
 Phi_rica = model.TransformWeights;
 atomicImagesRica = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesRica(:,:,iAtom) = reshape(Phi_rica(:,iAtom),szBlk(1),szBlk(2));
 end
-% 要素画像の表示（辞書）
-
+%[text] #### Show the atomic images (dictionary)
 figure
 montage(imresize(atomicImagesRica,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of RICA')
-% ブロックRICAによる合成処理とその随伴処理の定義
-
+%[text] #### Synthesis process by the block RICA and its adjoint
 syn_blkrica = @(x) col2im(Phi_rica*x,szBlk,szOrg,"distinct");
 adj_blkrica = @(y) Phi_rica.'*im2col(y,szBlk,"distinct");
-%% 
-% 随伴関係の確認
-
+%[text] Check of the adjoint relation
 x = adj_blkrica(y);
 v = randn(size(x));
 u = syn_blkrica(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-9)
-%% K-特異値分解
-% パラメータ設定
-%% 
-% * 繰返し回数 (Number of iterations)
-
+%%
+%[text] ## k-singular value decomposition (k-SVD)
+%[text] Parameter settings
+%[text] - nItersKsvd: number of iterations \
 % Number of iterations
 nItersKsvd = 5e3;
-% 問題設定 (Problem setting):
-% $$\{\hat{\mathbf{\Phi}},\{ \hat{\mathbf{x}}_b \}\}=\arg\min_{\{\mathbf{\Phi},\{\mathbf{x}_b\}\}}\frac{1}{2S}\sum_{b=1}^{S}\|\mathbf{y}_b-\mathbf{\Phi}\hat{\mathbf{x}}_b\|_2^2,\ 
-% \quad\mathrm{s.t.}\ \forall b, \|\mathbf{x}_b\|_0\leq K$$$
-% アルゴリズム :
-% スパース近似ステップと辞書更新ステップを繰返す．
-%% 
-% * スパース近似ステップ 
-%% 
-% $$\hat{\mathbf{x}}_b=\arg\min_{\mathbf{x}} \frac{1}{2}\|\mathbf{y}_b-\hat{\mathbf{\Phi}}\mathbf{x}\|_2^2\ 
-% \quad \mathrm{s.t.}\ \|\mathbf{x}\|_0\leq K$$
-%% 
-% * 辞書更新ステップ 
-%% 
-% $$\hat{\mathbf{\Phi}}=\arg\min_{\mathbf{\Phi}}\frac{1}{2S}\sum_{b=1}^{S}\|\mathbf{y}_b-\mathbf{\Phi}\hat{\mathbf{x}}_b\|_2^2=\arg\min_{\mathbf{\Phi}}\frac{1}{2S}\left\|\left(\mathbf{Y}-\sum_{p\neq 
-% k}\mathbf{\phi}_p\hat{\mathbf{X}}_{p,\colon}\right)-\mathbf{\phi}_k\hat{\mathbf{X}}_{k,\colon}\right\|_F^2$$
-% 
-% 
-% 
-% 係数の数 
-
+if isQuick, nItersKsvd = 2; end
+%[text] #### Problem setting
+%[text]  $\\{\\hat{\\mathbf{\\Phi}},\\{ \\hat{\\mathbf{x}}\_b \\}\\}=\\arg\\min\_{\\{\\mathbf{\\Phi},\\{\\mathbf{x}\_b\\}\\}}\\frac{1}{2S}\\sum\_{b=1}^{S}\\|\\mathbf{y}\_b-\\mathbf{\\Phi}\\hat{\\mathbf{x}}\_b\\|\_2^2,\\ \\quad\\mathrm{s.t.}\\ \\forall b, \\|\\mathbf{x}\_b\\|\_0\\leq K$
+%[text] #### Algorithm
+%[text] Repeat the sparse approximation step and the dictionary update step.
+%[text] - Sparse approximation step \
+%[text]  $\\hat{\\mathbf{x}}\_b=\\arg\\min\_{\\mathbf{x}} \\frac{1}{2}\\|\\mathbf{y}\_b-\\hat{\\mathbf{\\Phi}}\\mathbf{x}\\|\_2^2\\ \\quad \\mathrm{s.t.}\\ \\|\\mathbf{x}\\|\_0\\leq K$
+%[text] - Dictionary update step \
+%[text]  $\\hat{\\mathbf{\\Phi}}=\\arg\\min\_{\\mathbf{\\Phi}}\\frac{1}{2S}\\sum\_{b=1}^{S}\\|\\mathbf{y}\_b-\\mathbf{\\Phi}\\hat{\\mathbf{x}}\_b\\|\_2^2=\\arg\\min\_{\\mathbf{\\Phi}}\\frac{1}{2S}\\left\\|\\left(\\mathbf{Y}-\\sum\_{p\\neq k}\\mathbf{\\phi}\_p\\hat{\\mathbf{X}}\_{p,\\colon}\\right)-\\mathbf{\\phi}\_k\\hat{\\mathbf{X}}\_{k,\\colon}\\right\\|\_F^2$
+%[text] 
+%[text] Number of coefficients
 nCoefsKsvd = max(floor(sparsityRatio*nDims),1);
-%% 
-% 辞書 $\mathbf{\Phi}$の初期化 
-%% 
-% * 二変量離散コサイン変換
-% * ランダム 
-
+%[text] Initialization of the dictionary $\\mathbf{\\Phi}$
+%[text] - two-dimensional DCT
+%[text] - random \
 Phi_ksvd = randn(nDims,nAtoms);
 Phi_ksvd = Phi_ksvd/norm(Phi_ksvd,'fro');
 for iAtom = 1:nDims
@@ -342,9 +256,7 @@ for iAtom = 1:nDims
     delta(iAtom) = 1;
     Phi_ksvd(:,iAtom) = reshape(idct2(delta),nDims,1);
 end
-%% 
-% 要素ベクトルを要素画像に変換
-
+%[text] Reshape the atoms into atomic images
 atomicImagesKsvd = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesKsvd(:,:,iAtom) = reshape(Phi_ksvd(:,iAtom),szBlk(1),szBlk(2));
@@ -352,29 +264,22 @@ end
 figure
 montage(imresize(atomicImagesKsvd,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of initial dictionary (DCT & random)')
-% スパース近似ステップと辞書更新ステップの繰り返し
-%% 
-% * スパース近似： 直交マッチング追跡 (OMP)
-% * 辞書更新： 特異値分解(SVD)と1-ランク近似 
-%% 
-% 辞書更新の内容
-%% 
-% # $k\leftarrow 1$
-% # 誤差行列 $\mathbf{E}_k$ を定義：$\mathbf{E}_k\colon = \mathbf{Y}-\sum_{p\neq k}\mathbf{\phi}_p\hat{\mathbf{X}}_{p,\colon}$
-% # データ行 $\hat{\mathbf{X}}_{k,\colon}$の非零値を抽出する行列 $\mathbf{\Omega}_k$を定義： $\hat{\mathbf{X}}_{k,\colon}^R=\hat{\mathbf{X}}_{k,\colon}\mathbf{\Omega}_k 
-% \Leftrightarrow \hat{\mathbf{X}}_{k,\colon}^R\mathbf{\Omega}_k^T=\hat{\mathbf{X}}_{k,\colon}$
-% # 誤差行列 $\mathbf{E}_k$ を行列 $\mathbf{\Omega}_k$で縮退： $\mathbf{E}_k^R \colon=\mathbf{E}_k\mathbf{\Omega}_k$
-% # 縮退した誤差行列$\mathbf{E}_k^R$を特異値分解：$\mathbf{E}_k^R =\mathbf{U}\mathbf{S}\mathbf{V}^T=\left(\mathbf{u}_1,\mathbf{u}_2,\cdots,\mathbf{u}_r\right)\mathrm{diag}(\sigma_1,\sigma_2,\cdots,\sigma_r)\left(\mathbf{v}_1,\mathbf{v}_2,\cdots,\mathbf{v}_r\right)^T$
-% # 要素ベクトル $\mathbf{\phi}_k$ を更新： $\mathbf{k}\leftarrow \mathbf{u}_1$
-% # データ行$\hat{\mathbf{X}}_{k,\colon}$を更新： $\hat{\mathbf{X}}_{k,\colon}\leftarrow 
-% \sigma_1\mathbf{v}_{1}^T$
-% # $k\leftarrow k+1$
-% # $k\leq N$ ならば 2. へ $k>N$ ならば終了
-%% 
-% ただし， $\sigma_1$ を最大特異値とする．
-% 交互ステップの繰返し計算
-% PCAに合わせて予め零平均化したデータで学習
-
+%[text] #### Iteration of the sparse approximation step and the dictionary update step
+%[text] - Sparse approximation: orthogonal matching pursuit (OMP)
+%[text] - Dictionary update: singular value decomposition (SVD) and rank-1 approximation \
+%[text] Procedure of the dictionary update
+%[text] 1. $k\\leftarrow 1$
+%[text] 2. Define the error matrix $\\mathbf{E}\_k\\colon = \\mathbf{Y}-\\sum\_{p\\neq k}\\mathbf{\\phi}\_p\\hat{\\mathbf{X}}\_{p,\\colon}$
+%[text] 3. Define the matrix $\\mathbf{\\Omega}\_k$ that extracts the non-zero entries of the row $\\hat{\\mathbf{X}}\_{k,\\colon}$: $\\hat{\\mathbf{X}}\_{k,\\colon}^R=\\hat{\\mathbf{X}}\_{k,\\colon}\\mathbf{\\Omega}\_k$
+%[text] 4. Reduce the error matrix $\\mathbf{E}\_k$ by the matrix $\\mathbf{\\Omega}\_k$: $\\mathbf{E}\_k^R \\colon=\\mathbf{E}\_k\\mathbf{\\Omega}\_k$
+%[text] 5. Singular value decomposition of the reduced error matrix: $\\mathbf{E}\_k^R =\\mathbf{U}\\mathbf{S}\\mathbf{V}^\\top=\\left(\\mathbf{u}\_1,\\mathbf{u}\_2,\\cdots,\\mathbf{u}\_r\\right)\\mathrm{diag}(\\sigma\_1,\\sigma\_2,\\cdots,\\sigma\_r)\\left(\\mathbf{v}\_1,\\mathbf{v}\_2,\\cdots,\\mathbf{v}\_r\\right)^\\top$
+%[text] 6. Update the atom $\\mathbf{\\phi}\_k$: $\\mathbf{\\phi}\_k\\leftarrow \\mathbf{u}\_1$
+%[text] 7. Update the row $\\hat{\\mathbf{X}}\_{k,\\colon}^R$: $\\hat{\\mathbf{X}}\_{k,\\colon}^R\\leftarrow \\sigma\_1\\mathbf{v}\_{1}^\\top$
+%[text] 8. $k\\leftarrow k+1$
+%[text] 9. If $k\\leq P$ go to 2, otherwise finish. \
+%[text] where $\\sigma\_1$ is the largest singular value.
+%[text] #### Iterative calculation of the alternating steps
+%[text] Training with the centered data as for PCA
 cost = zeros(1,nItersKsvd);
 nSamples = size(Y,2);
 for iIter = 1:nItersKsvd
@@ -404,17 +309,13 @@ for iIter = 1:nItersKsvd
     end
     cost(iIter) = (norm(Y-Phi_ksvd*X,'fro')^2)/(2*nSamples);
 end
-%% 
-% コスト評価のグラフ 
-
+%[text] Graph of the cost
 figure
 plot(cost)
 xlabel('Number of iteration')
 ylabel('Cost')
 grid on
-%% 
-% 要素ベクトルを要素画像に変換 
-
+%[text] Reshape the atoms into atomic images
 atomicImagesKsvd = zeros(szBlk(1),szBlk(2),nAtoms);
 for iAtom = 1:nAtoms
     atomicImagesKsvd(:,:,iAtom) = reshape(Phi_ksvd(:,iAtom),szBlk(1),szBlk(2));
@@ -422,74 +323,41 @@ end
 figure
 montage(imresize(atomicImagesKsvd,8,'nearest')+.5,'BorderSize',[2 2],'Size',[ceil(nAtoms/8) 8])
 title('Atomic images of K-SVD')
-% ブロックK-特異値分解による合成処理とその随伴処理の定義
-
+%[text] #### Synthesis process by the block k-SVD and its adjoint
 syn_blkksvd = @(x) col2im(Phi_ksvd*x,szBlk,szOrg,"distinct");
 adj_blkksvd = @(y) Phi_ksvd.'*im2col(y,szBlk,"distinct");
-%% 
-% 随伴関係の確認
-
+%[text] Check of the adjoint relation
 x = adj_blkksvd(y);
 v = randn(size(x));
 u = syn_blkksvd(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-9)
-%% 2変量ラティス構造冗長フィルタバンク
-% 例として，（偶対称チャネルと奇対称チャネルが等しい）偶数チャネル、偶数のポリフェーズ次数をもつタイプI非分離冗長重複変換(NSOLT)
-% 
-% $$\mathbf{E}(z_\mathrm{v},z_\mathbf{h})=\left(\prod_{n_\mathrm{h}=1}^{\nu_\mathrm{h}/2}{\mathbf{V}_{2n_\mathrm{h}}^{\{\mathrm{h}\}}}\bar{\mathbf{Q}}(z_\mathrm{h}){\mathbf{V}_{2k_\mathrm{h}-1}^{\{\mathrm{h}\}}}{\mathbf{Q}}(z_\mathrm{h})\right)%\left(\prod_{n_{\mathrm{v}}=1}^{\nu_\mathrm{v}/2}{\mathbf{V}_{2n_\mathrm{v}}^{\{\mathrm{v}\}}}\bar{\mathbf{Q}}(z_\mathrm{v}){\mathbf{V}_{2n_\mathrm{v}-1}^{\{\mathrm{v}\}}}{\mathbf{Q}}(z_\mathrm{v})\right)%\mathbf{V}_0\mathbf{E}_0,$$
-% 
-% $$\mathbf{R}(z_\mathrm{v},z_\mathbf{h})=\mathbf{E}^\textsf{T}(z_\mathrm{v}^{-1},z_\mathrm{h}^{-1}),$$
-% 
-% を採用する．ただし，
-%% 
-% * $\mathbf{E}(z_\mathrm{v},z_\mathrm{h})$:  分析フィルタバンクのType-I ポリフェーズ行列
-% * $\mathbf{R}(z_\mathrm{v},z_\mathrm{h})$: 合成フィルタバンクのType-II ポリフェーズ行列
-% * $z_d\in\mathbb{C}, d\in\{\mathrm{v},\mathrm{h}\}$: Z-変換の変数
-% * $\nu_d\in \mathbb{N}, d\in\{\mathrm{v},\mathrm{h}\}$:方向 $d$ のポリフェーズ次数(重複ブロック数)
-% * $\mathbf{V}_0=\left(\begin{array}{cc}\mathbf{W}_{0} & \mathbf{O} \\\mathbf{O} 
-% & \mathbf{U}_0\end{array}\right)%\left(\begin{array}{c}\mathbf{I}_{M/2} \\ \mathbf{O} 
-% \\\mathbf{I}_{M/2} \\\mathbf{O}\end{array}\right)\in\mathbb{R}^{P\times M}$,$\mathbf{V}_n^{\{d\}}=\left(\begin{array}{cc}\mathbf{I}_{P/2} 
-% & \mathbf{O} \\\mathbf{O} & \mathbf{U}_n^{\{d\}}\end{array}\right)\in\mathbb{R}^{P\times 
-% P}, d\in\{\mathrm{v},\mathrm{h}\}$, $\mathbf{W}_0, \mathbf{U}_0,\mathbf{U}_n^{\{d\}}\in\mathbb{R}^{P/2\times 
-% P/2}$は直交行列
-% * $\mathbf{Q}(z)=\mathbf{B}_{P}\left(\begin{array}{cc} \mathbf{I}_{P/2} &  
-% \mathbf{O} \\ \mathbf{O} &  z^{-1}\mathbf{I}_{P/2}\end{array}\right)\mathbf{B}_{P}$, 
-% $\bar{\mathbf{Q}}(z)=\mathbf{B}_{P}\left(\begin{array}{cc} z\mathbf{I}_{P/2} 
-% &  \mathbf{O} \\ \mathbf{O} &  \mathbf{I}_{P/2}\end{array}\right)\mathbf{B}_{P}$, 
-% $\mathbf{B}_{P}=\frac{1}{\sqrt{2}}\left(\begin{array}{cc} \mathbf{I}_{P/2} &  
-% \mathbf{I}_{P/2} \\ \mathbf{I}_{P/2} &  -\mathbf{I}_{P/2}\end{array}\right)$
-%% 
-% 【References】 
-%% 
-% * <https://jp.mathworks.com/help/dsp/ug/overview-of-filter-banks.html Overview 
-% of Filter Banks - MATLAB & Simulink - MathWorks 日本>
-% * MATLAB SaivDr Package: <https://github.com/msiplab/SaivDr https://github.com/msiplab/SaivDr>
-% * S. Muramatsu, K. Furuya and N. Yuki, "Multidimensional Nonseparable Oversampled 
-% Lapped Transforms: Theory and Design," in IEEE Transactions on Signal Processing, 
-% vol. 65, no. 5, pp. 1251-1264, 1 March1, 2017, doi: 10.1109/TSP.2016.2633240.
-% * S. Muramatsu, T. Kobayashi, M. Hiki and H. Kikuchi, "Boundary Operation 
-% of 2-D Nonseparable Linear-Phase Paraunitary Filter Banks," in IEEE Transactions 
-% on Image Processing, vol. 21, no. 4, pp. 2314-2318, April 2012, doi: 10.1109/TIP.2011.2181527.
-% * S. Muramatsu, M. Ishii and Z. Chen, "Efficient parameter optimization for 
-% example-based design of nonseparable oversampled lapped transform," 2016 IEEE 
-% International Conference on Image Processing (ICIP), Phoenix, AZ, 2016, pp. 
-% 3618-3622, doi: 10.1109/ICIP.2016.7533034.
-% * Furuya, K., Hara, S., Seino, K., & Muramatsu, S. (2016). Boundary operation 
-% of 2D non-separable oversampled lapped transforms. _APSIPA Transactions on Signal 
-% and Information Processing, 5_, E9. doi:10.1017/ATSIP.2016.3.
-% 2次元画像の階層的分析
-% $R_M^P(\tau)$ をツリーレベル $\tau$の階層構造フィルタバンクの冗長度とすると、
-% 
-% $$R_M^P(\tau)=\left\{\begin{array}{ll} (P-1)\tau + 1, & M=1, \\ \frac{P-1}{M-1}-\frac{P-M}{(M-1)M^\tau}, 
-% & M\geq 2.\end{array}\right.$$
-% 
-% となる．
-% 
-% 構成パラメータ設定
-
+%%
+%[text] ## Bivariate lattice-structure oversampled filter banks
+%[text] As an example, let us adopt a type-I non-separable oversampled lapped transform (NSOLT) with an even number of channels (the numbers of even- and odd-symmetric channels are identical) and even polyphase orders:
+%[text]  $\\mathbf{E}(z\_\\mathrm{v},z\_\\mathrm{h})\n=\n\\left(\\prod\_{n\_\\mathrm{h}=1}^{\\nu\_\\mathrm{h}/2}\n{\\mathbf{V}\_{2n\_\\mathrm{h}}^{\\{\\mathrm{h}\\}}}\\bar{\\mathbf{Q}}(z\_\\mathrm{h}){\\mathbf{V}\_{2k\_\\mathrm{h}-1}^{\\{\\mathrm{h}\\}}}{\\mathbf{Q}}(z\_\\mathrm{h})\\right)\n%\n\\left(\\prod\_{n\_{\\mathrm{v}}=1}^{\\nu\_\\mathrm{v}/2}{\\mathbf{V}\_{2n\_\\mathrm{v}}^{\\{\\mathrm{v}\\}}}\\bar{\\mathbf{Q}}(z\_\\mathrm{v}){\\mathbf{V}\_{2n\_\\mathrm{v}-1}^{\\{\\mathrm{v}\\}}}{\\mathbf{Q}}(z\_\\mathrm{v})\\right)\n%\n\\mathbf{V}\_0\\mathbf{E}\_0,$
+%[text]  $\\mathbf{R}(z\_\\mathrm{v},z\_\\mathrm{h})\n=\\mathbf{E}^\\textsf{T}(z\_\\mathrm{v}^{-1},z\_\\mathrm{h}^{-1}),$
+%[text] where
+%[text] - $\\mathbf{E}(z\_\\mathrm{v},z\_\\mathrm{h})$: type-I polyphase matrix of the analysis filter bank
+%[text] - $\\mathbf{R}(z\_\\mathrm{v},z\_\\mathrm{h})$: type-II polyphase matrix of the synthesis filter bank
+%[text] - $z\_d\\in\\mathbb{C}, d\\in\\{\\mathrm{v},\\mathrm{h}\\}$: variable of the Z-transform
+%[text] - $\\nu\_d\\in \\mathbb{N}, d\\in\\{\\mathrm{v},\\mathrm{h}\\}$: polyphase order in direction $d$ (number of overlapping blocks)
+%[text] - $\\mathbf{V}\_0=\\left(\\begin{array}{cc}\\mathbf{W}\_{0} & \\mathbf{O} \\\\\\mathbf{O} & \\mathbf{U}\_0\\end{array}\\right)\n%\n\\left(\\begin{array}{c}\\mathbf{I}\_{M/2} \\\\ \n\\mathbf{O} \\\\\n\\mathbf{I}\_{M/2} \\\\\n\\mathbf{O}\n\\end{array}\\right)\\in\\mathbb{R}^{P\\times M}$,$\\mathbf{V}\_n^{\\{d\\}}=\\left(\\begin{array}{cc}\\mathbf{I}\_{P/2} & \\mathbf{O} \\\\\\mathbf{O} & \\mathbf{U}\_n^{\\{d\\}}\\end{array}\\right)\\in\\mathbb{R}^{P\\times P}, d\\in\\{\\mathrm{v},\\mathrm{h}\\}$, where $\\mathbf{W}\_0, \\mathbf{U}\_0,\\mathbf{U}\_n^{\\{d\\}}\\in\\mathbb{R}^{P/2\\times P/2}$ are orthonormal matrices.
+%[text] - $\\mathbf{Q}(z)=\\mathbf{B}\_{P}\\left(\\begin{array}{cc} \\mathbf{I}\_{P/2} &  \\mathbf{O} \\\\ \\mathbf{O} &  z^{-1}\\mathbf{I}\_{P/2}\\end{array}\\right)\\mathbf{B}\_{P}$, $\\bar{\\mathbf{Q}}(z)=\\mathbf{B}\_{P}\\left(\\begin{array}{cc} z\\mathbf{I}\_{P/2} &  \\mathbf{O} \\\\ \\mathbf{O} &  \\mathbf{I}\_{P/2}\\end{array}\\right)\\mathbf{B}\_{P}$, $\\mathbf{B}\_{P}=\\frac{1}{\\sqrt{2}}\\left(\\begin{array}{cc} \\mathbf{I}\_{P/2} &  \\mathbf{I}\_{P/2} \\\\ \\mathbf{I}\_{P/2} &  -\\mathbf{I}\_{P/2}\\end{array}\\right)$ \
+%[text] References
+%[text] - [Overview of Filter Banks - MATLAB & Simulink - MathWorks](https://www.mathworks.com/help/dsp/ug/overview-of-filter-banks.html)
+%[text] - MATLAB SaivDr Package: [https://github.com/msiplab/SaivDr](https://github.com/msiplab/SaivDr)
+%[text] - S. Muramatsu, K. Furuya and N. Yuki, "Multidimensional Nonseparable Oversampled Lapped Transforms: Theory and Design," in IEEE Transactions on Signal Processing, vol. 65, no. 5, pp. 1251-1264, 1 March1, 2017, doi: 10.1109/TSP.2016.2633240.
+%[text] - S. Muramatsu, T. Kobayashi, M. Hiki and H. Kikuchi, "Boundary Operation of 2-D Nonseparable Linear-Phase Paraunitary Filter Banks," in IEEE Transactions on Image Processing, vol. 21, no. 4, pp. 2314-2318, April 2012, doi: 10.1109/TIP.2011.2181527.
+%[text] - S. Muramatsu, M. Ishii and Z. Chen, "Efficient parameter optimization for example-based design of nonseparable oversampled lapped transform," 2016 IEEE International Conference on Image Processing (ICIP), Phoenix, AZ, 2016, pp. 3618-3622, doi: 10.1109/ICIP.2016.7533034.
+%[text] - Furuya, K., Hara, S., Seino, K., & Muramatsu, S. (2016). Boundary operation of 2D non-separable oversampled lapped transforms. *APSIPA Transactions on Signal and Information Processing, 5*, E9. doi:10.1017/ATSIP.2016.3. \
+%[text] ### Hierarchical decomposition of a two-dimensional image
+%[text] Let $R\_M^P(\\tau)$ be the redundancy of the $\\tau$-level tree-structured filter bank; then
+%[text]  $R\_M^P(\\tau)=\\left\\{\\begin{array}{ll} (P-1)\\tau + 1, & M=1, \\\\ \\frac{P-1}{M-1}-\\frac{P-M}{(M-1)M^\\tau}, & M\\geq 2.\\end{array}\\right.$
+%[text] #### 
+%[text] #### Configuration parameters
 %%{
 % Decimation factor (Strides)
-decFactor = [2 2]; % [μv μh] 
+decFactor = [2 2]; % [Mv Mh] 
 
 % Number of channels ( sum(nChannels) >= prod(decFactors) )
 nChannels = [4 4]; % [Ps Pa] (Ps=Pa)
@@ -503,7 +371,7 @@ ppOrder = [4 4];
 
 %{
 % Decimation factor (Strides)
-decFactor =  [4 4]; % [μv μh] 
+decFactor =  [4 4]; % [Mv Mh] 
 
 % Number of channels ( sum(nChannels) >= prod(decFactors) )
 nChannels = [13 13]; % [Ps Pa] (Ps=Pa)
@@ -517,7 +385,7 @@ ppOrder = [2 2];
 
 %{
 % Decimation factor (Strides)
-decFactor =  [8 8]; % [μv μh] 
+decFactor =  [8 8]; % [Mv Mh] 
 
 % Number of channels ( sum(nChannels) >= prod(decFactors) )
 nChannels = [53 53]; % [Ps Pa] (Ps=Pa)
@@ -537,10 +405,7 @@ redundancyNsolt = ...
     (prod(decFactor)>1)*((P-1)/(M-1)-(P-M)/((M-1)*M^nLevels))
 assert(redundancyNsolt<redundancyRatio)
 
-%% 
-% $$L_\mathrm{v}\times L_\mathrm{h}=\left(\mu_\mathrm{v}^{\tau}+{\nu}_\mathrm{v}\frac{\mu_\mathrm{v}(\mu_\mathrm{v}^{\tau}-1)}{\mu_\mathrm{v}-1}\right) 
-% \times\left(\mu_\mathrm{h}^{\tau}+\nu_\mathrm{h}\frac{\mu_\mathrm{h}(\mu_\mathrm{h}^{\tau}-1)}{\mu_\mathrm{h}-1}\right)$$ 
-
+%[text] $L\_\\mathrm{v}\\times L\_\\mathrm{h}=\\left(\\mu\_\\mathrm{v}^{\\tau}+{\\nu}\_\\mathrm{v}\\frac{\\mu\_\\mathrm{v}(\\mu\_\\mathrm{v}^{\\tau}-1)}{\\mu\_\\mathrm{v}-1}\\right) \\times\\left(\\mu\_\\mathrm{h}^{\\tau}+\\nu\_\\mathrm{h}\\frac{\\mu\_\\mathrm{h}(\\mu\_\\mathrm{h}^{\\tau}-1)}{\\mu\_\\mathrm{h}-1}\\right)$ 
 % Filter size [ Ly Lx ]
 maxDecFactor = decFactor.^nLevels;
 szFilters = maxDecFactor + ppOrder.*decFactor.*(maxDecFactor-1)./(decFactor-1)
@@ -555,11 +420,13 @@ nSubImgs = floor(nPatches*prod(szBlk./szPatchTrn))
 assert(nSubImgs > 0)
 
 % No DC-leakage
-noDcLeakage = true
-% 辞書の設定
-
-if exist("./data/"+nsoltDic+".mat","file")
-    S = load("./data/"+nsoltDic);
+noDcLeakage = true %[control:checkbox:7783]{"position":[15,19]}
+%%
+%[text] #### Setting of the dictionary
+dicfiles = [fullfile(resfolder,nsoltDic+".mat") fullfile(datfolder,nsoltDic+".mat")];
+idxDic = find(strlength(nsoltDic) > 0 & isfile(dicfiles),1);
+if ~isempty(idxDic)
+    S = load(dicfiles(idxDic));
     analysisnet = S.analysisnet;
     synthesisnet = S.synthesisnet;
     nLevels_ = extractnumlevels(analysisnet);
@@ -572,6 +439,7 @@ if exist("./data/"+nsoltDic+".mat","file")
 else
     % Number of iterations
     nItersNsolt = 10;
+    if isQuick, nItersNsolt = 1; end
 
     % Standard deviation of initial angles
     stdInitAng = 1e-1; %pi/6;
@@ -581,38 +449,20 @@ else
 
     % Number of Epochs (1 Epoch = nSubImgs/miniBachSize iterlations)
     maxEpochs = 30;
+    if isQuick, maxEpochs = 1; end
 
     % Number of iterations
     maxIters = nSubImgs/miniBatchSize * maxEpochs
 
-    % Training options
-    opts = trainingOptions('sgdm', ... % Stochastic gradient descent w/ momentum
-        ...'Momentum', 0.9000,...
-        'InitialLearnRate',5.0e-03,...
-        ...'LearnRateScheduleSettings','none',...
-        'L2Regularization',0.0, ... 1.0e-04,... 
-        ...'GradientThresholdMethod','l2norm',...
-        ...'GradientThreshold',Inf,...
-        'MaxEpochs',maxEpochs,...30,...
-        'MiniBatchSize',miniBatchSize,...128,...
-        'Verbose',1,...
-        ...'VerboseFrequency',50,...
-        ...'ValidationData',[],...
-        ...'ValidationFrequency',50,...
-        ...'ValidationPatience',Inf,...
-        ...'Shuffle','once',...
-        ...'CheckpointPath','',...
-        ...'ExecutionEnvironment','auto',...
-        ...'WorkerLoad',[],...
-        ...'OutputFcn',[],...
-        'Plots','none',...'training-progress',...
-        ...'SequenceLength','longest',...
-        ...'SequencePaddingValue',0,...
-        ...'SequencePaddingDirection','right',...
-        ...'DispatchInBackground',0,...
-        'ResetInputNormalization',0);...1
-% 層構造の構築
-
+    % Training options for trainnet
+    opts = trainingOptions("sgdm", ... % stochastic gradient descent with momentum
+        InitialLearnRate=5.0e-03, ...
+        L2Regularization=0.0, ...
+        MaxEpochs=maxEpochs, ...
+        MiniBatchSize=miniBatchSize, ...
+        Verbose=true, ...
+        Plots="none");
+%[text] #### Construction of the layers
     import saivdr.dcnn.*
     analysislgraph = fcn_creatensoltlgraph2d([],...
         'InputSize',szPatchTrn,...
@@ -646,7 +496,6 @@ else
     nLearnables = height(synthesisnet.Learnables);
     for iLearnable = 1:nLearnables
         if synthesisnet.Learnables.Parameter(iLearnable)=="Angles"
-            layerName = synthesisnet.Learnables.Layer(iLearnable);
             synthesisnet.Learnables.Value(iLearnable) = ...
                 cellfun(@(x) x+stdInitAng*randn(size(x)), ...
                 synthesisnet.Learnables.Value(iLearnable),'UniformOutput',false);
@@ -654,12 +503,9 @@ else
     end
 
     % Copy the synthesizer's parameters to the analyzer
-    synthesislgraph = layerGraph(synthesisnet);
-    analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
-    analysisnet = dlnetwork(analysislgraph);
-% 随伴関係（完全再構成）の確認
-% NSOLTはパーセバルタイト性を満たす．
-
+    analysisnet = dlnetwork(fcn_cpparamssyn2ana(analysislgraph,synthesisnet));
+%[text] #### Confirmation of the adjoint relation (perfect reconstruction)
+%[text] NSOLT satisfies the Parseval tight property.
     nOutputs = nLevels+1;
     x = rand(szPatchTrn,'single');
     s = cell(1,nOutputs);
@@ -667,161 +513,106 @@ else
     [s{1:nOutputs}] = analysisnet.predict(dlx);
     dly = synthesisnet.predict(s{:});
     display("MSE: " + num2str(mse(dlx,dly)))
-% 要素画像の初期状態
-
+%[text] #### Initial state of the atomic images
     import saivdr.dcnn.*
     figure
     atomicimshow(synthesisnet,[],2^(nLevels-1))
     title('Atomic images of initial NSOLT')
-% 訓練画像の準備
-% 画像データストアからランダムにパッチを抽出
-% 
-% PCAに合わせて予め零平均化したデータで学習
-
+%[text] ### Preparation of the training images
+%[text] Patches are randomly extracted from the image datastore.
+%[text] Training with the centered data as for PCA
     imds = imageDatastore(file_yorg,"ReadFcn",@(x) meansubtract(im2single(imread(x))));
     patchds = randomPatchExtractionDatastore(imds,imds,szPatchTrn,'PatchesPerImage',nSubImgs);
-    figure
     minibatch = preview(patchds);
     responses = minibatch.ResponseImage;
     responses = cellfun(@(x) x + 0.5,responses,'UniformOutput',false);
     figure
     montage(responses,'Size',[2 4]);
     drawnow
-% 畳み込み辞書学習
-% 問題設定:
-% $$\{\hat{\mathbf{\theta}},\{ \hat{\mathbf{x}}_n \}\}=\arg\min_{\{\mathbf{\theta},\{\mathbf{x}_n\}\}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{y}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{x}}_n\|_2^2,\ 
-% \quad\mathrm{s.t.}\ \forall n, \|\mathbf{x}_n\|_0\leq K,$$$
-% 
-% ただし， $\mathbf{D}_{\mathbf{\theta}}$は設計パラメータベクトル $\mathbf{\theta}}$をもつ畳み込み辞書．
-% 
-% 
-% アルゴリズム:
-% スパース近似ステップと辞書更新ステップを繰返す．
-%% 
-% * スパース近似ステップ
-%% 
-% $$\hat{\mathbf{x}}_n=\arg\min_{\mathbf{x}_n}\frac{1}{2} \|\mathbf{y}_n-\hat{\mathbf{D}}\mathbf{x}_n\|_2^2\ 
-% \quad \mathrm{s.t.}\ \|\mathbf{x}_n\|_0\leq K$$
-%% 
-% * 辞書更新ステップ
-%% 
-% $$\hat{\mathbf{\theta}}=\arg\min_{\mathbf{\theta}}\frac{1}{2S}\sum_{n=1}^{S}\|\mathbf{y}_n-\mathbf{D}_{\mathbf{\theta}}\hat{\mathbf{x}}_n\|_2^2$$
-% 
-% $$\hat{\mathbf{D}}=\mathbf{D}_{\hat{\mathbf{\theta}}$$
-% 採用するスパース近似と辞書更新の手法:
-%% 
-% * スパース近似：（正規化なし）繰返しハード閾値処理(IHT)
-% * 辞書更新： モーメンタム付き確率的勾配降下法(SGD)
-
+%[text] ### Convolutional dictionary learning
+%[text] #### Problem setting
+%[text]  $\\{\\hat{\\mathbf{\\theta}},\\{ \\hat{\\mathbf{x}}\_n \\}\\}=\\arg\\min\_{\\{\\mathbf{\\theta},\\{\\mathbf{x}\_n\\}\\}}\\frac{1}{2S}\\sum\_{n=1}^{S}\\|\\mathbf{y}\_n-\\mathbf{D}\_{\\mathbf{\\theta}}\\hat{\\mathbf{x}}\_n\\|\_2^2,\\ \\quad\\mathrm{s.t.}\\ \\forall n, \\|\\mathbf{x}\_n\\|\_0\\leq K,$
+%[text] where $\\mathbf{D}\_{\\mathbf{\\theta}}$ is a convolutional dictionary with the design parameter vector $\\mathbf{\\theta}$.
+%[text] 
+%[text] #### Algorithm
+%[text] Repeat the sparse approximation step and the dictionary update step.
+%[text] - Sparse approximation step \
+%[text]  $\\hat{\\mathbf{x}}\_n=\\arg\\min\_{\\mathbf{x}\_n}\\frac{1}{2} \\|\\mathbf{y}\_n-\\hat{\\mathbf{D}}\\mathbf{x}\_n\\|\_2^2\\ \\quad \\mathrm{s.t.}\\ \\|\\mathbf{x}\_n\\|\_0\\leq K$
+%[text] - Dictionary update step \
+%[text]  $\\hat{\\mathbf{\\theta}}=\\arg\\min\_{\\mathbf{\\theta}}\\frac{1}{2S}\\sum\_{n=1}^{S}\\|\\mathbf{y}\_n-\\mathbf{D}\_{\\mathbf{\\theta}}\\hat{\\mathbf{x}}\_n\\|\_2^2$
+%[text]  $\\hat{\\mathbf{D}}=\\mathbf{D}\_{\\hat{\\mathbf{\\theta}}$
+%[text] #### Methods adopted
+%[text] - Sparse approximation: iterative hard thresholding (IHT) without normalization
+%[text] - Dictionary update: stochastic gradient descent with momentum (SGDM) by `trainnet` \
     % Check if IHT works for dlarray
     %x = dlarray(randn(szPatchTrn,'single'),'SSCB');
     %[y,coefs{1:nOutputs}] = iht(x,analysisnet,synthesisnet,sparsityRatio);
-% 辞書学習の繰返し計算
-
-    import saivdr.dcnn.*
-    %profile on
+%[text] #### Iterative calculation of the dictionary learning
     for iIter = 1:nItersNsolt
 
-        % Sparse approximation (Applied to produce an object of TransformedDatastore)
+        % Sparse approximation (applied to produce a TransformedDatastore)
         coefimgds = transform(patchds, @(x) iht4patchds(x,analysisnet,synthesisnet,sparsityRatio));
 
-        % Synthesis dictionary update
-        trainlgraph = synthesislgraph.replaceLayer('Lv1_Out',...
-            regressionLayer('Name','Lv1_Out'));
-        trainednet = trainNetwork(coefimgds,trainlgraph,opts);
+        % Synthesis dictionary update (mean squared error between the synthesized and original patches)
+        synthesisnet = trainnet(coefimgds,synthesisnet,"mse",opts);
 
-        % Analysis dictionary update (Copy parameters from synthesizer to analyzer)
-        trainedlgraph = layerGraph(trainednet);
-        analysislgraph = fcn_cpparamssyn2ana(analysislgraph,trainedlgraph);
-        analysisnet = dlnetwork(analysislgraph);
+        % Analysis dictionary update (copy the parameters from the synthesizer to the analyzer)
+        analysisnet = dlnetwork(fcn_cpparamssyn2ana(analysislgraph,synthesisnet));
 
         % Check the adjoint relation (perfect reconstruction)
-        checkadjointrelation(analysislgraph,trainedlgraph,nLevels,szPatchTrn);
-
-        % Replace layer
-        synthesislgraph = trainedlgraph.replaceLayer('Lv1_Out',...
-            nsoltIdentityLayer('Name','Lv1_Out'));
-        synthesisnet = dlnetwork(synthesislgraph);
+        checkadjointrelation(analysisnet,synthesisnet,nLevels,szPatchTrn);
 
     end
-    %profile off
-    %profile viewer
-% 訓練ネットワークの保存
-
-    import saivdr.dcnn.*
-    synthesislgraph = layerGraph(synthesisnet);
-    analysislgraph = fcn_cpparamssyn2ana(analysislgraph,synthesislgraph);
-    analysisnet = dlnetwork(analysislgraph);
-    save(sprintf('./data/nsoltdictionary_%s',datetime('now','Format','yyyyMMddHHmmssSSS')),'analysisnet','synthesisnet','nLevels')
+%[text] #### Save the trained network (results folder)
+    save(fullfile(resfolder,"nsoltdictionary_"+string(datetime("now","Format","yyyyMMddHHmmssSSS"))+".mat"), ...
+        'analysisnet','synthesisnet','nLevels')
 end
 %%
-analysislgraph = layerGraph(analysisnet);
-synthesislgraph = layerGraph(synthesisnet);
 
 figure
 subplot(1,2,1)
-plot(analysislgraph)
+plot(analysisnet)
 title('Analysis NSOLT')
 subplot(1,2,2)
-plot(synthesislgraph)
+plot(synthesisnet)
 title('Synthesis NSOLT')
-% 要素画像の表示
-
-import saivdr.dcnn.*
+%[text] #### Show the atomic images
 
 figure
 
-atomicimshow(synthesisnet,[],2^(nLevels-1))
+saivdr.dcnn.atomicimshow(synthesisnet,[],2^(nLevels-1))
 title('Atomic images of trained NSOLT')
-% 推論用NSOLTネットワークの構築
+%[text] ### Construction of the NSOLT networks for the whole image
+%[text] The input layers of the `dlnetwork` objects are replaced for the size of the whole image.
+% Analyzer D^T
+analysisnet4predict = replaceLayer(analysisnet,"Image input",...
+    imageInputLayer([szOrg 1],"Name","Image input","Normalization","none"));
+analysisnet4predict = initialize(analysisnet4predict);
 
-
-% Assemble analyzer
-analysislgraph4predict = analysislgraph;
-analysislgraph4predict = analysislgraph4predict.replaceLayer('Image input',...
-    imageInputLayer(szOrg,'Name','Image imput','Normalization','none'));
-for iLayer = 1:height(analysislgraph4predict.Layers)
-    layer = analysislgraph4predict.Layers(iLayer);
-    if contains(layer.Name,"Lv"+nLevels+"_DcOut") || ...
-            ~isempty(regexp(layer.Name,'^Lv\d+_AcOut','once'))
-        analysislgraph4predict = analysislgraph4predict.replaceLayer(layer.Name,...
-            regressionLayer('Name',layer.Name));
-    end
-end
-analysisnet4predict = assembleNetwork(analysislgraph4predict);
-
-% Assemble synthesizer
-synthesislgraph4predict = synthesislgraph;
-synthesislgraph4predict = synthesislgraph4predict.replaceLayer('Lv1_Out',...
-    regressionLayer('Name','Lv1_Out'));
-for iLayer = 1:height(synthesislgraph4predict.Layers)
-    layer = synthesislgraph4predict.Layers(iLayer);
-    if contains(layer.Name,'Ac feature input')
+% Synthesizer D
+synthesisnet4predict = synthesisnet;
+for iLayer = 1:numel(synthesisnet4predict.Layers)
+    layer = synthesisnet4predict.Layers(iLayer);
+    if contains(layer.Name,"Ac feature input")
         iLv = str2double(layer.Name(3));
         sbSize = szOrg.*(decFactor.^(-iLv));
-        newlayer = ...
-            imageInputLayer([sbSize (sum(nChannels)-1)],'Name',layer.Name,'Normalization','none');
-        synthesislgraph4predict = synthesislgraph4predict.replaceLayer(...
-            layer.Name,newlayer);
-    elseif contains(layer.Name,sprintf('Lv%0d_Dc feature input',nLevels))
+        newlayer = imageInputLayer([sbSize (sum(nChannels)-1)],"Name",layer.Name,"Normalization","none");
+        synthesisnet4predict = replaceLayer(synthesisnet4predict,layer.Name,newlayer);
+    elseif contains(layer.Name,sprintf("Lv%0d_Dc feature input",nLevels))
         iLv = str2double(layer.Name(3));
         sbSize = szOrg.*(decFactor.^(-iLv));
-        newlayer = ...
-            imageInputLayer([sbSize 1],'Name',layer.Name,'Normalization','none');
-        synthesislgraph4predict = synthesislgraph4predict.replaceLayer(...
-            layer.Name,newlayer);
+        newlayer = imageInputLayer([sbSize 1],"Name",layer.Name,"Normalization","none");
+        synthesisnet4predict = replaceLayer(synthesisnet4predict,layer.Name,newlayer);
     end
 end
-synthesisnet4predict = assembleNetwork(synthesislgraph4predict);  
-% 随伴関係（完全再構成）の確認
-% NSOLTはパーセバルタイト性を満たす．
-
-u = rand(szOrg,'single');
-[s{1:nLevels+1}] = analysisnet4predict.predict(u);
-v = synthesisnet4predict.predict(s{1:nLevels+1});
-assert(mse(u,v)<1e-9)
-% NSOLTによる合成処理とその随伴処理の定義
-
+synthesisnet4predict = initialize(synthesisnet4predict);
+%[text] #### Confirmation of the adjoint relation (perfect reconstruction)
+%[text] NSOLT satisfies the Parseval tight property.
+u = dlarray(rand(szOrg,'single'),'SSCB');
+[s{1:nLevels+1}] = predict(analysisnet4predict,u);
+v = predict(synthesisnet4predict,s{1:nLevels+1});
+assert(mean((extractdata(u)-extractdata(v)).^2,"all")<1e-9)
+%[text] #### Synthesis process by NSOLT and its adjoint
 nsoltconfig.nLevels = nLevels;
 szCoefs = zeros(nLevels+1,3);
 for iLevel = 1:nLevels+1
@@ -833,15 +624,14 @@ end
 nsoltconfig.szCoefs = szCoefs;
 syn_nsolt = @(x) synthesisnsolt(x,synthesisnet4predict,nsoltconfig);
 adj_nsolt = @(y) analysisnsolt(y,analysisnet4predict,nsoltconfig);
-% 随伴関係の確認
-
+%[text] #### Check of the adjoint relation
 x = adj_nsolt(y);
 v = randn(size(x));
 u = syn_nsolt(v);
 assert(abs(dot(y(:),u(:))-dot(x(:),v(:)))<1e-3)
-%% 繰返しハード閾値処理(IHT)によるスパース近似の比較
-% 辞書の準備
-
+%%
+%[text] ## Comparison of the sparse approximation by iterative hard thresholding (IHT)
+%[text] #### Preparation of the dictionaries
 blkdctwon  = { syn_blkdct,  adj_blkdct,  "Block DCTwoN", false };
 blkdct  = { syn_blkdct,  adj_blkdct,  "Block DCT", true };
 blkpcawon  = { syn_blkpca,  adj_blkpca,  "Block PCAwoN", false };
@@ -852,28 +642,24 @@ nsoltwon   = { syn_nsolt,   adj_nsolt,   "NSOLTwoN", false };
 nsolt = { syn_nsolt,   adj_nsolt,   "NSOLT", true };
 dicset  = { blkdctwon, blkdct, blkpcawon, blkpca, blkrica, blkksvd, nsoltwon, nsolt };
 nDics   = length(dicset);
-% IHT
-% $$\mathbf{x}^{(t+1)}\leftarrow \mathcal{H}_{BK}\left(\mathbf{x}^{(t)}+\mu^{(t)}\hat{\mathbf{D}}^\textsf{T}\left(\mathbf{y}-\hat{\mathbf{D}}\mathbf{x}^{(t)}\right)\right)$$
-% 
-% $$t\leftarrow t+1$$
-%% 
-% * T. Blumensath and M. E. Davies, "Normalized Iterative Hard Thresholding: 
-% Guaranteed Stability and Performance," in IEEE Journal of Selected Topics in 
-% Signal Processing, vol. 4, no. 2, pp. 298-309, April 2010, doi: 10.1109/JSTSP.2010.2042411.
-
+%[text] #### IHT
+%[text]  $\\mathbf{x}^{(t+1)}\\leftarrow \\mathcal{H}\_{BK}\\left(\\mathbf{x}^{(t)}+\\mu^{(t)}\\hat{\\mathbf{D}}^\\textsf{T}\\left(\\mathbf{y}-\\hat{\\mathbf{D}}\\mathbf{x}^{(t)}\\right)\\right)$
+%[text]  $t\\leftarrow t+1$
+%[text] -  T. Blumensath and M. E. Davies, "Normalized Iterative Hard Thresholding: Guaranteed Stability and Performance," in IEEE Journal of Selected Topics in Signal Processing, vol. 4, no. 2, pp. 298-309, April 2010, doi: 10.1109/JSTSP.2010.2042411. \
 nItersIht = 2000;
+if isQuick, nItersIht = 20; end
 
-% 平均値を引いた画像を用意（近似後に平均値を加算）
+% Centered image (the mean is added after the approximation)
 ymean = mean(yorg,"all");
 y = yorg - ymean;
-% 準備
+% Preparation
 c = 1e-3;
 kappa = 1.1/(1-c);
 nCoefs = floor(sparsityRatio*prod(szOrg));
 psnrs = zeros(nItersIht,nDics);
 ssims = zeros(nItersIht,nDics);
 yaprxs = cell(1,nDics);
-% 繰り返し処理
+% Iterations
 for iDic = 1:nDics
     dic_ = dicset{iDic};
     synproc = dic_{1};
@@ -884,22 +670,22 @@ for iDic = 1:nDics
     display(dicname)
     s = adjproc(y); % D^Ty
     xt = zeros(size(s),'like',s); % x1 = 0;
-    if isStepSizeNormalized % 正規化あり
-        suppt = find(hardthresh(s,nCoefs)); % Γ1 = supp(H_K(D^Ty))
+    if isStepSizeNormalized % with normalization (NIHT)
+        suppt = find(hardthresh(s,nCoefs)); % G1 = supp(H_K(D^Ty))
         maskt = (abs(s)~=0);
     end
     for iIter=1:nItersIht
         % Gradient descent
         gt = adjproc(y-synproc(xt)); % g = D^T(y-Dxn)
-        if ~isStepSizeNormalized % 正規化なし
+        if ~isStepSizeNormalized % without normalization
             mu = (1-c);
             xtp1 = hardthresh(xt+mu*gt,nCoefs);
-        else % 正規化あり
-            ggt = gt(suppt); % g_Γn
-            ugt = synproc(maskt.*gt); % D_Γn^T g_Γn
+        else % with normalization (NIHT)
+            ggt = gt(suppt); % g_Gn
+            ugt = synproc(maskt.*gt); % D_Gn g_Gn
             mu = (ggt.'*ggt)/(ugt(:).'*ugt(:));
-            ttp1 = hardthresh(xt+mu*gt,nCoefs); % ~xn+1 = H_K(xn + μn gn)
-            supptp1 = find(ttp1); % Γn+1 = supp(~xn+1)
+            ttp1 = hardthresh(xt+mu*gt,nCoefs); % ~xn+1 = H_K(xn + mun gn)
+            supptp1 = find(ttp1); % Gn+1 = supp(~xn+1)
             if length(supptp1)==length(suppt) && all(supptp1==suppt)
                 xtp1 = ttp1; % xn+1 = ~xn+1
             else
@@ -910,11 +696,11 @@ for iDic = 1:nDics
                 else
                     while mu > omega
                         mu = mu/(kappa*(1-c));
-                        ttp1 = hardthresh(xt+mu*gt,nCoefs); % ~xn+1 = H_K(xn + μn gn)
+                        ttp1 = hardthresh(xt+mu*gt,nCoefs); % ~xn+1 = H_K(xn + mun gn)
                         dxt = ttp1-xt; % ~xn+1 - xn
                         omega = (1-c)*(norm(dxt,'fro')/norm(synproc(dxt),'fro'))^2;
                     end
-                    supptp1 = find(ttp1);  % Γn+1 = supp(~xn+1)
+                    supptp1 = find(ttp1);  % Gn+1 = supp(~xn+1)
                     xtp1 = ttp1; % xn+1 = ~xn+1
                 end
             end
@@ -936,20 +722,20 @@ for iDic = 1:nDics
     end
     yaprxs{iDic} = yaprx_ + ymean;
 end
-%% 近似結果の表示
-
+%%
+%[text] ## Display of the approximation results
 dicnames = [blkdctwon{3},blkdct{3},blkpcawon{3},blkpca{3},blkrica{3},blkksvd{3},nsoltwon{3},nsolt{3}];
 psnrtbl = array2table(psnrs,'VariableNames',dicnames);
 psnrtbl = horzcat(table((1:nItersIht).','VariableNames',"Iterations"),psnrtbl);
 ssimtbl = array2table(ssims,'VariableNames',dicnames);
 ssimtbl = horzcat(table((1:nItersIht).','VariableNames',"Iterations"),ssimtbl);
 
-% PSNR のグラフ
+% Graph of PSNR
 figure
 plot(psnrtbl,"Iterations",dicnames,'LineWidth',2)
 ylabel('PSNR [dB]')
 legend('Location','best')
-% SSIM のグラフ
+% Graph of SSIM
 figure
 plot(ssimtbl,"Iterations",dicnames,'LineWidth',2)
 ylabel('SSIM')
@@ -957,26 +743,26 @@ legend('Location','best')
 
 
 %%
-% 原画像の表示
+% Show the original image
 figure
 tiledlayout(2,ceil((nDics+1)/2))
 nexttile
 imshow(yorg)
 title("Original image")
-% 近似画像の表示
+% Show the approximated images
 for idx = 1:nDics
     yaprx = yaprxs{idx};
-    dicname = dicnames(idx)
-    file_yaprx = "./data/yaprx_" + replace(lower(dicname),' ','_') +".png";
+    dicname = dicnames(idx);
+    file_yaprx = fullfile(resfolder,"sample13_06_yaprx_" + replace(lower(dicname)," ","_") + ".png");
     imwrite(yaprx,file_yaprx)
     %
     nexttile
     imshow(yaprxs{idx})
     title(dicname+" "+num2str(psnrs(end,idx))+" dB")
 end
-%% 【関数定義】
-% NSOLT合成処理関数
-
+%%
+%[text] ## Functions
+%[text] #### NSOLT synthesis function
 function y = synthesisnsolt(x,synthesisnet4predict,config)
 nLevels = config.nLevels;
 szCoefs = config.szCoefs;
@@ -986,18 +772,17 @@ for iLevel = 1:nLevels+1
     sz_iLevel = szCoefs(iLevel,:);
     eidx = sidx+prod(sz_iLevel)-1;
     x_iLevel = x(sidx:eidx);
-    s{iLevel} = reshape(x_iLevel,sz_iLevel);
+    s{iLevel} = dlarray(single(reshape(x_iLevel,sz_iLevel)),'SSCB');
     sidx = eidx+1;
 end
-y = synthesisnet4predict.predict(s{1:nLevels+1});
+y = extractdata(predict(synthesisnet4predict,s{1:nLevels+1}));
 end
 
-% NSOLT分析処理関数
-
+%[text] #### NSOLT analysis function
 function x = analysisnsolt(y,analysisnet4predict,config)
 nLevels = config.nLevels;
 szCoefs = config.szCoefs;
-[s{1:nLevels+1}] = analysisnet4predict.predict(y);
+[s{1:nLevels+1}] = predict(analysisnet4predict,dlarray(single(y),'SSCB'));
 nCoefs = sum(prod(szCoefs,2),1);
 %x = [];
 x = zeros(nCoefs,1);
@@ -1005,19 +790,17 @@ sidx = 1;
 for iLevel = 1:nLevels+1
     %x = [x; s{iLevel}(:)];
     eidx = sidx - 1 + prod(szCoefs(iLevel,:));
-    x(sidx:eidx) = s{iLevel}(:);
+    x(sidx:eidx) = extractdata(s{iLevel}(:));
     sidx = eidx + 1;
 end
 end
-% ハード閾値処理
-
+%[text] #### Hard thresholding (keeps the K coefficients of the largest magnitudes)
 function y = hardthresh(x,K)
 v = sort(abs(x(:)),'descend');
-thk = v(K);
+thk = v(K+1);
 y = (abs(x)>thk).*x;
 end
-% 深層学習配列に対する繰返しハード閾値処理(IHT)のバッチ処理
-
+%[text] #### Batch processing of IHT for deep learning arrays
 function newdata = iht4patchds(oldtbl,analyzer,synthesizer,sparsityRatio)
 % IHT for InputImage in randomPatchExtractionDatastore
 %
@@ -1039,8 +822,7 @@ end
 % Output as a cell in order to make multiple-input datastore
 newdata = [ coefarray table2cell(restbl) ];
 end
-% 深層学習配列に対する繰返しハード閾値処理(IHT)
-
+%[text] #### Iterative hard thresholding (IHT) for deep learning arrays
 function [dly,varargout] = iht4dlarray(dlx,analyzer,synthesizer,sparsityRatio)
 % IHT Iterative hard thresholding
 %
@@ -1049,7 +831,7 @@ szBatch = size(dlx,4);
 
 % Iterative hard thresholding w/o normalization
 % (A Parseval tight frame is assumed)
-gamma = (1.-1e-3);
+eta = (1.-1e-3);
 nIters = 10;
 nCoefs = floor(sparsityRatio*numel(dlx(:,:,:,1)));
 [dlcoefs{1:nInputs}] = analyzer.predict(dlarray(zeros(size(dlx),'like',dlx),'SSCB'));
@@ -1058,12 +840,12 @@ for iter=1:nIters
     % Gradient descent
     dly = synthesizer.predict(dlcoefs{1:nInputs});
     [grad{1:nInputs}] = analyzer.predict(dlx-dly);
-    dlcoefs = cellfun(@(x,y) x+gamma*y,dlcoefs,grad,'UniformOutput',false);
+    dlcoefs = cellfun(@(x,y) x+eta*y,dlcoefs,grad,'UniformOutput',false);
     % Hard thresholding
     coefvecs = cellfun(@(x) extractdata(reshape(x,[],szBatch)),dlcoefs,'UniformOutput',false);
     srtdabscoefs = sort(abs(cell2mat(coefvecs.')),1,'descend');
     thk = reshape(srtdabscoefs(nCoefs,:),1,1,1,szBatch);
-    dlcoefs = cellfun(@(x) (abs(x)>thk).*x,dlcoefs,'UniformOutput',false);
+    dlcoefs = cellfun(@(x) (abs(x)>=thk).*x,dlcoefs,'UniformOutput',false);
     % Monitoring
     %checkSparsity =...
     %nnz(srtdabscoefs>srtdabscoefs(nCoefs,:))/numel(dlx)<=sparsityRatio;
@@ -1072,78 +854,43 @@ for iter=1:nIters
 end
 varargout = dlcoefs;
 end
-% NSOLTネットワークの随伴関係の確認
-
-function checkadjointrelation(analysislgraph,synthesislgraph,nLevels,szInput)
-import saivdr.dcnn.*
-x = rand(szInput,'single');
-% Assemble analyzer
-analysislgraph4predict = analysislgraph;
-for iLayer = 1:length(analysislgraph4predict.Layers)
-    layer = analysislgraph4predict.Layers(iLayer);
-    if contains(layer.Name,"Lv"+nLevels+"_DcOut") || ...
-            ~isempty(regexp(layer.Name,'^Lv\d+_AcOut','once'))
-        analysislgraph4predict = analysislgraph4predict.replaceLayer(layer.Name,...
-            regressionLayer('Name',layer.Name));
-    end
-end
-analysisnet4predict = assembleNetwork(analysislgraph4predict);
-
-% Assemble synthesizer
-synthesislgraph4predict = synthesislgraph;
-synthesisnet4predict = assembleNetwork(synthesislgraph4predict);
-
+%[text] #### Confirmation of the adjoint relation of the NSOLT networks
+function checkadjointrelation(analysisnet,synthesisnet,nLevels,szInput)
+x = dlarray(rand(szInput,'single'),'SSCB');
 % Analysis and synthesis process
-[s{1:nLevels+1}] = analysisnet4predict.predict(x);
-if isvector(s{end-1})
-    s{end-1} = permute(s{end-1},[1,3,2]);
-end
-y = synthesisnet4predict.predict(s{:});
-
+[s{1:nLevels+1}] = analysisnet.predict(x);
+y = synthesisnet.predict(s{:});
 % Evaluation
-display("MSE: " + num2str(mse(x,y)))
+display("MSE: " + num2str(mean((extractdata(x)-extractdata(y)).^2,"all")))
 end
-% 直交マッチング追跡関数の定義
-
+%[text] #### Orthogonal matching pursuit (OMP)
 function x = omp(y,Phi,nCoefs)
-% Initializaton
-nDims = size(Phi,1);
+% Initialization
 nAtoms = size(Phi,2);
-e = ones(nAtoms,1);
-a = zeros(nAtoms,1);
-g = zeros(nAtoms,1);
 x = zeros(nAtoms,1);
-v = zeros(nDims,1);
-r = y - v;
+r = y;
 supp = [];
 k = 0;
 while k < nCoefs
-    % Matching process
-    rr = r.'*r;
-    for m = setdiff(1:nAtoms,supp)
-        d = Phi(:,m);
-        g(m) = d.'*r; % γm=<dm,r>
-        a(m) = g(m)/(d.'*d); % Normalize αm=γm/||dm||^2
-        e(m) = rr - g(m)*a(m); % <r-dm/||dm||^2,r>
-    end
+    % Matching process for the atoms not selected yet
+    rest = setdiff(1:nAtoms,supp);
+    D = Phi(:,rest);
+    g = D.'*r;                       % gamma_m = <d_m,r>
+    a = g./sum(D.^2,1).';            % alpha_m = gamma_m/||d_m||^2
+    e = r.'*r - g.*a;                % ||r - alpha_m d_m||^2
     % Minimum value search (pursuit)
-    [~,mmin]= min(e);
+    [~,mmin] = min(e);
     % Update the support
-    supp = union(supp,mmin);
-    subPhi = Phi(:,supp);
-    x(supp) = pinv(subPhi) * y;
-    % Synthesis process
-    v = Phi*x;
+    supp = union(supp,rest(mmin));
+    x(supp) = pinv(Phi(:,supp)) * y;
     % Residual
-    r = y - v;
+    r = y - Phi*x;
     % Update
     k = k + 1;
 end
 end
-% NSOLTネットワークからのツリーレベル情報の抽出
-
+%[text] #### Extraction of the number of tree levels from an NSOLT network
 function nLevels = extractnumlevels(nsoltnet)
-import saivdr.dcnn.*
 
 % Extraction of information
 expidctlayer = '^Lv\d+_E0~?$';
@@ -1156,10 +903,8 @@ for iLayer = 1:nLayers
     end
 end
 end
-% NSOLTネットワークからのストライド情報の抽出
-
+%[text] #### Extraction of the decimation factor from an NSOLT network
 function decFactor = extractdecfactor(nsoltnet)
-import saivdr.dcnn.*
 
 % Extraction of information
 expfinallayer = '^Lv1_Cmp1+_V0~?$';
@@ -1171,10 +916,8 @@ for iLayer = 1:nLayers
     end
 end
 end
-% NSOLTネットワークからのチャネル数情報の抽出
-
+%[text] #### Extraction of the numbers of channels from an NSOLT network
 function nChannels = extractnumchannels(nsoltnet)
-import saivdr.dcnn.*
 
 % Extraction of information
 expfinallayer = '^Lv1_Cmp1+_V0~?$';
@@ -1186,5 +929,16 @@ for iLayer = 1:nLayers
     end
 end
 end
-%% 
-% © Copyright, 2023, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:checkbox:8096]
+%   data: {"defaultValue":false,"label":"isCodegen","run":"Section"}
+%---
+%[control:checkbox:7783]
+%   data: {"defaultValue":true,"label":"noDcLeakage","run":"Section"}
+%---

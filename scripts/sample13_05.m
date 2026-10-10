@@ -1,250 +1,156 @@
-%% Sample 13-5
-%% 辞書学習
-% 学習辞書による画像復元
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Dictionary learning
-% Image restoration with learned dictionary
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% 準備
-% (Preparation)
-
-clear 
-close all
-import msip.download_img
-msip.download_img
-% 原画像
-% (Original image)
-
-% Original image
-file_uorg = './data/kodim23.png';
-u = im2single(imread(file_uorg));
-if size(u,3) == 3
-    u = rgb2gray(u);
-end
+%[text] # Sample 13-5: Image restoration with a learned dictionary
+%[text] Advanced Topics in Image Processing, Lecture 13 "Dictionary Learning"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation
+%[text] SaivDr (NSOLT layers `saivdr.dcnn.*`) is downloaded into the folder `code` of the project by `msip.saivdr_setup`.
+datfolder = atip.prjfolders();
+msip.saivdr_setup(false)
+atip.download_img(false)
+%%
+%[text] ## Original image
+xorg = im2single(im2gray(imread(fullfile(datfolder,"kodim23.png"))));
 figure
-imshow(u)
-title('Original u')
-% 観測画像
-% (Observed image)
-% 
-% 以下の観測の単一画像超解像を行う．
-% 
-% (Let us consider the single image super resolution problem of observation))
-% 
-% $$\mathbf{v}=\mathbf{Pu}+\mathbf{w}$$
-% 
-% $\mathbf{u}$ を原画像として，加法性白色ガウスノイズ$\mathbf{w}$ と低解像度観測過程$\mathbf{P}$が加わり劣化している．ここで，観測過程は低域通過フィルタとダウンサンプルからなる線形処理である．
-% 
-% (which originates  $\mathbf{u}$ and is contaminated by additive white Gaussian 
-% noise $\mathbf{w}$ and downscale measurement proces, where $\mathbf{P}$ is a 
-% linear process consisting of low-pass filter and downsampling.)
-
-% Measurement process P
+imshow(xorg)
+title("Original x")
+%%
+%[text] ## Observed image
+%[text] Let us consider the single-image super-resolution problem with the observation
+%[text]  $\\mathbf{v}=\\mathbf{H}\\mathbf{x}+\\mathbf{w}$,
+%[text] which originates from $\\mathbf{x}$ through the downscaling measurement process $\\mathbf{H}$ (low-pass filter and downsampling)
+%[text] and is contaminated by the additive white Gaussian noise $\\mathbf{w}$.
+% Measurement process H
 sigmah = 2;
-h = fspecial('gaussian',9,sigmah);
+h = fspecial("gaussian",9,sigmah);
 downsample2 = @(x,m) ipermute(downsample(permute(downsample(x,m),[2 1 3]),m),[2 1 3]);
-linproc = @(x) downsample2(imfilter(x,h,'conv','circ'),2);
-H = fftn(h,2.^nextpow2([size(u,1) size(u,2)]));
-beta = max(abs(H(:)).^2); % λmax(PP.')
+linproc = @(x) downsample2(imfilter(x,h,"conv","circ"),2);
+Ht = fftn(h,2.^nextpow2([size(xorg,1) size(xorg,2)]));
+kappa = max(abs(Ht(:)).^2); % lambda_max(H*H.') (upper bound)
 
 % Observation
 sigmaw = 5/255;
-v = imnoise(linproc(u),'gaussian',0,sigmaw^2);
+v = imnoise(linproc(xorg),"gaussian",0,sigmaw^2);
 figure
 imshow(v)
-title('Observation v');
-%% 双三次補間
-% (Bicubic interpolation)
-% 
-% 参考までに，双三次補間の結果を示す．
-% 
-% (For the sake of reference, the result with the bicubic interpolation is shown.)
-
+title("Observation v");
+%%
+%[text] ## Bicubic interpolation
+%[text] For reference, the result of the bicubic interpolation is shown.
 % Bicubic
-y = imresize(v,2,'bicubic');
+y = imresize(v,2,"bicubic");
 figure
 imshow(y)
-title(['Bicubic y: PSNR = ' num2str(psnr(u,y)) ' [dB]']);
-%% 単一画像超解像
-% (Single image super resolution)
-% 
-% 上記の超改造問題は，冗長辞書 $\mathbf{D}$を用いて$\ell_1$-ノルム正則化崔譲二乗問題として
-% 
-% (The above super-resolution problem can be formulated by the  $\ell_1$-norm 
-% regularized least square problem with a redundant dictionary  $\mathbf{D}$  
-% as)
-% 
-% $\hat{\mathbf{s}}=\arg\min_\mathbf{s}\frac{1}{2}\|\mathbf{v}-\mathbf{PDs}\|_2^2+\lambda\|\mathbf{s}\|_1$.
-% 
-% のように定式化でき，その解は近接勾配アルゴリズムにより得られる．
-% 
-% (It is possible to obtain the solution by the proximal gradient algorithm)
-% 
-% $$\mathbf{s}^{(t+1)}\leftarrow\mathrm{prox}_{\gamma\lambda\|\cdot\|_1}(\mathbf{s}^{(t)}-\gamma\nabla 
-% f(\mathbf{s}^{(t)}))$$
-% 
-% $$\nabla f(\mathbf{s})=\mathbf{D}^T\mathbf{P}^T(\mathbf{PDs}-\mathbf{v})$$
-% 
-% $[\mathrm{prox}_{\gamma\lambda\|\cdot\|_1}(\mathbf{s})]_i=\mathcal{T}_{\gamma\lambda}([\mathbf{s}]_i)=\mathrm{sign}([\mathbf{s}]_i)\cdot\max(|[\mathbf{s}]_i|-\gamma\lambda,0)$,
-% 
-% ただし，$0<\gamma<2/\beta$ であり， $\beta$ は $\nabla f$のリプシッツ定数である．
-% 
-% (where  $0<\gamma<2/\beta$ and $\beta$ is the Lipschitz constant of $\nabla 
-% f$.)
-% 
-% 以下では，サンプル13-4で訓練したNSOLTとともに近接勾配法を利用して単一画像超解像を行う．
-% 
-% (In the following, let us perform single image super-resolution (SISR) with 
-% a proximal gradient method using the nonseparate oversampled laped transform 
-% (NSOLT) trained in Sample 13-4 as a dictionary.)
-% 
-% $\mathbf{DD}^T=\mathbf{I}$ なので，(Since  $\mathbf{DD}^T=\mathbf{I}$ holds,  
-% )
-% 
-% $\beta=\lambda_\mathrm{max}(\mathbf{D}^T\mathbf{P}^T\mathbf{PD})=(\mathbf{PD}\mathbf{D}^T\mathbf{P}^T)=(\mathbf{P}\mathbf{P}^T)=\lambda_\mathrm{max}(\mathbf{PP}^T)=\sigma_\mathrm{max}^2(\mathbf{P})$.
-% 
-% である．NSOLTの設計データは "data" フォルダの下の"nsoltdictionary.mat"にある．
-% 
-% (The design data of NSOLT is saved in "nsoltdictionary.mat" under the folder 
-% "data".)
-% 
-% NSOLT辞書の読込み
-% (Loading NSOLT dictionary)
-
-import msip.*
-load ./data/nsoltdictionary_20230705164652136.mat
-analysislgraph = layerGraph(analysisnet);
-synthesislgraph = layerGraph(synthesisnet);
+title("Bicubic y: PSNR = " + num2str(psnr(y,xorg)) + " dB");
+%%
+%[text] ## Single-image super-resolution
+%[text] The above super-resolution problem can be formulated as the $\\ell\_1$-norm regularized least squares problem with a redundant dictionary $\\mathbf{D}$:
+%[text]  $\\hat{\\mathbf{s}}=\\arg\\min\_\\mathbf{s}\\frac{1}{2}\\|\\mathbf{v}-\\mathbf{H}\\mathbf{D}\\mathbf{s}\\|\_2^2+\\lambda\\|\\mathbf{s}\\|\_1$.
+%[text] The solution is obtained by the proximal gradient algorithm (ISTA)
+%[text]  $\\mathbf{s}^{(t+1)}\\leftarrow\\mathrm{prox}\_{\\eta\\lambda\\|\\cdot\\|\_1}(\\mathbf{s}^{(t)}-\\eta\\nabla f(\\mathbf{s}^{(t)}))$
+%[text]  $\\nabla f(\\mathbf{s})=\\mathbf{D}^\\top\\mathbf{H}^\\top(\\mathbf{H}\\mathbf{D}\\mathbf{s}-\\mathbf{v})$
+%[text]  $\[\\mathrm{prox}\_{\\eta\\lambda\\|\\cdot\\|\_1}(\\mathbf{s})\]\_i=\\phi\_\\mathrm{ST}(\[\\mathbf{s}\]\_i;\\eta\\lambda)=\\mathrm{sign}(\[\\mathbf{s}\]\_i)\\cdot\\max(|\[\\mathbf{s}\]\_i|-\\eta\\lambda,0)$,
+%[text] where $0\<\\eta\<2/\\kappa$ and $\\kappa$ is the Lipschitz constant of $\\nabla f$.
+%[text] In the following, let us perform single-image super-resolution (SISR) by the proximal gradient method with the non-separable oversampled lapped transform (NSOLT) trained by Sample 13-4 as the dictionary.
+%[text] For the Parseval tight frame $\\mathbf{D}$ ($\\mathbf{D}\\mathbf{D}^\\top=\\mathbf{I}$),
+%[text]  $\\kappa=\\lambda\_\\mathrm{max}(\\mathbf{D}^\\top\\mathbf{H}^\\top\\mathbf{H}\\mathbf{D})=\\lambda\_\\mathrm{max}(\\mathbf{H}\\mathbf{D}\\mathbf{D}^\\top\\mathbf{H}^\\top)=\\lambda\_\\mathrm{max}(\\mathbf{H}\\mathbf{H}^\\top)=\\sigma\_\\mathrm{max}^2(\\mathbf{H})$.
+%[text] The NSOLT dictionary is stored in the data folder.
+%[text] ### Loading the NSOLT dictionary
+dic = load(fullfile(datfolder,"nsoltdictionary_20230705164652136.mat"));
+analysisnet = dic.analysisnet;
+synthesisnet = dic.synthesisnet;
+nLevels = dic.nLevels;
 
 figure
 subplot(1,2,1)
-plot(analysislgraph)
-title('Analysis NSOLT')
+plot(analysisnet)
+title("Analysis NSOLT")
 subplot(1,2,2)
-plot(synthesislgraph)
-title('Synthesis NSOLT')
-% 要素画像の表示
-% (Show the atomic images)
-
+plot(synthesisnet)
+title("Synthesis NSOLT")
+%[text] Show the atomic images
 figure
-atomicimshow(synthesisnet,[],2^(nLevels-1))
-title('Atomic images of trained NSOLT')
+saivdr.dcnn.atomicimshow(synthesisnet,[],2^(nLevels-1))
+title("Atomic images of the trained NSOLT")
 %%
-import msip.*
+%[text] ### Networks for the whole image
+%[text] The input layers of the `dlnetwork` objects are replaced for the size of the whole image.
 nLevels = extractnumlevels(analysisnet);
 decFactor = extractdecfactor(analysisnet);
 nChannels = extractnumchannels(analysisnet);
-szOrg = size(u);
+szOrg = size(xorg);
 
-% Assemble analyzer
-analysislgraph4predict = analysislgraph;
-analysislgraph4predict = analysislgraph4predict.replaceLayer('Image input',...
-    imageInputLayer(szOrg,'Name','Image imput','Normalization','none'));
-for iLayer = 1:height(analysislgraph4predict.Layers)
-    layer = analysislgraph4predict.Layers(iLayer);
-    if contains(layer.Name,"Lv"+nLevels+"_DcOut") || ...
-            ~isempty(regexp(layer.Name,'^Lv\d+_AcOut','once'))
-        analysislgraph4predict = analysislgraph4predict.replaceLayer(layer.Name,...
-            regressionLayer('Name',layer.Name));
-    end
-end
-analysisnet4predict = assembleNetwork(analysislgraph4predict);
+% Analyzer D^T
+analysisnet4predict = analysisnet;
+analysisnet4predict = replaceLayer(analysisnet4predict,"Image input",...
+    imageInputLayer([szOrg 1],"Name","Image input","Normalization","none"));
+analysisnet4predict = initialize(analysisnet4predict);
 
-% Assemble synthesizer
-synthesislgraph4predict = synthesislgraph;
-synthesislgraph4predict = synthesislgraph4predict.replaceLayer('Lv1_Out',...
-    regressionLayer('Name','Lv1_Out'));
-for iLayer = 1:height(synthesislgraph4predict.Layers)
-    layer = synthesislgraph4predict.Layers(iLayer);
-    if contains(layer.Name,'Ac feature input')
+% Synthesizer D
+synthesisnet4predict = synthesisnet;
+for iLayer = 1:numel(synthesisnet4predict.Layers)
+    layer = synthesisnet4predict.Layers(iLayer);
+    if contains(layer.Name,"Ac feature input")
         iLv = str2double(layer.Name(3));
         sbSize = szOrg.*(decFactor.^(-iLv));
-        newlayer = ...
-            imageInputLayer([sbSize (sum(nChannels)-1)],'Name',layer.Name,'Normalization','none');
-        synthesislgraph4predict = synthesislgraph4predict.replaceLayer(...
-            layer.Name,newlayer);
-    elseif contains(layer.Name,sprintf('Lv%0d_Dc feature input',nLevels))
+        newlayer = imageInputLayer([sbSize (sum(nChannels)-1)],"Name",layer.Name,"Normalization","none");
+        synthesisnet4predict = replaceLayer(synthesisnet4predict,layer.Name,newlayer);
+    elseif contains(layer.Name,sprintf("Lv%0d_Dc feature input",nLevels))
         iLv = str2double(layer.Name(3));
         sbSize = szOrg.*(decFactor.^(-iLv));
-        newlayer = ...
-            imageInputLayer([sbSize 1],'Name',layer.Name,'Normalization','none');
-        synthesislgraph4predict = synthesislgraph4predict.replaceLayer(...
-            layer.Name,newlayer);
+        newlayer = imageInputLayer([sbSize 1],"Name",layer.Name,"Normalization","none");
+        synthesisnet4predict = replaceLayer(synthesisnet4predict,layer.Name,newlayer);
     end
 end
-synthesisnet4predict = assembleNetwork(synthesislgraph4predict);  
-% 随伴関係（完全再構成）の確認
-% (Confirmation of the adjoint relation (perfect reconstruction))
-% 
-% NSOLTはパーセバルタイト性を満たすことに注意．(Note that NSOLT satisfy the Parseval tight property.)
-
-x = rand(szOrg,'single');
-[s{1:nLevels+1}] = analysisnet4predict.predict(x);
-y = synthesisnet4predict.predict(s{1:nLevels+1});
-display("MSE: " + num2str(mse(x,y)))
-% 観測過程の随伴作用素
-% (Adjoint operator of the measurement process)
-
-% Adjoint process P.'
+synthesisnet4predict = initialize(synthesisnet4predict);
+%%
+%[text] ### Confirmation of the adjoint relation (perfect reconstruction)
+x = dlarray(rand(szOrg,"single"),"SSCB");
+[s{1:nLevels+1}] = predict(analysisnet4predict,x);
+r = predict(synthesisnet4predict,s{1:nLevels+1});
+display("MSE: " + num2str(mean((extractdata(x)-extractdata(r)).^2,"all")))
+%%
+%[text] ### Adjoint operator of the measurement process
+% Adjoint process H.'
 upsample2 = @(x,m) ipermute(upsample(permute(upsample(x,m),[2 1 3]),m),[2 1 3]);
-adjproc = @(x) imfilter(upsample2(x,2),h,'corr','circ');
-%% 近接勾配法(ISTA)の実行
-% (Execution of proximal-gradient method (ISTA))
-%% 
-% * "synthesisnet" and "analysisnet" are objects of "dlnetwork."
-% * "dlnetwork" takes "dlarray."
-% * Function "extractdata" is used for extracting ordinary array data from "dlarray."  
-
+adjproc = @(x) imfilter(upsample2(x,2),h,"corr","circ");
+%%
+%[text] ### Execution of the proximal gradient method (ISTA)
+%[text] - `synthesisnet4predict` and `analysisnet4predict` are `dlnetwork` objects, which take `dlarray` inputs.
+%[text] - `extractdata` extracts ordinary array data from a `dlarray`. \
 % Parameter settings
 lambda = 0.001;
-gamma = 2./(beta+1e-2);
+eta = 2./(kappa+1e-2);
 nIters = 100;
 isDcSkip = true;
 %%
-% Initalization
-z = zeros(szOrg,'like',u);
-[coefs{1:nLevels+1}] = analysisnet4predict.predict(z);
+% Initialization
+z = dlarray(zeros(szOrg,"like",xorg),"SSCB");
+[coefs{1:nLevels+1}] = predict(analysisnet4predict,z);
 
-% profile on
 for itr = 1:nIters
-    x = linproc(synthesisnet4predict.predict(coefs{1:nLevels+1}));
-    [g{1:nLevels+1}] = analysisnet4predict.predict(adjproc(x-v));
-    % Gradient descnet
+    u = linproc(extractdata(predict(synthesisnet4predict,coefs{1:nLevels+1})));
+    [g{1:nLevels+1}] = predict(analysisnet4predict,dlarray(adjproc(u-v),"SSCB"));
+    % Gradient descent
     for iOutput = 1:nLevels+1
-        coefs{iOutput} = coefs{iOutput}-gamma*g{iOutput};
-        if ~isDcSkip || iOutput < nLevels+1 
-            % ISTA for detail (w/o soft-thresholding for approximation components)
-            coefs{iOutput} = wthresh(coefs{iOutput},'s',gamma*lambda);
+        coefs{iOutput} = coefs{iOutput}-eta*g{iOutput};
+        if ~isDcSkip || iOutput < nLevels+1
+            % Soft thresholding for the details (not applied to the approximation components)
+            coefs{iOutput} = sign(coefs{iOutput}).*max(abs(coefs{iOutput})-eta*lambda,0);
         end
     end
 end
-% profile off
-% profile viewer
 %%
-
 % Reconstruction
-r = synthesisnet4predict.predict(coefs{1:nLevels+1});
-% 結果の表示
-% (Display the result)
-
+r = extractdata(predict(synthesisnet4predict,coefs{1:nLevels+1}));
+%[text] ### Display the result
 figure
 imshow(r)
-title(['Restoration r: PSNR = ' num2str(psnr(u,r)) ' [dB]'])
+title("Restoration r: PSNR = " + num2str(psnr(r,xorg)) + " dB")
 %%
+%[text] ## Functions
+%[text] Extraction of the number of tree levels from an NSOLT network
 function nLevels = extractnumlevels(nsoltnet)
-import saivdr.dcnn.*
-
-% Extraction of information
 expidctlayer = '^Lv\d+_E0~?$';
 nLevels = 0;
 nLayers = height(nsoltnet.Layers);
@@ -255,11 +161,8 @@ for iLayer = 1:nLayers
     end
 end
 end
-
+%[text] Extraction of the decimation factor from an NSOLT network
 function decFactor = extractdecfactor(nsoltnet)
-import saivdr.dcnn.*
-
-% Extraction of information
 expfinallayer = '^Lv1_Cmp1+_V0~?$';
 nLayers = height(nsoltnet.Layers);
 for iLayer = 1:nLayers
@@ -269,11 +172,8 @@ for iLayer = 1:nLayers
     end
 end
 end
-
+%[text] Extraction of the numbers of channels from an NSOLT network
 function nChannels = extractnumchannels(nsoltnet)
-import saivdr.dcnn.*
-
-% Extraction of information
 expfinallayer = '^Lv1_Cmp1+_V0~?$';
 nLayers = height(nsoltnet.Layers);
 for iLayer = 1:nLayers
@@ -283,5 +183,10 @@ for iLayer = 1:nLayers
     end
 end
 end
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---

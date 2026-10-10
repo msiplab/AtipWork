@@ -1,110 +1,100 @@
-%% Sample 2-3
-%% 画像データの入出力
-% 輝度値変換 
-% 
-% 画像処理特論
-% 
-% 村松 正吾 
-% 
-% 動作確認: MATLAB R2023a
-%% Input and output of images
-% Intensity transforms
-% 
-% Advanced Topics in Image Processing
-% 
-% Shogo MURAMATSU
-% 
-% Verified: MATLAB R2023a
-% サンプル画像の準備
-% (Preparation of sample image)
-% 
-% 本サンプルで利用する画像データを収めたdata フォルダにパスをとおす。
-% 
-% Create a path to the data folder that contains images used in this sample.
-
-addpath('./data')
-close
-% Reading original image
-I = im2double(rgb2gray(imread('firenzeRgb.jpg')));
-figure(1)
+%[text] # Sample 2-3: Intensity transforms
+%[text] Advanced Topics in Image Processing, Lecture 2 "Input and Output of Images"
+%[text] Shogo Muramatsu
+%[text] Verified: MATLAB R2026b
+%%
+%[text] ## Preparation of sample image
+%[text] Each pixel value $x$ is mapped to $y=\\phi(x)$ by the same scalar function (pixel-wise processing,
+%[text] \[M\] Section 2.1).  The grayscale image is normalized to $\[0,1\]$.
+datfolder = atip.prjfolders();
+% Read the original image
+I = im2double(rgb2gray(imread(fullfile(datfolder,'firenzeRgb.jpg'))));
+figure
 imshow(I)
 title('Original')
-figure(2)
+figure
 imhist(I)
-% ネガ変換
-% (Negative conversion)
-% 
-% $$y=T(x) = 1.0-x$$
-
-% Definition of negative conversion
+%%
+%[text] ## Negative transform
+%[text]{"align":"center"} $y=\\phi(x) = 1-x$
+% Definition of the negative transform
 Tn = @(x) 1.0-x;
-figure(3)
+figure
 fplot(Tn,[0,1])
 axis square
 grid on
-% Negative conversion of image I
+% Negative transform of image I
 J = Tn(I);
-figure(4)
+figure
 imshow(J)
 title('Negative')
-figure(5)
+figure
 imhist(J)
-% 対比伸長
-% (Contrast stretching)
-% 
-% $$y=T(x) = \frac{1}{2}(\mathrm{sign}(2x-1)|2x-1|^{10^{-\alpha}}+1)$$
-
+%%
+%[text] ## Contrast stretching
+%[text] \[M\] Section 2.1.4 with $\\gamma=10^{-\\alpha}$:
+%[text]{"align":"center"} $y=\\phi(x) = \\frac{1}{2}\\left(\\mathrm{sign}(2x-1)|2x-1|^{10^{-\\alpha}}+1\\right)$
 % Definition of contrast stretching
-alpha = 1
+alpha = 1 %[control:slider:27ad]{"position":[9,10]}
 Tc = @(x) 0.5*(sign(2.0*x-1.0).*abs(2*x-1.0).^(10^(-alpha))+1.0);
-figure(6)
+figure
 fplot(Tc,[0,1])
 axis square
 grid on
 % Contrast stretching of image I
 K = Tc(I);
-figure(7)
+figure
 imshow(K)
 title('Contrast stretching')
-figure(8)
+figure
 imhist(K)
-% べき乗則変換
-% (Power law conversion)
-% 
-% $$y=T(x) = x^\gamma$$  
-
-% Definition of power law conversion
-gamma = 0.5
+%%
+%[text] ## Power-law transform
+%[text] \[M\] Section 2.1.4 with $c=1$: $\\gamma<1$ brightens and $\\gamma>1$ darkens the image.
+%[text]{"align":"center"} $y=\\phi(x) = x^\\gamma$
+% Definition of the power-law transform
+gamma = 0.5 %[control:slider:0ccc]{"position":[9,12]}
 Tp = @(x) x.^gamma;
-figure(9)
+figure
 fplot(Tp,[0,1])
 axis square
 grid on
-% Power law conversion of image I
+% Power-law transform of image I
 L = Tp(I);
-figure(10)
+figure
 imshow(L)
-title('Power law conversion')
-figure(11)
+title('Power-law transform')
+figure
 imhist(L)
-% 輝度値調整関数
-% (Image adjustment function)
-% 
-% IMADJUST は高機能な輝度値調整関数で，uint8型画像に対してもべき乗則変換を含めた細かい調整が可能
-% 
-% IMADJUST is a sophisticated intensity adjustment function that allows fine 
-% tuning of images including uint8-type ones, such as power law conversion.
-
-% Parameter setting of power law conversion
-gamma = 0.5
+%%
+%[text] ## Image adjustment function
+%[text] `imadjust` is a sophisticated intensity adjustment function that allows fine tuning of images,
+%[text] including the power-law transform of `uint8` images.
+% Parameter of the power-law transform
+gamma = 0.5 %[control:slider:8f9c]{"position":[9,12]}
 % Conversion to uint8
 U = im2uint8(I);
-% Power law conversion with IMADUST function
+% Power-law transform with IMADJUST
 M = imadjust(U,[],[],gamma);
-figure(12)
+figure
 imshow(M)
-title('Power law conversion with IMADJUST')
-figure(13)
+title('Power-law transform with IMADJUST')
+figure
 imhist(M)
-%% 
-% © Copyright, Shogo MURAMATSU, All rights reserved.
+%%
+%[text] © Copyright, Shogo MURAMATSU, All rights reserved.
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline","rightPanelPercent":40}
+%---
+%[control:slider:27ad]
+%   data: {"defaultValue":1,"label":"alpha","max":3,"min":0,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:0ccc]
+%   data: {"defaultValue":0.5,"label":"gamma","max":4,"min":0,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
+%[control:slider:8f9c]
+%   data: {"defaultValue":0.5,"label":"gamma","max":4,"min":0,"run":"Section","runOn":"ValueChanging","step":0.1}
+%---
