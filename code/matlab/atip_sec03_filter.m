@@ -58,15 +58,17 @@ atip.savetex("atip-03-norm-spec", sprintf("%.2f", nspec));
 %%
 %[text] ## Moving average and moving differences
 %[text] Local inner product $y\[\\boldsymbol{n}\]=\\langle\\boldsymbol{f},\\boldsymbol{x}\_{\\boldsymbol{n}}\\rangle=\\sum\_{\\boldsymbol{m}}f\[\\boldsymbol{m}\]x\[\\boldsymbol{n}+\\boldsymbol{m}\]$
-%[text] (\[M\] Section 3.1) for the $2\\times 2$ local array of the 2026 slides.
-xn = [2 2; 1 1];
-favg = ones(2)/4;
-fhor = [-1 1; -1 1];
-fver = [-1 -1; 1 1];
+%[text] (\[M\] Section 3.1) for the $3\\times 3$ local array of the array of \[M\] Exercises "Box filter" and
+%[text] "Prewitt filter" at $\\boldsymbol{n}=(1\\ 1)^\\top$: average (box) and Prewitt (horizontal, vertical) kernels.
+xn = [18 9 9; 27 9 9; 36 9 9];
+favg = ones(3)/9;
+fhor = [-1 0 1; -1 0 1; -1 0 1];
+fver = fhor.';
 yavg = sum(favg.*xn, "all")
 yhor = sum(fhor.*xn, "all")
 yver = sum(fver.*xn, "all")
-assert(yavg == 1.5 && yhor == 0 && yver == -2)
+% agrees with y_box[1,1] = 15, x_h[1,1] = -54 and x_v[1,1] = 18 of the exercises
+assert(abs(yavg - 15) < 1e-12 && yhor == -54 && yver == 18)
 atip.savetex("atip-03-md-x", atip.arr2tex(xn, "%d"));
 atip.savetex("atip-03-md-avg", sprintf("%g", yavg));
 atip.savetex("atip-03-md-hor", sprintf("%g", yhor));
